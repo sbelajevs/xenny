@@ -77,5 +77,7 @@ def generate_embedded_resources():
   generate_master_header(sizes)
 
 if __name__ == "__main__":
+  if not os.path.exists(GEN_DIR):
+    os.mkdir(GEN_DIR)
   clean_up()
   generate_embedded_resources()
