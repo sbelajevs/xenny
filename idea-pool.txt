@@ -1,0 +1,77 @@
+Version 0.0.2:
+ - Add animation for card movement
+ - Add animation for card turning
+ - Add animation for game start
+ - Add animation for game end (after "New game" pressed)
+ - Add animation for (full) undo/redo
+ - Implement automatic game finishing with animation (new GUI button should appear when "end is near")
+
+Version 0.0.3:
+ - Implement tweening for animation
+ - Add motion blur effect and evaluate if it is cool
+ - Alpha-blend closed card on top of the stack when hand is far enough from it
+ - Try optimizing rendering - batch render calls
+ - Play with gradient backgrounds
+
+Version 0.0.4:
+ - Implement smart game-over check and show skull-icon when game is lost, do the brute-forcing in a separate thread
+ - Check for some simple unsolvable cases right after a game is generated and generate a new one if found
+
+Version 0.0.5
+ - Show amount of cards left in the stock/waste
+ - Show how many undos/redos can be done
+ - Add lots of debug assertions and run the game in debug mode
+ - Do something with max allowed moves in game history
+ - Move FPS from windows title to the game window (somewhere in the corner), allow to toggle its visibility
+ - Add keyboard shortcuts too for all buttons and meaningful actions
+ - Allow to play the game using only keyboard
+
+Version 0.0.6
+ - Replace glfw/OpenGL with custom-made-code/DirectX
+ - Module separation - OS module as executable and game module as .dll
+ - Add logging and all kinds of error checking to the OS module
+ - Tie FPS to refresh rate, make it dynamically adjustable
+ - Change mouse cursor pointers depending on screen position
+
+Version 0.1
+ - Start implementing scalable vector graphics and engine to generate it
+ - Regenerate graphics depending on the screen size used 
+ - Add threading and optimizations to get rid of possible hanging
+ - Allow to resize window and make it full-screen, tie it also to shortcuts
+
+Version 0.2
+ - Add different Klondaike variations
+
+Version 0.3
+ - Add other types of patience games, introduce Start-screen and state-switching
+ - Add some support for text engine and simple GUI engine
+
+Version 0.4
+ - Add some statistics saving for each type of game
+ - Add recommendations to try new games and "Try something new" button
+ - Do lots of refactoring (focus on modularity and cohesion)
+
+Version 0.5
+ - Improve graphics, UI and UX
+ - Add some simple sound effects? (Uh-oh for no-more-moves, ticks for card picking, something for dealing), allow to easily disable all sounds or set the volume
+ - Consider adding background noises for relaxation, see mynoise.net for nice(?) examples
+ - Implement unicode support? Add localizations
+
+
+
+General ideas: 
+ - Add mahjong and memory category of games
+ - Add color-lines category of games
+ - Add bubble-shooter category of games
+ - Match-3?
+ - Branches/pipes?
+ - Blendoku?
+ - Minesweeper?
+ ------------------------------------------------
+ - Port to windows 8 (and RT?)
+ - Port to android
+ - Port to iOS
+ - Port to linux
+ - Port to OSX
+ - Port to Web
+ - Port to Chrome OS

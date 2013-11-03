@@ -1,0 +1,15 @@
+#version 120
+
+// Input vertex data, different for all executions of this shader.
+attribute vec2 vertexPosition_modelspace;
+attribute vec2 vertexUv;
+
+varying vec2 vUv;
+
+uniform mat4 MVP;
+
+void main()
+{
+    gl_Position =  MVP * vec4(vertexPosition_modelspace, 0, 1);
+    vUv = vertexUv;
+}

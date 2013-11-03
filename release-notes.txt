@@ -1,0 +1,8 @@
+Version 0.0.1
+==============
+ - Standard Klondike solitaire game with 1-deck/1-card/no-limit rules
+ - Supports 'Infinite' undos
+ - Shortcut: single-click moves card to foundation if possible
+ - Shortcut: right-click advances stock
+ - Shortcut: back and forward mouse buttons trigger undo/redo commands
+ - Uses OpenGL 2.1, should work fine on relatively old hardware too

@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\generated\default.vertexshader.c">
+      <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\generated\default.fragmentshader.c">
+      <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\generated\cards.png.c">
+      <Filter>generated</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\system.cpp" />
+    <ClCompile Include="..\..\src\model.cpp" />
+    <ClCompile Include="..\..\src\controller.cpp" />
+    <ClCompile Include="..\..\src\xenny.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\generated\resources_gen.h">
+      <Filter>generated</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\system.h" />
+    <ClInclude Include="..\..\src\model.h" />
+    <ClInclude Include="..\..\src\controller.h" />
+    <ClInclude Include="..\..\src\xenny.h" />
+    <ClInclude Include="..\..\src\properties.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="generated">
+      <UniqueIdentifier>{9cb5d801-8fc7-4edd-a38d-00baacc26214}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
