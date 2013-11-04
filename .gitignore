@@ -4,6 +4,7 @@
 *.ilk
 *.pdb           
 *.exe
+build/*/bin/
 *generated/
 *ipch/
 *Debug/
