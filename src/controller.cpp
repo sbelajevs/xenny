@@ -469,7 +469,7 @@ void GameGUI::handleControls(const Input* in)
 
 void GameGUI::evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist)
 {
-    if (gameState->canReleaseHand(dest)) 
+    if (dest == gameState->handSource || gameState->canReleaseHand(dest)) 
     {
         Rect destRect = layout->getDestCardRect(dest);
         float destX = destRect.x + destRect.w/2.f;
