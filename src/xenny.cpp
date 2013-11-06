@@ -107,6 +107,8 @@ public:
 
     void tick()
     {
+        gg.update();
+        wg.update();
     }
 
     void render()

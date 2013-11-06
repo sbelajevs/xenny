@@ -36,10 +36,10 @@ public:
     void initHand(CardStack* stack, int idx, float x, float y);
     void updateHandRect(float x, float y);
 
+    Rect stackRects[STACK_COUNT];
 private:
     static Rect getCardScreenRect(float x, float y);
 
-    Rect stackRects[STACK_COUNT];
     GameState* gameState;
 
     float borderV;
@@ -48,8 +48,6 @@ private:
 
     float handDx;
     float handDy;
-    float handOriginalX;
-    float handOriginalY;
 
     float stockTopLeftX;
     float stockTopLeftY;
@@ -187,6 +185,23 @@ private:
     ContainerT* container;
 };
 
+class Tween
+{
+public:
+    Tween();
+    Tween(float& start, float end, int ticks, bool startPlaying);
+    void update();
+    void play();
+    bool finished();
+private:
+    float* value;
+    float initialValue;
+    float delta;
+    int ticksElapsed;
+    int totalTicks;
+    bool started;
+};
+
 class WidgetGUI
 {
 public:
@@ -207,6 +222,7 @@ public:
     void setUndo(bool enabled);
     void setRedo(bool enabled);
     void handleControls(const Input* ctrl);
+    void update();
 
     const Button<WidgetGUI>& getButton(Buttons type);
 
@@ -233,13 +249,31 @@ public:
     void init(GameState& gs, Layout& l);
     bool isBusy() const;
     void handleControls(const Input* in);
+    void update();
 
 private:
-    void handleClick(CardStack* victim);
+    bool isAnimationPlaying() const;
+    void handleClick(CardStack* victim, float x, float y);
     void evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist);
     void handleHandRelease();
 
     GameState* gameState;
     Layout* layout;
     bool busy;
+
+    class MovementAnimation
+    {
+    public:
+        MovementAnimation();
+        void start(GameState* gs, Layout* l, CardStack* destStack);
+        void update();
+        bool isPlaying() const;
+    private:
+        Tween movementX;
+        Tween movementY;
+        GameState* state;
+        CardStack* dest; 
+        bool playing;
+    };
+    MovementAnimation movementAnimation;
 };

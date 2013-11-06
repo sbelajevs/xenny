@@ -185,8 +185,6 @@ void Layout::initHand(CardStack* stack, int idx, float x, float y)
     Rect cardRect = getCardRect(stack, idx);
     handDx = cardRect.x - x;
     handDy = cardRect.y - y;
-    handOriginalX = cardRect.x;
-    handOriginalY = cardRect.y;
     updateHandRect(x, y);
 }
 
@@ -364,6 +362,11 @@ void WidgetGUI::handleControls(const Input* in)
     busy = result;
 }
 
+void WidgetGUI::update()
+{
+    // Nothing interesting yet
+}
+
 const Button<WidgetGUI>& WidgetGUI::getButton(Buttons type)
 {
     return buttons[(int)type];
@@ -414,11 +417,20 @@ void GameGUI::init(GameState& gs, Layout& l)
 
 bool GameGUI::isBusy() const
 {
-    return busy;
+    return busy || isAnimationPlaying();
+}
+
+bool GameGUI::isAnimationPlaying() const
+{
+    return movementAnimation.isPlaying();
 }
 
 void GameGUI::handleControls(const Input* in)
 {
+    if (isAnimationPlaying()) {
+        return;
+    }
+
     float x = in->x;
     float y = in->y;
     if (in->dragStart)
@@ -432,7 +444,7 @@ void GameGUI::handleControls(const Input* in)
     busy = true;
     if (in->left.clicked && in->dragEnd == false)
     {
-        handleClick(stack);
+        handleClick(stack, in->left.pressX, in->left.pressY);
     }
     else if (in->dragStart)
     {
@@ -465,6 +477,11 @@ void GameGUI::handleControls(const Input* in)
     {
         busy = false;
     }
+}
+
+void GameGUI::update()
+{
+    movementAnimation.update();
 }
 
 void GameGUI::evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist)
@@ -503,10 +520,10 @@ void GameGUI::handleHandRelease()
         evaluateHandRelease(&gameState->foundations[i], x, y, &destStack, &bestDist);
     }
 
-    gameState->releaseHand(destStack);
+    movementAnimation.start(gameState, layout, destStack);
 }
 
-void GameGUI::handleClick(CardStack* victim)
+void GameGUI::handleClick(CardStack* victim, float x, float y)
 {
     if (victim == NULL_PTR) {
         return;
@@ -519,8 +536,89 @@ void GameGUI::handleClick(CardStack* victim)
     else if (victim->type == CardStack::TYPE_TABLEAU 
         || victim->type == CardStack::TYPE_WASTE)
     {
+        layout->initHand(victim, victim->size-1, x, y);
         gameState->fillHand(victim, victim->size-1);
         CardStack* destStack = gameState->findFoundationDest();
-        gameState->releaseHand(destStack);
+        movementAnimation.start(gameState, layout, destStack);
     }
+}
+
+Tween::Tween(): value(NULL_PTR), ticksElapsed(0), totalTicks(0), started(true)
+{
+}
+
+Tween::Tween(float& start, float end, int ticks, bool startPlaying)
+    : value(&start)
+    , initialValue(start)
+    , delta(end - start)
+    , ticksElapsed(0)
+    , totalTicks(ticks)
+    , started(startPlaying)
+{
+}
+
+void Tween::play()
+{
+    started = true;
+}
+
+void Tween::update()
+{
+    if (started && ticksElapsed < totalTicks)
+    {
+        float t = ticksElapsed / (float)totalTicks;
+        *value = initialValue + delta * t;
+        ticksElapsed++;
+    }
+}
+
+bool Tween::finished()
+{
+    return started && ticksElapsed >= totalTicks;
+}
+
+GameGUI::MovementAnimation::MovementAnimation(): playing(false)
+{
+}
+
+void GameGUI::MovementAnimation::start(GameState* gs, Layout* l, CardStack* destStack)
+{
+    state = gs;
+    dest = destStack;
+    playing = true;
+
+    Rect startRect = l->stackRects[gs->hand.handle];
+    Rect endRect = l->getDestCardRect(destStack);
+    float distSqr = getDistSqr(startRect.x, startRect.y, endRect.x, endRect.y);
+    int ticks = 4 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
+    if (ticks > 24) {
+        ticks = 24;
+    }
+
+    movementX = Tween(l->stackRects[gs->hand.handle].x, endRect.x, ticks, true);
+    movementY = Tween(l->stackRects[gs->hand.handle].y, endRect.y, ticks, true);
+}
+
+void GameGUI::MovementAnimation::update()
+{
+    if (playing)
+    {
+        if (movementX.finished() == false) {
+            movementX.update();
+        }
+        if (movementY.finished() == false) {
+            movementY.update();
+        }
+
+        if (movementX.finished() && movementY.finished())
+        {
+            state->releaseHand(dest);
+            playing = false;
+        }
+    }
+}
+
+bool GameGUI::MovementAnimation::isPlaying() const
+{
+    return playing;
 }
