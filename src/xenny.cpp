@@ -97,10 +97,10 @@ public:
         else 
         {
             if (gg.isBusy() == false) {
-                wg.update(&input);
+                wg.handleControls(&input);
             }
             if (wg.isBusy() == false) {
-                gg.update(&input);
+                gg.handleControls(&input);
             }
         }
     }

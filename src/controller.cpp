@@ -331,7 +331,7 @@ void WidgetGUI::setRedo(bool enabled)
     buttons[BUTTON_REDO].setEnabled(enabled);
 }
 
-void WidgetGUI::update(const Input* in)
+void WidgetGUI::handleControls(const Input* in)
 {
     setUndo(gameState->history.canUndo());
     setRedo(gameState->history.canRedo());
@@ -359,7 +359,7 @@ void WidgetGUI::update(const Input* in)
 
     bool result = false;
     for (int i=0; i<BUTTON_MAX && result == false; i++) {
-        result = buttons[i].update(in);
+        result = buttons[i].handleControls(in);
     }
     busy = result;
 }
@@ -417,7 +417,7 @@ bool GameGUI::isBusy() const
     return busy;
 }
 
-void GameGUI::update(const Input* in)
+void GameGUI::handleControls(const Input* in)
 {
     float x = in->x;
     float y = in->y;

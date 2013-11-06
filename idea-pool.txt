@@ -36,7 +36,6 @@ Version 0.0.6
 Version 0.1
  - Start implementing scalable vector graphics and engine to generate it
  - Regenerate graphics depending on the screen size used 
- - Add threading and optimizations to get rid of possible hanging
  - Allow to resize window and make it full-screen, tie it also to shortcuts
 
 Version 0.2
@@ -49,6 +48,7 @@ Version 0.3
 Version 0.4
  - Add some statistics saving for each type of game
  - Add recommendations to try new games and "Try something new" button
+ - Add threading and optimizations to get rid of possible hanging
  - Do lots of refactoring (focus on modularity and cohesion)
 
 Version 0.5

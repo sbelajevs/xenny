@@ -142,7 +142,7 @@ public:
         }
     }
 
-    bool update(const Input* in)
+    bool handleControls(const Input* in)
     {
         if (enabled() == false) {
             return false;
@@ -206,7 +206,7 @@ public:
     bool isBusy() const;
     void setUndo(bool enabled);
     void setRedo(bool enabled);
-    void update(const Input* ctrl);
+    void handleControls(const Input* ctrl);
 
     const Button<WidgetGUI>& getButton(Buttons type);
 
@@ -232,7 +232,7 @@ public:
 
     void init(GameState& gs, Layout& l);
     bool isBusy() const;
-    void update(const Input* in);
+    void handleControls(const Input* in);
 
 private:
     void handleClick(CardStack* victim);
