@@ -12,10 +12,15 @@ Version 0.0.3:
  - Alpha-blend closed card on top of the stack when hand is far enough from it
  - Try optimizing rendering - batch render calls
  - Play with gradient backgrounds
+ - Add some shaking animation when something cannot be done
+ - Try checking mouse movement direction vector when drag-and-dropping a card - take into acount also velocity of the dragging
 
 Version 0.0.4:
+ - Allow animation to be non-blocking - it should be possible to do things while animation is playing
  - Implement smart game-over check and show skull-icon when game is lost, do the brute-forcing in a separate thread
  - Check for some simple unsolvable cases right after a game is generated and generate a new one if found
+ - Consider generating only 100% solvable games
+ - Implement special case of "undo" that undoes until a chosen card is moved
 
 Version 0.0.5
  - Show amount of cards left in the stock/waste
