@@ -44,12 +44,13 @@ public:
     GameCard data[CARDS_TOTAL];
     int size;
     int handle;
+    int ordinal;
     Type type;
 
     CardStack();
 
     void clear();
-    void init(Type t);
+    void init(Type t, int ord = 0);
     void push(GameCard value);
     GameCard& top();
     GameCard pop();
@@ -124,6 +125,8 @@ public:
     void fullUndo();
 
     bool gameWon() const;
+
+    CardStack* getStack(int n);
 
     void advanceStock();
     void fillHand(CardStack* stack, int idx);

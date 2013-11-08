@@ -13,9 +13,9 @@ public:
     Rect();
     Rect(float x, float y, float w, float h);
 
-    Rect flipX();
-    bool inside(float rx, float ry);
-    bool empty();
+    Rect flipX() const;
+    bool inside(float rx, float ry) const;
+    bool empty() const;
 };
 
 class Layout
@@ -28,18 +28,10 @@ public:
     Rect getWorkingArea() const;
     Rect getYouWonRect() const;
     Rect getStackRect(const CardStack* stack) const;
-    Rect getCardRect(const CardStack* stack, int idx) const;
-    Rect getDestCardRect(const CardStack* stack) const;
 
-    CardStack* probePos(float x, float y, int* idx) const;
-
-    void initHand(CardStack* stack, int idx, float x, float y);
-    void updateHandRect(float x, float y);
-
-    Rect stackRects[STACK_COUNT];
-private:
     static Rect getCardScreenRect(float x, float y);
 
+private:
     GameState* gameState;
 
     float borderV;
@@ -251,11 +243,27 @@ public:
     void handleControls(const Input* in);
     void update();
 
+    Rect getCardRect(int cardValue) const;
+    Rect getStackRect(const CardStack* stack) const;
+
 private:
+    void initRects();
     bool isAnimationPlaying() const;
     void handleClick(CardStack* victim, float x, float y);
     void evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist);
     void handleHandRelease();
+    void updateStackRect(const CardStack* stack, float newX, float newY);
+    void updateCardRects(const CardStack* stack);
+    void initHand(CardStack* stack, int idx, float x, float y);
+    void updateHand(float x, float y);
+
+    Rect getDestCardRect(CardStack* stack) const;
+    CardStack* probePos(float x, float y, int* idx) const;
+    
+    float handDx;
+    float handDy;
+    Rect cardRects[CARDS_TOTAL];
+    Rect stackRects[STACK_COUNT];
 
     GameState* gameState;
     Layout* layout;
@@ -265,13 +273,13 @@ private:
     {
     public:
         MovementAnimation();
-        void start(GameState* gs, Layout* l, CardStack* destStack);
+        void start(GameGUI* gg, CardStack* destStack);
         void update();
         bool isPlaying() const;
     private:
         Tween movementX;
         Tween movementY;
-        GameState* state;
+        GameGUI* gui;
         CardStack* dest; 
         bool playing;
     };

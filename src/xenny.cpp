@@ -135,7 +135,7 @@ private:
     {
         if (stack->empty() && emptyTexRect.empty() == false)
         {
-            renderRect(layout.getStackRect(stack), emptyTexRect);
+            renderRect(gg.getStackRect(stack), emptyTexRect);
         }
         else
         {
@@ -148,7 +148,7 @@ private:
                     Rect texRect = stack->data[i].state == GameCard::STATE_OPEN 
                         ? cardGfxData.cardFaces[cardValue] 
                         : cardGfxData.cardBack;
-                    renderRect(layout.getCardRect(stack, i), texRect);
+                    renderRect(gg.getCardRect(cardValue), texRect);
                 }
             }
             else
@@ -158,7 +158,7 @@ private:
                 Rect texRect = stack->data[idx].state == GameCard::STATE_OPEN 
                     ? cardGfxData.cardFaces[cardValue] 
                     : cardGfxData.cardBack;
-                renderRect(layout.getCardRect(stack, idx), texRect);
+                renderRect(gg.getCardRect(cardValue), texRect);
             }
         }
     }

@@ -24,7 +24,7 @@ GameCard::Color GameCard::getColor() const
     return getSuit() < 2 ? SUIT_RED : SUIT_BLACK;
 }
 
-CardStack::CardStack(): size(0)
+CardStack::CardStack(): size(0), ordinal(-1)
 {
     static int handleCount = 0;
     handle = handleCount++;
@@ -35,9 +35,10 @@ void CardStack::clear()
     size = 0;
 }
 
-void CardStack::init(Type t)
+void CardStack::init(Type t, int ord)
 {
     type = t;
+    ordinal = ord;
     clear();
 }
 
@@ -148,7 +149,7 @@ void GameState::init()
 
     for (int i=0; i<TABLEAU_COUNT; i++)
     {
-        tableaux[i].init(CardStack::TYPE_TABLEAU);
+        tableaux[i].init(CardStack::TYPE_TABLEAU, i);
         for (int j=0; j<i; j++) {
             tableaux[i].push(allCards[cards[cur++]]);
         }
@@ -162,7 +163,7 @@ void GameState::init()
     }
     
     for (int i=0; i<FOUNDATION_COUNT; i++) {
-        foundations[i].init(CardStack::TYPE_FOUNDATION);
+        foundations[i].init(CardStack::TYPE_FOUNDATION, i);
     }
 
     waste.init(CardStack::TYPE_WASTE);
@@ -350,6 +351,31 @@ bool GameState::canReleaseHand(CardStack* dest) const
     }
 
     return false;
+}
+
+CardStack* GameState::getStack(int n)
+{
+    if (n < 0) {
+        return NULL_PTR;
+    }
+
+    if (n < TABLEAU_COUNT) {
+        return &tableaux[n];
+    } else if (n < TABLEAU_COUNT+FOUNDATION_COUNT) {
+        n -= TABLEAU_COUNT;
+        return &foundations[n];
+    } else if (n < TABLEAU_COUNT+FOUNDATION_COUNT+1) {
+        n -= TABLEAU_COUNT + 1;
+        return &stock;
+    } else if (n < TABLEAU_COUNT+FOUNDATION_COUNT+2) {
+        n -= TABLEAU_COUNT + 2;
+        return &waste;
+    } else if (n < TABLEAU_COUNT+FOUNDATION_COUNT+3) {
+        n -= TABLEAU_COUNT + 3;
+        return &hand;
+    } else {
+        return NULL_PTR;
+    }
 }
 
 CardStack* GameState::findFoundationDest()
