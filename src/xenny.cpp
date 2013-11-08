@@ -241,13 +241,7 @@ int runGame()
         }
         else
         {
-            double timeToSleep = gameTime - currentTime;
-            if (timeToSleep > 0.008) {
-                timeToSleep = 0.008;
-            }
-            if (timeToSleep > 0.0005) {
-                Sys_Sleep((float)timeToSleep);
-            }
+            Sys_Sleep(0.001);
         }
     } 
 
