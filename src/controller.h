@@ -247,18 +247,18 @@ public:
     Rect getStackRect(const CardStack* stack) const;
 
 private:
-    void initRects();
     bool isAnimationPlaying() const;
     void handleClick(CardStack* victim, float x, float y);
     void evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist);
     void handleHandRelease();
+
+    void initRects();
     void updateStackRect(const CardStack* stack, float newX, float newY);
     void updateCardRects(const CardStack* stack);
-    void initHand(CardStack* stack, int idx, float x, float y);
-    void updateHand(float x, float y);
-
     Rect getDestCardRect(CardStack* stack) const;
     CardStack* probePos(float x, float y, int* idx) const;
+    void initHand(CardStack* stack, int idx, float x, float y);
+    void updateHand(float x, float y);
     
     float handDx;
     float handDy;

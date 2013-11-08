@@ -226,11 +226,15 @@ int runGame()
 
         Sys_StartFrame(sys);
 
-        app.handleControls();
-        while (currentTime > gameTime)
+        if (currentTime > gameTime)
         {
-            app.tick();
-            gameTime += FRAME_TIME;
+            // We want to have at least one tick if controls are handled
+            app.handleControls();
+            while (currentTime > gameTime)
+            {
+                app.tick();
+                gameTime += FRAME_TIME;
+            }
         }
         app.render();
         

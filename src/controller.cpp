@@ -360,8 +360,6 @@ void GameGUI::handleControls(const Input* in)
         return;
     }
 
-    initRects();
-
     float x = in->x;
     float y = in->y;
     if (in->dragStart)
@@ -412,8 +410,13 @@ void GameGUI::handleControls(const Input* in)
 
 void GameGUI::update()
 {
-    updateCardRects(&gameState->hand);
     movementAnimation.update();
+
+    // Game state could be changed by someone outside of this class, 
+    // so it is better to rebuild rects before rendering
+    initRects();
+    // Animation might update hand position, but only for one card
+    updateCardRects(&gameState->hand);
 }
 
 Rect GameGUI::getCardRect(int cardValue) const
@@ -518,7 +521,7 @@ void GameGUI::updateCardRects(const CardStack* stack)
 void GameGUI::initHand(CardStack* stack, int idx, float x, float y)
 {
     GameCard card = stack->data[idx];
-    Rect cardRect = cardRects[card.value];
+    Rect cardRect = getCardRect(card.value);
     handDx = cardRect.x - x;
     handDy = cardRect.y - y;
     updateHand(x, y);
@@ -536,7 +539,7 @@ Rect GameGUI::getDestCardRect(CardStack* stack) const
     }
 
     GameCard gc = stack->top();
-    Rect res = cardRects[gc.value];
+    Rect res = getCardRect(gc.value);
     if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
         res.y += gc.state == GameCard::STATE_CLOSED
             ? CARD_CLOSED_SLIDE
@@ -553,7 +556,7 @@ CardStack* GameGUI::probePos(float x, float y, int* idx) const
         CardStack* s = gameState->getStack(i);
         for (int j = s->size - 1; j >= 0; j--) {
             int v = s->data[j].value;
-            if (cardRects[v].inside(x, y)) {
+            if (getCardRect(v).inside(x, y)) {
                 *idx = j;
                 return s;
             }
