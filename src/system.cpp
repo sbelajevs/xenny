@@ -38,7 +38,6 @@ struct SystemAPI
 
     float orthoProjection[16];
 
-    double timeSlice;
     double stopWatch;
     int frameCount;
     double curMaxFrame;
@@ -48,7 +47,6 @@ struct SystemAPI
     double maxFrame;
     double minFrame;
     double avgFrame;
-    double fps;
 };
 
 static float round(float f)
@@ -200,8 +198,6 @@ void Sys_Init(SystemAPI* sysApi)
     sysApi->textureProgram.uniforms[UNIFORM_MVP] = glGetUniformLocation(sysApi->textureProgram.id, "MVP");
     sysApi->textureProgram.uniforms[UNIFORM_TEX] = glGetUniformLocation(sysApi->textureProgram.id, "sampler");
 
-    sysApi->timeSlice = 0.;
-    sysApi->fps = 60.;
     sysApi->minFrame = sysApi->avgFrame = sysApi->maxFrame = 0. ;
     sysApi->curTotal = 0.;
     sysApi->curMaxFrame = 0.;
@@ -335,17 +331,8 @@ void Sys_EndFrame(SystemAPI* sysApi)
     sysApi->curMaxFrame = std::max(sysApi->curMaxFrame, frameTime);
     sysApi->curMinFrame = std::min(sysApi->curMinFrame, frameTime);
 
-    double expectedTime = sysApi->frameCount * (1./60.);
-    if (sysApi->timeSlice < expectedTime)
+    if (sysApi->frameCount == 60)
     {
-        double timeToSleep = expectedTime - sysApi->timeSlice - 0.0075;
-        glfwSleep(timeToSleep);
-    }
-    sysApi->timeSlice += Sys_GetTime(sysApi) - sysApi->stopWatch;
-
-    if (sysApi->timeSlice > 1.0)
-    {
-        sysApi->fps = sysApi->frameCount / sysApi->timeSlice;
         sysApi->maxFrame = sysApi->curMaxFrame;
         sysApi->minFrame = sysApi->curMinFrame;
         sysApi->avgFrame = sysApi->frameCount > 0 ? (sysApi->curTotal / sysApi->frameCount) : 0.;
@@ -354,21 +341,29 @@ void Sys_EndFrame(SystemAPI* sysApi)
         sysApi->curTotal = 0.;
         sysApi->curMaxFrame = 0.;
         sysApi->curMinFrame = 1e10;
-        while (sysApi->timeSlice > 1.0)
-        {
-            sysApi->timeSlice -= 1.0;
-        }
     }
 }
 
 void Sys_GetInfoString(SystemAPI* sysApi, char* s, int size)
 {
-    sprintf_s(s, size-1, "FPS: %.0f;  Min: %.2fms, Avg: %.2fms, Max: %.2fms;", sysApi->fps, sysApi->minFrame*1000, sysApi->avgFrame*1000, sysApi->maxFrame*1000);
+    sprintf_s(
+        s, 
+        size-1, 
+        "Frame times...  Min: %.2fms, Avg: %.2fms, Max: %.2fms;", 
+        sysApi->minFrame*1000, 
+        sysApi->avgFrame*1000, 
+        sysApi->maxFrame*1000
+    );
 }
 
 double Sys_GetTime(SystemAPI* sysApi)
 {
     return glfwGetTime();
+}
+
+void Sys_Sleep(double seconds)
+{
+    glfwSleep(seconds);
 }
 
 void Sys_SetWindowTitle(SystemAPI* sysApi, const char* msg)

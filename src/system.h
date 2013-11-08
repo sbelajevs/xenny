@@ -28,7 +28,9 @@ void Sys_DrawMainTex(SystemAPI* sys, float sx, float sy, float sw, float sh, flo
 void Sys_StartFrame(SystemAPI* sys);
 void Sys_EndFrame(SystemAPI* sys);
 void Sys_GetInfoString(SystemAPI* sys, char* s, int size);
+
 double Sys_GetTime(SystemAPI* sys);
+void Sys_Sleep(double seconds);
 
 void Sys_GetRandomPermutation(int* begin, int count);
 
@@ -36,6 +38,7 @@ int  Sys_TimeToQuit(SystemAPI* sys);
 
 int  Sys_GetMouseButtonState(SystemAPI* sys);
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y);
+
 
 #ifdef __cplusplus
 }

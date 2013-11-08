@@ -4,7 +4,7 @@
 
 static const int SCREEN_WIDTH = 1280;
 static const int SCREEN_HEIGHT = 800;
-static const double FRAME_TIME = 0.016;
+static const double FRAME_TIME = 1/60.;
 
 static const int NULL_PTR = 0;
 

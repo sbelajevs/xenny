@@ -212,36 +212,43 @@ int runGame()
     static const size_t BUFFER_SIZE = 100;
 
     SystemAPI* sys = Sys_CreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Xenny 0.0.1");
-    App app;
-    double gameTime = 0.0;
-    char buffer[BUFFER_SIZE];
-
     Sys_Init(sys);
+
+    App app;
     app.init(sys);
-    gameTime = Sys_GetTime(sys);
+
+    double gameTime = Sys_GetTime(sys);
 
     while (Sys_TimeToQuit(sys) == false)
     {
         double currentTime = Sys_GetTime(sys);
 
-        Sys_StartFrame(sys);
-
         if (currentTime > gameTime)
         {
-            // We want to have at least one tick if controls are handled
+            Sys_StartFrame(sys);
             app.handleControls();
             while (currentTime > gameTime)
             {
                 app.tick();
                 gameTime += FRAME_TIME;
             }
-        }
-        app.render();
-        
-        Sys_EndFrame(sys);
+            app.render();
+            Sys_EndFrame(sys);
 
-        Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
-        Sys_SetWindowTitle(sys, buffer);
+            char buffer[BUFFER_SIZE];
+            Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
+            Sys_SetWindowTitle(sys, buffer);
+        }
+        else
+        {
+            double timeToSleep = gameTime - currentTime;
+            if (timeToSleep > 0.008) {
+                timeToSleep = 0.008;
+            }
+            if (timeToSleep > 0.0005) {
+                Sys_Sleep((float)timeToSleep);
+            }
+        }
     } 
 
     Sys_ShutDown(sys);
