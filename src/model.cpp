@@ -8,6 +8,26 @@ GameCard::GameCard(int value): value(value), state(STATE_CLOSED)
 {
 }
 
+void GameCard::switchState()
+{
+    state = isOpened() ? STATE_CLOSED : STATE_OPEN;
+}
+
+void GameCard::open()
+{
+    state = STATE_OPEN;
+}
+
+void GameCard::close()
+{
+    state = STATE_CLOSED;
+}
+
+bool GameCard::isOpened() const
+{
+    return state == STATE_OPEN;
+}
+
 int GameCard::getSuit() const
 {
     return value / CARDS_PER_SUIT;
@@ -153,7 +173,7 @@ void GameState::init()
         for (int j=0; j<i; j++) {
             tableaux[i].push(allCards[cards[cur++]]);
         }
-        allCards[cards[cur]].state = GameCard::STATE_OPEN;
+        allCards[cards[cur]].open();
         tableaux[i].push(allCards[cards[cur++]]);
     }
 
@@ -193,9 +213,7 @@ bool GameState::redo()
             for (int i=0; i<move.amount; i++)
             {
                 GameCard card = move.src->pop();
-                card.state = card.state == GameCard::STATE_CLOSED 
-                    ? GameCard::STATE_OPEN 
-                    : GameCard::STATE_CLOSED;
+                card.switchState();
                 move.dst->push(card);
             }
         }
@@ -208,7 +226,7 @@ bool GameState::redo()
             }
             move.src->size -= move.amount;
             if (move.cardOpened) {
-                move.src->top().state = GameCard::STATE_OPEN;
+                move.src->top().open();
             }
         }
         return true;
@@ -232,16 +250,14 @@ bool GameState::undo()
             for (int i=0; i<move.amount; i++)
             {
                 GameCard card = move.dst->pop();
-                card.state = card.state == GameCard::STATE_CLOSED 
-                    ? GameCard::STATE_OPEN 
-                    : GameCard::STATE_CLOSED;
+                card.switchState();
                 move.src->push(card);
             }
         }
         else
         {
             if (move.cardOpened) {
-                move.src->top().state = GameCard::STATE_CLOSED;
+                move.src->top().close();
             }
             for (int i=0; i<move.amount; i++)
             {
@@ -269,14 +285,14 @@ void GameState::advanceStock()
         while (waste.empty() == false)
         {
             GameCard card = waste.pop();
-            card.state = GameCard::STATE_CLOSED;
+            card.close();
             stock.push(card);
         }
     }
     else if (stock.empty() == false)
     {
         GameCard card = stock.pop();
-        card.state = GameCard::STATE_OPEN;
+        card.open();
         waste.push(card);
         registerMove(&stock, &waste, 1, false, true);
     }
@@ -299,7 +315,7 @@ void GameState::releaseHand(CardStack* dest)
     if (hand.empty() == false && dest != NULL_PTR)
     {
         bool openCard = handSource->empty() == false 
-            && handSource->top().state == GameCard::STATE_CLOSED;
+            && handSource->top().isOpened() == false;
 
         if (dest != handSource) {
             registerMove(handSource, dest, hand.size, openCard, false);
@@ -310,7 +326,7 @@ void GameState::releaseHand(CardStack* dest)
         }
         hand.size = 0;
         if (openCard) {
-            handSource->top().state = GameCard::STATE_OPEN;
+            handSource->top().open();
         }
         handSource = NULL_PTR;
     }

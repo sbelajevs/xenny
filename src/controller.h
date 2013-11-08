@@ -269,11 +269,29 @@ private:
     Layout* layout;
     bool busy;
 
+    class TurningAnimation
+    {
+    public:
+        TurningAnimation();
+        void start(GameGUI* gg, CardStack* srcStack, int delayTicks);
+        void update();
+        bool isPlaying() const;
+    private:
+        Tween movementX;
+        Tween movementW;
+        GameGUI* gui;
+        CardStack* src;
+        Rect startRect;
+        bool playing;
+        bool midpointPassed;
+        int waitTicks;
+    };
+
     class MovementAnimation
     {
     public:
         MovementAnimation();
-        void start(GameGUI* gg, CardStack* destStack);
+        void start(GameGUI* gg, CardStack* srcStack, CardStack* destStack);
         void update();
         bool isPlaying() const;
     private:
@@ -281,7 +299,9 @@ private:
         Tween movementY;
         GameGUI* gui;
         CardStack* dest; 
+        CardStack* src;
         bool playing;
+        TurningAnimation turningAnimation;
     };
     MovementAnimation movementAnimation;
 };

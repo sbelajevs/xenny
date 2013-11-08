@@ -412,11 +412,15 @@ void GameGUI::update()
 {
     movementAnimation.update();
 
-    // Game state could be changed by someone outside of this class, 
-    // so it is better to rebuild rects before rendering
-    initRects();
-    // Animation might update hand position, but only for one card
-    updateCardRects(&gameState->hand);
+    if (isAnimationPlaying()) {
+        // Animation might update hand position, but only for topmost card
+        updateCardRects(&gameState->hand);
+    } else {
+        // Game state could be changed by someone outside of this class, 
+        // so it is better to rebuild rects before rendering.
+        // But we shouldn't mess with animation!
+        initRects();
+   }
 }
 
 Rect GameGUI::getCardRect(int cardValue) const
@@ -465,7 +469,7 @@ void GameGUI::handleHandRelease()
         evaluateHandRelease(&gameState->foundations[i], x, y, &destStack, &bestDist);
     }
 
-    movementAnimation.start(this, destStack);
+    movementAnimation.start(this, gameState->handSource, destStack);
 }
 
 void GameGUI::handleClick(CardStack* victim, float x, float y)
@@ -484,7 +488,7 @@ void GameGUI::handleClick(CardStack* victim, float x, float y)
         initHand(victim, victim->size-1, x, y);
         gameState->fillHand(victim, victim->size-1);
         CardStack* destStack = gameState->findFoundationDest();
-        movementAnimation.start(this, destStack);
+        movementAnimation.start(this, victim, destStack);
     }
 }
 
@@ -511,7 +515,7 @@ void GameGUI::updateCardRects(const CardStack* stack)
         int cardValue = stack->data[i].value;
         cardRects[cardValue] = resultingRect;
         if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-            resultingRect.y += stack->data[i].state == GameCard::STATE_OPEN
+            resultingRect.y += stack->data[i].isOpened()
                 ? CARD_OPEN_SLIDE
                 : CARD_CLOSED_SLIDE;
         }
@@ -541,9 +545,9 @@ Rect GameGUI::getDestCardRect(CardStack* stack) const
     GameCard gc = stack->top();
     Rect res = getCardRect(gc.value);
     if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-        res.y += gc.state == GameCard::STATE_CLOSED
-            ? CARD_CLOSED_SLIDE
-            : CARD_OPEN_SLIDE;
+        res.y += gc.isOpened()
+            ? CARD_OPEN_SLIDE
+            : CARD_CLOSED_SLIDE;
     }
 
     return res;
@@ -599,13 +603,80 @@ bool Tween::finished()
     return started && ticksElapsed >= totalTicks;
 }
 
+GameGUI::TurningAnimation::TurningAnimation(): playing(false)
+{
+}
+
+void GameGUI::TurningAnimation::start(GameGUI* gg, CardStack* srcStack, int delayTicks)
+{
+    gui = gg;
+    src = srcStack;
+    playing = true;
+    midpointPassed = false;
+    waitTicks = delayTicks;
+    
+    GameCard gc = srcStack->top();
+
+    startRect = gui->cardRects[gc.value];
+    Rect endRect = startRect;
+    endRect.w = 1.f;
+    endRect.x += (startRect.w - endRect.w)/2.f;
+
+    movementX = Tween(gui->cardRects[gc.value].x, endRect.x, 6, true);
+    movementW = Tween(gui->cardRects[gc.value].w, endRect.w, 6, true);
+}
+
+void GameGUI::TurningAnimation::update()
+{
+    if (playing)
+    {
+        if (waitTicks > 0) 
+        {
+            waitTicks--;
+            return;
+        }
+
+        if (movementX.finished() == false) {
+            movementX.update();
+        }
+        if (movementW.finished() == false) {
+            movementW.update();
+        }
+
+        if (movementX.finished() && movementW.finished())
+        {
+            if (midpointPassed == false)
+            {
+                GameCard& gc = src->top();
+                gc.switchState();
+                movementX = Tween(gui->cardRects[gc.value].x, startRect.x, 6, true);
+                movementW = Tween(gui->cardRects[gc.value].w, startRect.w, 6, true);
+                movementX.update();
+                movementW.update();
+                midpointPassed = true;
+            }
+            else
+            {
+                src->top().switchState();
+                playing = false;
+            }
+        }
+    }
+}
+
+bool GameGUI::TurningAnimation::isPlaying() const
+{
+    return playing;
+}
+
 GameGUI::MovementAnimation::MovementAnimation(): playing(false)
 {
 }
 
-void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* destStack)
+void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* srcStack, CardStack* destStack)
 {
     gui = gg;
+    src = srcStack;
     dest = destStack;
     playing = true;
     
@@ -621,6 +692,10 @@ void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* destStack)
 
     movementX = Tween(gui->stackRects[hand->handle].x, endRect.x, ticks, true);
     movementY = Tween(gui->stackRects[hand->handle].y, endRect.y, ticks, true);
+
+    if (src != dest && src->top().isOpened() == false) {
+        turningAnimation.start(gui, src, ticks);
+    }
 }
 
 void GameGUI::MovementAnimation::update()
@@ -633,8 +708,11 @@ void GameGUI::MovementAnimation::update()
         if (movementY.finished() == false) {
             movementY.update();
         }
+        if (turningAnimation.isPlaying()) {
+            turningAnimation.update();
+        }
 
-        if (movementX.finished() && movementY.finished())
+        if (movementX.finished() && movementY.finished() && turningAnimation.isPlaying() == false)
         {
             gui->gameState->releaseHand(dest);
             playing = false;

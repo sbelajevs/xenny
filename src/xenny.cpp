@@ -145,7 +145,7 @@ private:
                 for (int i=0; i<stack->size; i++)
                 {
                     int cardValue = stack->data[i].value;
-                    Rect texRect = stack->data[i].state == GameCard::STATE_OPEN 
+                    Rect texRect = stack->data[i].isOpened()
                         ? cardGfxData.cardFaces[cardValue] 
                         : cardGfxData.cardBack;
                     renderRect(gg.getCardRect(cardValue), texRect);
@@ -155,7 +155,7 @@ private:
             {
                 int idx = stack->size-1;
                 int cardValue = stack->data[idx].value;
-                Rect texRect = stack->data[idx].state == GameCard::STATE_OPEN 
+                Rect texRect = stack->data[idx].isOpened() 
                     ? cardGfxData.cardFaces[cardValue] 
                     : cardGfxData.cardBack;
                 renderRect(gg.getCardRect(cardValue), texRect);

@@ -5,12 +5,6 @@
 
 struct GameCard
 {
-    enum State
-    {
-        STATE_CLOSED = 0,
-        STATE_OPEN,
-    };
-
     enum Color
     {
         SUIT_RED = 0,
@@ -18,14 +12,27 @@ struct GameCard
     };
 
     int value;
-    State state;
 
     GameCard();
     GameCard(int value);
 
+    void switchState();
+    void open();
+    void close();
+    bool isOpened() const;
+    
     int getSuit() const;
     int getValue() const;
     Color getColor() const;
+
+private:
+    enum State
+    {
+        STATE_CLOSED = 0,
+        STATE_OPEN,
+    };
+
+    State state;
 };
 
 class CardStack
