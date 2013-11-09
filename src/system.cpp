@@ -6,6 +6,7 @@
 #include <time.h>
 
 #include <GL/glew.h>
+#include <GL/wglew.h>
 #include <GL/glfw.h>
 #include <stb_image.h>
 
@@ -13,6 +14,15 @@
 
 #include "properties.h"
 #include "xenny.h"
+
+// Because including wglew.h results in these defines that 
+// mess up with std::max/std::min
+#ifdef max
+  #undef max
+#endif
+#ifdef min
+  #undef min
+#endif
 
 namespace
 {
@@ -93,6 +103,11 @@ SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char*
     glfwSwapInterval(0);
 
     glClearColor(0.f, 0.f, 0.f, 1.f);
+
+    if (WGLEW_EXT_swap_control)
+    {
+        wglSwapIntervalEXT(1);
+    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

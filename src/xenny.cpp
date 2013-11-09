@@ -223,29 +223,22 @@ int runGame()
     {
         double currentTime = Sys_GetTime(sys);
 
-        if (currentTime > gameTime)
+        Sys_StartFrame(sys);
+        app.handleControls();
+        while (currentTime > gameTime)
         {
-            Sys_StartFrame(sys);
-            app.handleControls();
-            while (currentTime > gameTime)
-            {
-                app.tick();
-                gameTime += FRAME_TIME;
-            }
-            app.render();
-            Sys_EndFrame(sys);
+            app.tick();
+            gameTime += FRAME_TIME;
+        }
+        app.render();
+        Sys_EndFrame(sys);
 
-            char buffer[BUFFER_SIZE];
-            Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
-            Sys_SetWindowTitle(sys, buffer);
-        }
-        else
-        {
-            double timeToSleep = gameTime - currentTime;
-            if (timeToSleep > 0.002) {
-                Sys_Sleep(0.001);
-            }
-        }
+        // Give away processor time after draw call
+        Sys_Sleep(0.014);
+
+        char buffer[BUFFER_SIZE];
+        Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
+        Sys_SetWindowTitle(sys, buffer);
     } 
 
     Sys_ShutDown(sys);
