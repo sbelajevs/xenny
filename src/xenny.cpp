@@ -209,36 +209,36 @@ private:
 
 int runGame()
 {
-    static const size_t BUFFER_SIZE = 100;
-
     SystemAPI* sys = Sys_CreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Xenny 0.0.1");
     Sys_Init(sys);
 
     App app;
     app.init(sys);
 
-    double gameTime = Sys_GetTime(sys);
-
     while (Sys_TimeToQuit(sys) == false)
     {
-        double currentTime = Sys_GetTime(sys);
+        // Assumption #1: monitor refresh rate is 1/FRAME_TIME Hz
+        // Assumption #2: each game update takes less than FRAME_TIME seconds
+        
+        double stopWatch = Sys_GetTime(sys);
+
+        app.handleControls();
+        app.tick();
+
+        {
+            static const size_t BUFFER_SIZE = 100;
+            char buffer[BUFFER_SIZE];
+            Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
+            Sys_SetWindowTitle(sys, buffer);
+        }
+
+        while (Sys_GetTime(sys) - stopWatch < FRAME_TIME - 0.002) {
+            Sys_Sleep(0.001);
+        }
 
         Sys_StartFrame(sys);
-        app.handleControls();
-        while (currentTime > gameTime)
-        {
-            app.tick();
-            gameTime += FRAME_TIME;
-        }
         app.render();
         Sys_EndFrame(sys);
-
-        // Give away processor time after draw call
-        Sys_Sleep(0.014);
-
-        char buffer[BUFFER_SIZE];
-        Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
-        Sys_SetWindowTitle(sys, buffer);
     } 
 
     Sys_ShutDown(sys);
