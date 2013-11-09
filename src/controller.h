@@ -23,7 +23,7 @@ class Layout
 public:
     Layout();
 
-    void init(GameState* gs);
+    void init();
 
     Rect getWorkingArea() const;
     Rect getYouWonRect() const;
@@ -32,8 +32,6 @@ public:
     static Rect getCardScreenRect(float x, float y);
 
 private:
-    GameState* gameState;
-
     float borderV;
     float borderH;
     float tableauInterval;

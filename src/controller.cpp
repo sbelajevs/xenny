@@ -50,14 +50,12 @@ bool Rect::empty() const
     return w == 0.f || h == 0.f;
 }
 
-Layout::Layout(): gameState(NULL_PTR)
+Layout::Layout()
 {
 }
 
-void Layout::init(GameState* gs)
+void Layout::init()
 {
-    gameState = gs;
-
     borderV = 0.025f * SCREEN_HEIGHT;
     borderH = 0.075f * SCREEN_WIDTH;
     tableauInterval = ((SCREEN_WIDTH-borderH*2.f)-(TABLEAU_COUNT*CARD_WIDTH))/(TABLEAU_COUNT-1);

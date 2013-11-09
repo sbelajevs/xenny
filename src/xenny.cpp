@@ -77,8 +77,8 @@ public:
         Sys_LoadMainTexture(sys, MAIN_TEXTURE, MAIN_TEXTURE_SIZE);
         
         cardGfxData.init();
+        layout.init();
         gameState.init();
-        layout.init(&gameState);
         input.init(sys);
         wg.init(gameState, layout);
         gg.init(gameState, layout);
