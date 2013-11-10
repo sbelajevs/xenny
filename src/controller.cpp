@@ -375,7 +375,7 @@ void GameGUI::handleControls(const Input* in)
     }
     else if (in->dragStart)
     {
-        if (stack != NULL_PTR && stack->empty() == false)
+        if (stack != NULL_PTR && stack->empty() == false && stack->data[stackIdx].isOpened())
         {
             if (stack->type == CardStack::TYPE_WASTE 
                 || stack->type == CardStack::TYPE_TABLEAU 
