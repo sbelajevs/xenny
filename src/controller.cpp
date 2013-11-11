@@ -590,7 +590,7 @@ void Tween::update()
     } else if (ticksLeft > 0) {
         ticksLeft--;
         accumulatedStep += step;
-        float value = curveLinear(accumulatedStep);
+        float value = ticksLeft == 0 ? 1.f : curveLinear(accumulatedStep);
         *receiver += (value - lastValue) * delta;
         lastValue = value;
     }
