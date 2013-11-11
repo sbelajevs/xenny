@@ -179,17 +179,20 @@ class Tween
 {
 public:
     Tween();
-    Tween(float& start, float end, int ticks, bool startPlaying);
+    explicit Tween(float* receiver, float delta, int ticks, int delay = 0);
     void update();
-    void play();
     bool finished();
 private:
-    float* value;
-    float initialValue;
+    static float curveLinear(float x);
+
+    float* receiver;
     float delta;
-    int ticksElapsed;
-    int totalTicks;
-    bool started;
+    int ticksLeft;
+    int delayLeft;
+
+    float step;
+    float accumulatedStep;
+    float lastValue;
 };
 
 class WidgetGUI

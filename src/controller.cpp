@@ -568,37 +568,42 @@ CardStack* GameGUI::probePos(float x, float y, int* idx) const
     return NULL_PTR;
 }
 
-Tween::Tween(): value(NULL_PTR), ticksElapsed(0), totalTicks(0), started(true)
+Tween::Tween(): receiver(NULL_PTR), ticksLeft(0), delayLeft(0)
 {
 }
 
-Tween::Tween(float& start, float end, int ticks, bool startPlaying)
-    : value(&start)
-    , initialValue(start)
-    , delta(end - start)
-    , ticksElapsed(0)
-    , totalTicks(ticks)
-    , started(startPlaying)
+Tween::Tween(float* receiver, float delta, int ticks, int delay)
+    : receiver(receiver)
+    , delta(delta)
+    , ticksLeft(ticks)
+    , delayLeft(delay)
+    , step(1.f/ticks)
+    , accumulatedStep(0.f)
+    , lastValue(0.f)
 {
-}
-
-void Tween::play()
-{
-    started = true;
 }
 
 void Tween::update()
 {
-    if (finished() == false)
-    {
-        float t = ++ticksElapsed / (float)totalTicks;
-        *value = initialValue + delta * t;
+    if (delayLeft > 0) {
+        delayLeft--;
+    } else if (ticksLeft > 0) {
+        ticksLeft--;
+        accumulatedStep += step;
+        float value = curveLinear(accumulatedStep);
+        *receiver += (value - lastValue) * delta;
+        lastValue = value;
     }
 }
 
 bool Tween::finished()
 {
-    return started && ticksElapsed >= totalTicks;
+    return ticksLeft == 0 && delayLeft == 0;
+}
+
+float Tween::curveLinear(float x)
+{
+    return x;
 }
 
 GameGUI::TurningAnimation::TurningAnimation(): playing(false)
@@ -620,8 +625,8 @@ void GameGUI::TurningAnimation::start(GameGUI* gg, CardStack* srcStack, int dela
     endRect.w = 1.f;
     endRect.x += (startRect.w - endRect.w)/2.f;
 
-    movementX = Tween(gui->cardRects[gc.value].x, endRect.x, 6, true);
-    movementW = Tween(gui->cardRects[gc.value].w, endRect.w, 6, true);
+    movementX = Tween(&gui->cardRects[gc.value].x, (CARD_WIDTH-1.f)/2.f, 6);
+    movementW = Tween(&gui->cardRects[gc.value].w, -(CARD_WIDTH-1.f), 6);
 }
 
 void GameGUI::TurningAnimation::update()
@@ -647,8 +652,8 @@ void GameGUI::TurningAnimation::update()
             {
                 GameCard& gc = src->top();
                 gc.switchState();
-                movementX = Tween(gui->cardRects[gc.value].x, startRect.x, 6, true);
-                movementW = Tween(gui->cardRects[gc.value].w, startRect.w, 6, true);
+                movementX = Tween(&gui->cardRects[gc.value].x, -(CARD_WIDTH-1.f)/2.f, 6);
+                movementW = Tween(&gui->cardRects[gc.value].w, CARD_WIDTH-1.f, 6);
                 movementX.update();
                 movementW.update();
                 midpointPassed = true;
@@ -680,16 +685,16 @@ void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* srcStack, CardSta
     
     CardStack* hand = &gui->gameState->hand;
 
-    Rect startRect = gui->stackRects[hand->handle];
-    Rect endRect = gui->getDestCardRect(destStack);
-    float distSqr = getDistSqr(startRect.x, startRect.y, endRect.x, endRect.y);
+    Rect begR = gui->stackRects[hand->handle];
+    Rect endR = gui->getDestCardRect(destStack);
+    float distSqr = getDistSqr(begR.x, begR.y, endR.x, endR.y);
     int ticks = 4 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
     if (ticks > 24) {
         ticks = 24;
     }
 
-    movementX = Tween(gui->stackRects[hand->handle].x, endRect.x, ticks, true);
-    movementY = Tween(gui->stackRects[hand->handle].y, endRect.y, ticks, true);
+    movementX = Tween(&gui->stackRects[hand->handle].x, endR.x-begR.x, ticks);
+    movementY = Tween(&gui->stackRects[hand->handle].y, endR.y-begR.y, ticks);
 
     if (src != dest && src->empty() == false && src->top().isOpened() == false) {
         turningAnimation.start(gui, src, ticks);
