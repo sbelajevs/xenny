@@ -44,15 +44,10 @@ GameCard::Color GameCard::getColor() const
     return getSuit() < 2 ? SUIT_RED : SUIT_BLACK;
 }
 
-CardStack::CardStack(): size(0), ordinal(-1)
+CardStack::CardStack(): ordinal(-1)
 {
     static int handleCount = 0;
     handle = handleCount++;
-}
-
-void CardStack::clear()
-{
-    size = 0;
 }
 
 void CardStack::init(Type t, int ord)
@@ -60,34 +55,6 @@ void CardStack::init(Type t, int ord)
     type = t;
     ordinal = ord;
     clear();
-}
-
-void CardStack::push(GameCard value)
-{
-    data[size++] = value;
-}
-
-GameCard& CardStack::top()
-{
-    if (size > 0) {
-        return data[size-1];
-    }
-    // it's caller's responsibility not to let this happen
-    return data[0];
-}
-
-GameCard CardStack::pop()
-{
-    if (size > 0) {
-        return data[--size];
-    }
-    // it's caller's responsibility not to let this happen
-    return GameCard();
-}
-
-bool CardStack::empty() const
-{
-    return size == 0;
 }
 
 GameMove::GameMove()
@@ -212,19 +179,13 @@ bool GameState::redo()
         {
             for (int i=0; i<move.amount; i++)
             {
-                GameCard card = move.src->pop();
-                card.switchState();
-                move.dst->push(card);
+                move.src->transfer(*move.dst, 1);
+                move.dst->top().switchState();
             }
         }
         else
         {
-            for (int i=0; i<move.amount; i++)
-            {
-                int srcIdx = move.src->size - move.amount + i;
-                move.dst->push(move.src->data[srcIdx]);
-            }
-            move.src->size -= move.amount;
+            move.src->transfer(*move.dst, move.amount);
             if (move.cardOpened) {
                 move.src->top().open();
             }
@@ -249,9 +210,8 @@ bool GameState::undo()
         {
             for (int i=0; i<move.amount; i++)
             {
-                GameCard card = move.dst->pop();
-                card.switchState();
-                move.src->push(card);
+                move.dst->transfer(*move.src, 1);
+                move.src->top().switchState();
             }
         }
         else
@@ -259,12 +219,7 @@ bool GameState::undo()
             if (move.cardOpened) {
                 move.src->top().close();
             }
-            for (int i=0; i<move.amount; i++)
-            {
-                int dstIdx = move.dst->size - move.amount + i;
-                move.src->push(move.dst->data[dstIdx]);
-            }
-            move.dst->size -= move.amount;
+            move.dst->transfer(*move.src, move.amount);
         }
         return true;
     }
@@ -281,31 +236,26 @@ void GameState::advanceStock()
 {
     if (stock.empty() && waste.empty() == false)
     {
-        registerMove(&waste, &stock, waste.size, false, true);
+        registerMove(&waste, &stock, waste.size(), false, true);
         while (waste.empty() == false)
         {
-            GameCard card = waste.pop();
-            card.close();
-            stock.push(card);
+            waste.transfer(stock, 1);
+            stock.top().close();
         }
     }
     else if (stock.empty() == false)
     {
-        GameCard card = stock.pop();
-        card.open();
-        waste.push(card);
+        stock.transfer(waste, 1);
+        waste.top().open();
         registerMove(&stock, &waste, 1, false, true);
     }
 }
 
 void GameState::fillHand(CardStack* stack, int idx)
 {
-    if (hand.empty() && idx >= 0 && idx < stack->size)
+    if (hand.empty() && idx >= 0 && idx < stack->size())
     {
-        for (int i=idx; i<stack->size; i++) {
-            hand.push(stack->data[i]);
-        }
-        stack->size = idx;
+        stack->transfer(hand, stack->size()-idx);
         handSource = stack;
     }
 }
@@ -318,13 +268,10 @@ void GameState::releaseHand(CardStack* dest)
             && handSource->top().isOpened() == false;
 
         if (dest != handSource) {
-            registerMove(handSource, dest, hand.size, openCard, false);
+            registerMove(handSource, dest, hand.size(), openCard, false);
         }
 
-        for (int i=0; i<hand.size; i++) {
-            dest->push(hand.data[i]);
-        }
-        hand.size = 0;
+        hand.transfer(*dest, hand.size());
         if (openCard) {
             handSource->top().open();
         }
@@ -344,9 +291,9 @@ bool GameState::canReleaseHand(CardStack* dest) const
         return false;
     }
 
-    int handSuit = hand.data[0].getSuit();
-    int handValue = hand.data[0].getValue();
-    int handColor = hand.data[0].getColor();
+    int handSuit = hand[0].getSuit();
+    int handValue = hand[0].getValue();
+    int handColor = hand[0].getColor();
 
     if (dest->empty())
     {

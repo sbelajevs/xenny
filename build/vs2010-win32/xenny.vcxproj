@@ -36,6 +36,7 @@
     <ClInclude Include="..\..\src\model.h" />
     <ClInclude Include="..\..\src\properties.h" />
     <ClInclude Include="..\..\src\system.h" />
+    <ClInclude Include="..\..\src\utils.h" />
     <ClInclude Include="..\..\src\xenny.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

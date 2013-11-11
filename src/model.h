@@ -2,6 +2,7 @@
 
 #include "properties.h"
 #include "system.h"
+#include "utils.h"
 
 struct GameCard
 {
@@ -35,7 +36,7 @@ private:
     State state;
 };
 
-class CardStack
+class CardStack: public FixedVec<GameCard, CARDS_TOTAL>
 {
 public:
     enum Type
@@ -48,20 +49,12 @@ public:
         TYPE_HAND,
     };
 
-    GameCard data[CARDS_TOTAL];
-    int size;
     int handle;
     int ordinal;
     Type type;
 
     CardStack();
-
-    void clear();
     void init(Type t, int ord = 0);
-    void push(GameCard value);
-    GameCard& top();
-    GameCard pop();
-    bool empty() const;
 
 private:
     CardStack(const CardStack&);

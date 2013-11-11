@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\src\controller.h" />
     <ClInclude Include="..\..\src\xenny.h" />
     <ClInclude Include="..\..\src\properties.h" />
+    <ClInclude Include="..\..\src\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="generated">

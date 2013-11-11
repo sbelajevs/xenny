@@ -375,7 +375,7 @@ void GameGUI::handleControls(const Input* in)
     }
     else if (in->dragStart)
     {
-        if (stack != NULL_PTR && stack->empty() == false && stack->data[stackIdx].isOpened())
+        if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
         {
             if (stack->type == CardStack::TYPE_WASTE 
                 || stack->type == CardStack::TYPE_TABLEAU 
@@ -454,7 +454,7 @@ void GameGUI::handleHandRelease()
     }
 
     CardStack* destStack = gameState->handSource;
-    Rect handRect = getCardRect(gameState->hand.data[0].value);
+    Rect handRect = getCardRect(gameState->hand[0].value);
     float bestDist = -1.f;
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
@@ -483,8 +483,8 @@ void GameGUI::handleClick(CardStack* victim, float x, float y)
     else if (victim->type == CardStack::TYPE_TABLEAU 
         || victim->type == CardStack::TYPE_WASTE)
     {
-        initHand(victim, victim->size-1, x, y);
-        gameState->fillHand(victim, victim->size-1);
+        initHand(victim, victim->size()-1, x, y);
+        gameState->fillHand(victim, victim->size()-1);
         CardStack* destStack = gameState->findFoundationDest();
         movementAnimation.start(this, victim, destStack);
     }
@@ -508,12 +508,12 @@ void GameGUI::updateCardRects(const CardStack* stack)
 
     Rect resultingRect = stackRects[stack->handle];
     
-    for (int i=0; i<stack->size; i++) 
+    for (int i=0; i<stack->size(); i++) 
     {
-        int cardValue = stack->data[i].value;
+        int cardValue = (*stack)[i].value;
         cardRects[cardValue] = resultingRect;
         if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-            resultingRect.y += stack->data[i].isOpened()
+            resultingRect.y += (*stack)[i].isOpened()
                 ? CARD_OPEN_SLIDE
                 : CARD_CLOSED_SLIDE;
         }
@@ -522,7 +522,7 @@ void GameGUI::updateCardRects(const CardStack* stack)
 
 void GameGUI::initHand(CardStack* stack, int idx, float x, float y)
 {
-    GameCard card = stack->data[idx];
+    GameCard card = (*stack)[idx];
     Rect cardRect = getCardRect(card.value);
     handDx = cardRect.x - x;
     handDy = cardRect.y - y;
@@ -556,8 +556,8 @@ CardStack* GameGUI::probePos(float x, float y, int* idx) const
     for (int i=0; i<STACK_COUNT; i++)
     {
         CardStack* s = gameState->getStack(i);
-        for (int j = s->size - 1; j >= 0; j--) {
-            int v = s->data[j].value;
+        for (int j = s->size() - 1; j >= 0; j--) {
+            int v = (*s)[j].value;
             if (getCardRect(v).inside(x, y)) {
                 *idx = j;
                 return s;
@@ -691,7 +691,7 @@ void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* srcStack, CardSta
     movementX = Tween(gui->stackRects[hand->handle].x, endRect.x, ticks, true);
     movementY = Tween(gui->stackRects[hand->handle].y, endRect.y, ticks, true);
 
-    if (src != dest && src->top().isOpened() == false) {
+    if (src != dest && src->empty() == false && src->top().isOpened() == false) {
         turningAnimation.start(gui, src, ticks);
     }
 }
