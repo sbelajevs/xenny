@@ -142,10 +142,10 @@ private:
             if (stack->type == CardStack::TYPE_HAND 
                 || stack->type == CardStack::TYPE_TABLEAU)
             {
-                for (int i=0; i<stack->size; i++)
+                for (int i=0; i<stack->size(); i++)
                 {
-                    int cardValue = stack->data[i].value;
-                    Rect texRect = stack->data[i].isOpened()
+                    int cardValue = (*stack)[i].value;
+                    Rect texRect = (*stack)[i].isOpened()
                         ? cardGfxData.cardFaces[cardValue] 
                         : cardGfxData.cardBack;
                     renderRect(gg.getCardRect(cardValue), texRect);
@@ -153,9 +153,9 @@ private:
             }
             else
             {
-                int idx = stack->size-1;
-                int cardValue = stack->data[idx].value;
-                Rect texRect = stack->data[idx].isOpened() 
+                int idx = stack->size()-1;
+                int cardValue = (*stack)[idx].value;
+                Rect texRect = (*stack)[idx].isOpened() 
                     ? cardGfxData.cardFaces[cardValue] 
                     : cardGfxData.cardBack;
                 renderRect(gg.getCardRect(cardValue), texRect);
@@ -232,9 +232,12 @@ int runGame()
             Sys_SetWindowTitle(sys, buffer);
         }
 
-        while (Sys_GetTime(sys) - stopWatch < FRAME_TIME - 0.002) {
-            Sys_Sleep(0.001);
+        static const double SLEEP_EPS = 0.002;
+        double timeToSleep = FRAME_TIME - (Sys_GetTime(sys) - stopWatch) - SLEEP_EPS;
+        if (timeToSleep < SLEEP_EPS) {
+            timeToSleep = 0.;
         }
+        Sys_Sleep(timeToSleep);
 
         Sys_StartFrame(sys);
         app.render();
