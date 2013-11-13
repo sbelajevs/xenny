@@ -234,10 +234,9 @@ int runGame()
 
         static const double SLEEP_EPS = 0.002;
         double timeToSleep = FRAME_TIME - (Sys_GetTime(sys) - stopWatch) - SLEEP_EPS;
-        if (timeToSleep < SLEEP_EPS) {
-            timeToSleep = 0.;
+        if (timeToSleep > SLEEP_EPS) {
+            Sys_Sleep(timeToSleep);
         }
-        Sys_Sleep(timeToSleep);
 
         Sys_StartFrame(sys);
         app.render();
