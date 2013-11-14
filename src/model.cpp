@@ -299,7 +299,7 @@ bool GameState::canReleaseHand(CardStack* dest) const
     {
         return (dest->type == CardStack::TYPE_TABLEAU && handValue == 12)
             || (dest->type == CardStack::TYPE_FOUNDATION && handValue == 0)
-            || (dest->type == CardStack::TYPE_TABLEAU && handSource->empty());
+            || (dest->type == CardStack::TYPE_TABLEAU && handSource->type == CardStack::TYPE_TABLEAU && handSource->empty());
     }
     else
     {
