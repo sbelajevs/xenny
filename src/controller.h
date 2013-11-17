@@ -306,3 +306,33 @@ private:
     };
     MovementAnimation movementAnimation;
 };
+
+class ButtonDesc
+{
+public:
+    enum ButtonState
+    {
+        STATE_NORMAL = 0,
+        STATE_HOVER,
+        STATE_CLICKED,
+        STATE_DISABLED,
+    };
+
+    ButtonDesc();
+    void init(Rect r, ButtonState s, bool visible);
+
+    Rect getRect() const;
+    ButtonState getState() const;
+    bool isVisible() const;
+    bool enabled() const;
+
+    void setVisibility(bool value);
+    void setEnabled(bool value);
+    void setState(ButtonState value);
+
+private:
+    ButtonState state;
+    Rect rect;
+    bool visible;
+    bool disabled;
+};

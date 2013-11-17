@@ -727,3 +727,50 @@ bool GameGUI::MovementAnimation::isPlaying() const
 {
     return playing;
 }
+
+ButtonDesc::ButtonDesc(): visible(false)
+{
+}
+
+void ButtonDesc::init(Rect r, ButtonState s, bool visibilityValue)
+{
+    rect = r;
+    state = s;
+    disabled = s == STATE_DISABLED;
+    visible = visibilityValue;
+}
+
+Rect ButtonDesc::getRect() const
+{
+    return rect;
+}
+
+ButtonDesc::ButtonState ButtonDesc::getState() const
+{
+    return disabled ? STATE_DISABLED : state;
+}
+
+bool ButtonDesc::isVisible() const
+{
+    return visible;
+}
+
+bool ButtonDesc::enabled() const
+{
+    return disabled == false || state != STATE_DISABLED;
+}
+
+void ButtonDesc::setVisibility(bool value)
+{
+    visible = value;
+}
+
+void ButtonDesc::setEnabled(bool value)
+{
+    disabled = value == false;
+}
+
+void ButtonDesc::setState(ButtonDesc::ButtonState value)
+{
+    state = value;
+}
