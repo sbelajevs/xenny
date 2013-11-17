@@ -728,16 +728,16 @@ bool GameGUI::MovementAnimation::isPlaying() const
     return playing;
 }
 
-ButtonDesc::ButtonDesc(): visible(false)
+ButtonDesc::ButtonDesc(): isVisible(false)
 {
 }
 
-void ButtonDesc::init(Rect r, ButtonState s, bool visibilityValue)
+void ButtonDesc::init(Rect aRect, ButtonState aState, bool aVisible)
 {
-    rect = r;
-    state = s;
-    disabled = s == STATE_DISABLED;
-    visible = visibilityValue;
+    rect = aRect;
+    state = aState;
+    isEnabled = aState != STATE_DISABLED;
+    isVisible = aVisible;
 }
 
 Rect ButtonDesc::getRect() const
@@ -747,30 +747,87 @@ Rect ButtonDesc::getRect() const
 
 ButtonDesc::ButtonState ButtonDesc::getState() const
 {
-    return disabled ? STATE_DISABLED : state;
+    return isEnabled ? state : STATE_DISABLED;
 }
 
-bool ButtonDesc::isVisible() const
+bool ButtonDesc::visible() const
 {
-    return visible;
+    return isVisible;
 }
 
 bool ButtonDesc::enabled() const
 {
-    return disabled == false || state != STATE_DISABLED;
+    return isEnabled && state != STATE_DISABLED;
 }
 
-void ButtonDesc::setVisibility(bool value)
+void ButtonDesc::setVisible(bool aVisible)
 {
-    visible = value;
+    isVisible = aVisible;
 }
 
-void ButtonDesc::setEnabled(bool value)
+void ButtonDesc::setEnabled(bool aEnabled)
 {
-    disabled = value == false;
+    isEnabled = aEnabled;
+    if (isEnabled == false && state == STATE_DISABLED) {
+        state = STATE_NORMAL;
+    }
 }
 
-void ButtonDesc::setState(ButtonDesc::ButtonState value)
+void ButtonDesc::setState(ButtonDesc::ButtonState aState)
 {
-    state = value;
+    state = aState;
+}
+
+WidgetLayout::WidgetLayout()
+{
+}
+
+void WidgetLayout::init(const Layout& layout)
+{
+    Rect area = layout.getWorkingArea();
+    float interval = 8.f;
+    float undoTopLeftX = area.x + area.w - interval*3.f - BUTTON_WIDTH*4.f;
+    float undoTopLeftY = area.y + area.h - BUTTON_HEIGHT;
+    
+    for (int i=0; i<BUTTON_NEW; i++)
+    {
+        Rect onscreenPosition = Rect(
+            undoTopLeftX + (BUTTON_WIDTH+interval)*i, 
+            undoTopLeftY, 
+            BUTTON_WIDTH, 
+            BUTTON_HEIGHT
+        );
+        buttons[i].init(onscreenPosition, ButtonDesc::STATE_DISABLED, true);
+    }
+
+    buttons[BUTTON_NEW].init(
+        Rect(area.y, undoTopLeftY, BUTTON_NEW_WIDTH, BUTTON_NEW_HEIGHT),
+        ButtonDesc::STATE_NORMAL, 
+        true
+    );
+}
+
+WidgetLayout::ButtonType WidgetLayout::probe(float x, float y)
+{
+    for (int i=0; i<BUTTON_MAX; i++)
+    {
+        if (buttons[i].enabled() && buttons[i].visible() && buttons[i].getRect().inside(x, y)) {
+            return (ButtonType)i;
+        }
+    }
+    return BUTTON_MAX;
+}
+
+Commander::Commander(): gameState(NULL_PTR), widgetLayout(NULL_PTR)
+{
+}
+
+void Commander::init(GameState* aGameState, WidgetLayout* aWidgetLayout)
+{
+    gameState = aGameState;
+    widgetLayout = aWidgetLayout;
+}
+
+void Commander::handleInput(const Input& input)
+{
 }

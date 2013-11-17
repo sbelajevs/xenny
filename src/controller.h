@@ -319,20 +319,53 @@ public:
     };
 
     ButtonDesc();
-    void init(Rect r, ButtonState s, bool visible);
+    void init(Rect aRect, ButtonState aState, bool aVisible);
 
     Rect getRect() const;
     ButtonState getState() const;
-    bool isVisible() const;
+    bool visible() const;
     bool enabled() const;
 
-    void setVisibility(bool value);
-    void setEnabled(bool value);
-    void setState(ButtonState value);
+    void setVisible(bool aVisible);
+    void setEnabled(bool aEnabled);
+    void setState(ButtonState aState);
 
 private:
     ButtonState state;
     Rect rect;
-    bool visible;
-    bool disabled;
+    bool isVisible;
+    bool isEnabled;
+};
+
+class WidgetLayout
+{
+public:
+    enum ButtonType
+    {
+        BUTTON_FULL_UNDO = 0,
+        BUTTON_UNDO,
+        BUTTON_REDO,
+        BUTTON_FULL_REDO,
+        BUTTON_NEW,
+        BUTTON_MAX,
+    };
+
+    WidgetLayout();
+    void init(const Layout& layout);
+
+    ButtonType probe(float x, float y);
+
+    ButtonDesc buttons[BUTTON_MAX];
+};
+
+class Commander
+{
+public:
+    Commander();
+    void init(GameState* aGameState, WidgetLayout* aWidgetLayout);
+    void handleInput(const Input& input);
+
+    WidgetLayout* widgetLayout;
+private:
+    GameState* gameState;
 };
