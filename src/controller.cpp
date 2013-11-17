@@ -189,133 +189,6 @@ void Input::update()
     }
 }
 
-WidgetGUI::WidgetGUI(): gameState(NULL_PTR), buttonsLen(0), busy(false)
-{
-}
-
-void WidgetGUI::init(GameState& gameState, Layout& layout)
-{
-    this->gameState = &gameState;
-    this->busy = false;
-        
-    float interval = 8.f;
-    Rect area = layout.getWorkingArea();
-    float undoTopLeftX = area.x + area.w - interval*3.f - BUTTON_WIDTH*4.f;
-    float undoTopLeftY = area.y + area.h - BUTTON_HEIGHT;
-    
-    Button<WidgetGUI>::EventDelegate events[] = {
-        &FireFullUndo, &FireUndo, &FireRedo, &FireFullRedo
-    };
-    for (int i=0; i<BUTTON_NEW; i++)
-    {
-        buttons[buttonsLen].init(this, events[i]);
-        buttons[buttonsLen++].screenRect = Rect(
-            undoTopLeftX + (BUTTON_WIDTH+interval)*i, 
-            undoTopLeftY, 
-            BUTTON_WIDTH, 
-            BUTTON_HEIGHT
-        );
-    }
-
-    buttons[buttonsLen].init(this, &FireNewGame);
-    buttons[buttonsLen].setEnabled(true);
-    buttons[buttonsLen++].screenRect = Rect(
-        area.y, undoTopLeftY, BUTTON_NEW_WIDTH, BUTTON_NEW_HEIGHT
-    );
-}
-
-bool WidgetGUI::isBusy() const
-{
-    return busy;
-}
-
-void WidgetGUI::setUndo(bool enabled)
-{
-    buttons[BUTTON_FULL_UNDO].setEnabled(enabled);
-    buttons[BUTTON_UNDO].setEnabled(enabled);
-}
-
-void WidgetGUI::setRedo(bool enabled)
-{
-    buttons[BUTTON_FULL_REDO].setEnabled(enabled);
-    buttons[BUTTON_REDO].setEnabled(enabled);
-}
-
-void WidgetGUI::handleControls(const Input* in)
-{
-    setUndo(gameState->history.canUndo());
-    setRedo(gameState->history.canRedo());
-        
-    releaseButtons();
-
-    if (buttons[BUTTON_UNDO].enabled() && (in->back.pressed || in->back.clicked))
-    {
-        buttons[BUTTON_UNDO].changeState(in->back.pressed);
-        if (in->back.clicked) {
-            buttons[BUTTON_UNDO].click();
-        }
-        busy = true;
-        return;
-    }
-    else if (buttons[BUTTON_REDO].enabled() && (in->fwrd.pressed || in->fwrd.clicked))
-    {
-        buttons[BUTTON_REDO].changeState(in->fwrd.pressed);
-        if (in->fwrd.clicked) {
-            buttons[BUTTON_REDO].click();
-        }
-        busy = true;
-        return;
-    }
-
-    bool result = false;
-    for (int i=0; i<BUTTON_MAX && result == false; i++) {
-        result = buttons[i].handleControls(in);
-    }
-    busy = result;
-}
-
-void WidgetGUI::update()
-{
-    // Nothing interesting yet
-}
-
-const Button<WidgetGUI>& WidgetGUI::getButton(Buttons type)
-{
-    return buttons[(int)type];
-}
-
-void WidgetGUI::releaseButtons()
-{
-    for (int i=0; i<BUTTON_MAX; i++) {
-        buttons[i].release();
-    }
-}
-
-void WidgetGUI::FireUndo(WidgetGUI& container, Button<WidgetGUI>& sender)
-{
-    container.gameState->undo();
-}
-
-void WidgetGUI::FireFullUndo(WidgetGUI& container, Button<WidgetGUI>& sender)
-{
-    container.gameState->fullUndo();
-}
-
-void WidgetGUI::FireRedo(WidgetGUI& container, Button<WidgetGUI>& sender)
-{
-    container.gameState->redo();
-}
-
-void WidgetGUI::FireFullRedo(WidgetGUI& container, Button<WidgetGUI>& sender)
-{
-    container.gameState->fullRedo();
-}
-
-void WidgetGUI::FireNewGame(WidgetGUI& container, Button<WidgetGUI>& sender)
-{
-    container.gameState->init();
-}
-
 GameGUI::GameGUI(): busy(false)
 {
 }
@@ -757,7 +630,7 @@ bool ButtonDesc::visible() const
 
 bool ButtonDesc::enabled() const
 {
-    return isEnabled && state != STATE_DISABLED;
+    return isEnabled && isVisible && state != STATE_DISABLED;
 }
 
 void ButtonDesc::setVisible(bool aVisible)
@@ -767,10 +640,10 @@ void ButtonDesc::setVisible(bool aVisible)
 
 void ButtonDesc::setEnabled(bool aEnabled)
 {
-    isEnabled = aEnabled;
-    if (isEnabled == false && state == STATE_DISABLED) {
+    if (isEnabled != aEnabled) {
         state = STATE_NORMAL;
     }
+    isEnabled = aEnabled;
 }
 
 void ButtonDesc::setState(ButtonDesc::ButtonState aState)
@@ -830,4 +703,90 @@ void Commander::init(GameState* aGameState, WidgetLayout* aWidgetLayout)
 
 void Commander::handleInput(const Input& input)
 {
+    // TODO:[#014] Block buttons when drag-and-drop is active and vice-versa~
+    handleInputForButtons(input);
+}
+
+void Commander::handleInputForButtons(const Input& input)
+{
+    widgetLayout->buttons[WidgetLayout::BUTTON_NEW].setState(ButtonDesc::STATE_NORMAL);
+    widgetLayout->buttons[WidgetLayout::BUTTON_FULL_REDO].setEnabled(gameState->history.canRedo());
+    widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setEnabled(gameState->history.canRedo());
+    widgetLayout->buttons[WidgetLayout::BUTTON_FULL_UNDO].setEnabled(gameState->history.canUndo());
+    widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
+    
+    WidgetLayout::ButtonType focusButton = widgetLayout->probe(input.x, input.y);
+
+    for (int i=0; i<WidgetLayout::BUTTON_MAX; i++)
+    {
+        ButtonDesc& bd = widgetLayout->buttons[i];
+        if (bd.enabled())
+        {
+            bd.setState(focusButton == i 
+                ? (input.left.pressed ? ButtonDesc::STATE_CLICKED : ButtonDesc::STATE_HOVER)
+                : ButtonDesc::STATE_NORMAL);
+        }
+    }
+    
+    if (input.left.clicked && focusButton != WidgetLayout::BUTTON_MAX)
+    {
+        if (focusButton == WidgetLayout::BUTTON_FULL_REDO) {
+            cmdFullRedo();
+        } else if (focusButton == WidgetLayout::BUTTON_FULL_UNDO) {
+            cmdFullUndo();
+        } else if (focusButton == WidgetLayout::BUTTON_NEW) {
+            cmdNew();
+        } else if (focusButton == WidgetLayout::BUTTON_REDO) {
+            cmdRedo();
+        } else if (focusButton == WidgetLayout::BUTTON_UNDO) {
+            cmdUndo();
+        }
+    }
+
+    // TODO[#014]: Handle simultaneous multiple-button clicks gracefully!
+
+    if (widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].enabled())
+    {
+        if (input.back.pressed) {
+            widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setState(ButtonDesc::STATE_CLICKED);
+        }
+        if (input.back.clicked) {
+            cmdUndo();
+        }
+    }
+    
+    if (widgetLayout->buttons[WidgetLayout::BUTTON_REDO].enabled())
+    {
+        if (input.fwrd.pressed) {
+            widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setState(ButtonDesc::STATE_CLICKED);
+        }
+        if (input.fwrd.clicked) {
+            cmdRedo();
+        }
+    }
+}
+
+void Commander::cmdUndo()
+{
+    gameState->undo();
+}
+
+void Commander::cmdRedo()
+{
+    gameState->redo();
+}
+
+void Commander::cmdFullUndo()
+{
+    gameState->fullUndo();
+}
+
+void Commander::cmdFullRedo()
+{
+    gameState->fullRedo();
+}
+
+void Commander::cmdNew()
+{
+    gameState->init();
 }

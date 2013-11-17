@@ -80,8 +80,10 @@ public:
         layout.init();
         gameState.init();
         input.init(sys);
-        wg.init(gameState, layout);
         gg.init(gameState, layout);
+
+        widgetLayout.init(layout);
+        commander.init(&gameState, &widgetLayout);
     }
 
     void handleControls()
@@ -96,19 +98,14 @@ public:
         } 
         else 
         {
-            if (gg.isBusy() == false) {
-                wg.handleControls(&input);
-            }
-            if (wg.isBusy() == false) {
-                gg.handleControls(&input);
-            }
+            gg.handleControls(&input);
+            commander.handleInput(input);
         }
     }
 
     void tick()
     {
         gg.update();
-        wg.update();
     }
 
     void render()
@@ -180,20 +177,20 @@ private:
 
     void renderControlsGUI()
     {
-        const Button<WidgetGUI>& fullUndo = wg.getButton(WidgetGUI::BUTTON_FULL_UNDO);
-        renderRect(fullUndo.screenRect, cardGfxData.fullUndo[fullUndo.state]);
+        const ButtonDesc fullUndo = widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
+        renderRect(fullUndo.getRect(), cardGfxData.fullUndo[fullUndo.getState()]);
 
-        const Button<WidgetGUI>& undo = wg.getButton(WidgetGUI::BUTTON_UNDO);
-        renderRect(undo.screenRect, cardGfxData.undo[undo.state]);
+        const ButtonDesc undo = widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
+        renderRect(undo.getRect(), cardGfxData.undo[undo.getState()]);
 
-        const Button<WidgetGUI>& redo = wg.getButton(WidgetGUI::BUTTON_REDO);
-        renderRect(redo.screenRect, cardGfxData.undo[redo.state].flipX());
+        const ButtonDesc redo = widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
+        renderRect(redo.getRect(), cardGfxData.undo[redo.getState()].flipX());
 
-        const Button<WidgetGUI>& fullRedo = wg.getButton(WidgetGUI::BUTTON_FULL_REDO);
-        renderRect(fullRedo.screenRect, cardGfxData.fullUndo[fullRedo.state].flipX());
+        const ButtonDesc fullRedo = widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
+        renderRect(fullRedo.getRect(), cardGfxData.fullUndo[fullRedo.getState()].flipX());
 
-        const Button<WidgetGUI>& newGame = wg.getButton(WidgetGUI::BUTTON_NEW);
-        renderRect(newGame.screenRect, cardGfxData.newGame[newGame.state]);
+        const ButtonDesc newGame = widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
+        renderRect(newGame.getRect(), cardGfxData.newGame[newGame.getState()]);
     }
 
     SystemAPI*  sys;
@@ -203,7 +200,9 @@ private:
     Layout    layout;
     Input     input;
 
-    WidgetGUI wg;
+    WidgetLayout widgetLayout;
+    Commander commander;
+
     GameGUI   gg;
 };
 

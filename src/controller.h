@@ -91,90 +91,6 @@ private:
     SystemAPI* sys;
 };
 
-template <class ContainerT>
-class Button
-{
-public:
-    enum ButtonState
-    {
-        STATE_NORMAL = 0,
-        STATE_HOVER,
-        STATE_CLICKED,
-        STATE_DISABLED,
-    };
-
-    typedef void (*EventDelegate)(ContainerT& container, Button& sender);
-
-    ButtonState state;
-    Rect screenRect;
-
-    Button(): onClick(NULL_PTR), state(STATE_DISABLED), screenRect(Rect())
-    {
-    }
-
-    void click()
-    {
-        onClick(*container, *this);
-    }
-
-    void init(ContainerT* c, EventDelegate ed)
-    {
-        container = c;
-        onClick = ed;
-    }
-
-    void changeState(bool pressed)
-    {
-        if (enabled()) {
-            state = pressed ? STATE_CLICKED : STATE_NORMAL;
-        }
-    }
-
-    bool handleControls(const Input* in)
-    {
-        if (enabled() == false) {
-            return false;
-        }
-
-        state = STATE_NORMAL;
-        if (screenRect.inside(in->x, in->y))
-        {
-            if (in->left.clicked) {
-                click();
-            } else {
-                state = in->left.pressed ? STATE_CLICKED : STATE_HOVER;
-            }
-            return true;
-        }
-        return false;
-    }
-
-    bool enabled()
-    {
-        return state != STATE_DISABLED;
-    }
-
-    void release()
-    {
-        if (enabled()) {
-            state = STATE_NORMAL;
-        }
-    }
-
-    void setEnabled(bool value)
-    {
-        if (value && this->enabled() == false) {
-            state = STATE_NORMAL;
-        } else if (value == false) {
-            state = STATE_DISABLED;
-        }
-    }
-
-private:
-    EventDelegate onClick;
-    ContainerT* container;
-};
-
 class Tween
 {
 public:
@@ -193,45 +109,6 @@ private:
     float step;
     float accumulatedStep;
     float lastValue;
-};
-
-class WidgetGUI
-{
-public:
-    enum Buttons
-    {
-        BUTTON_FULL_UNDO = 0,
-        BUTTON_UNDO,
-        BUTTON_REDO,
-        BUTTON_FULL_REDO,
-        BUTTON_NEW,
-        BUTTON_MAX,
-    };
-
-    WidgetGUI();
-
-    void init(GameState& gameState, Layout& layout);
-    bool isBusy() const;
-    void setUndo(bool enabled);
-    void setRedo(bool enabled);
-    void handleControls(const Input* ctrl);
-    void update();
-
-    const Button<WidgetGUI>& getButton(Buttons type);
-
-private:
-    void releaseButtons();
-
-    static void FireUndo(WidgetGUI& container, Button<WidgetGUI>& sender);
-    static void FireFullUndo(WidgetGUI& container, Button<WidgetGUI>& sender);
-    static void FireRedo(WidgetGUI& container, Button<WidgetGUI>& sender);
-    static void FireFullRedo(WidgetGUI& container, Button<WidgetGUI>& sender);
-    static void FireNewGame(WidgetGUI& container, Button<WidgetGUI>& sender);
-
-    GameState* gameState;
-    Button<WidgetGUI> buttons[BUTTON_MAX];
-    int buttonsLen;
-    bool busy;
 };
 
 class GameGUI
@@ -367,5 +244,13 @@ public:
 
     WidgetLayout* widgetLayout;
 private:
+    void handleInputForButtons(const Input& input);
+
+    void cmdUndo();
+    void cmdRedo();
+    void cmdFullUndo();
+    void cmdFullRedo();
+    void cmdNew();
+
     GameState* gameState;
 };
