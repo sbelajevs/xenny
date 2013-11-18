@@ -781,8 +781,8 @@ void Commander::cmdAutoClick(float x, float y)
     {
         cmdAdvanceStock();
     }
-    else if (stack->type == CardStack::TYPE_TABLEAU 
-        || stack->type == CardStack::TYPE_WASTE)
+    else if (stackIdx == stack->size() - 1
+        && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE))
     {
         gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[stack->top().id];
         gameState->fillHand(stack, stack->size()-1);
