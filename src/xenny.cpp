@@ -130,21 +130,21 @@ private:
             {
                 for (int i=0; i<stack->size(); i++)
                 {
-                    int cardValue = (*stack)[i].value;
-                    Rect texRect = (*stack)[i].isOpened()
-                        ? cardGfxData.cardFaces[cardValue] 
+                    int cardId = (*stack)[i].id;
+                    Rect texRect = (*stack)[i].opened()
+                        ? cardGfxData.cardFaces[cardId] 
                         : cardGfxData.cardBack;
-                    renderRect(gameLayout.cardRects[cardValue], texRect);
+                    renderRect(gameLayout.cardRects[cardId], texRect);
                 }
             }
             else
             {
                 int idx = stack->size()-1;
-                int cardValue = (*stack)[idx].value;
-                Rect texRect = (*stack)[idx].isOpened() 
-                    ? cardGfxData.cardFaces[cardValue] 
+                int cardId = (*stack)[idx].id;
+                Rect texRect = (*stack)[idx].opened() 
+                    ? cardGfxData.cardFaces[cardId] 
                     : cardGfxData.cardBack;
-                renderRect(gameLayout.cardRects[cardValue], texRect);
+                renderRect(gameLayout.cardRects[cardId], texRect);
             }
         }
     }

@@ -12,15 +12,15 @@ struct GameCard
         SUIT_BLACK,
     };
 
-    int value;
+    int id;
 
     GameCard();
-    GameCard(int value);
+    GameCard(int id);
 
     void switchState();
     void open();
     void close();
-    bool isOpened() const;
+    bool opened() const;
     
     int getSuit() const;
     int getValue() const;

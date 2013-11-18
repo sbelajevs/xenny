@@ -1,16 +1,16 @@
 #include "model.h"
 
-GameCard::GameCard(): value(0), state(STATE_CLOSED)
+GameCard::GameCard(): id(0), state(STATE_CLOSED)
 {
 }
 
-GameCard::GameCard(int value): value(value), state(STATE_CLOSED)
+GameCard::GameCard(int id): id(id), state(STATE_CLOSED)
 {
 }
 
 void GameCard::switchState()
 {
-    state = isOpened() ? STATE_CLOSED : STATE_OPEN;
+    state = opened() ? STATE_CLOSED : STATE_OPEN;
 }
 
 void GameCard::open()
@@ -23,20 +23,20 @@ void GameCard::close()
     state = STATE_CLOSED;
 }
 
-bool GameCard::isOpened() const
+bool GameCard::opened() const
 {
     return state == STATE_OPEN;
 }
 
 int GameCard::getSuit() const
 {
-    return value / CARDS_PER_SUIT;
+    return id / CARDS_PER_SUIT;
 }
 
 int GameCard::getValue() const
 {
     // Such a hack, only because our texture has aces after kings
-    return ((value % CARDS_PER_SUIT) + 1) % CARDS_PER_SUIT;
+    return ((id % CARDS_PER_SUIT) + 1) % CARDS_PER_SUIT;
 }
 
 GameCard::Color GameCard::getColor() const
@@ -265,7 +265,7 @@ void GameState::releaseHand(CardStack* dest)
     if (hand.empty() == false && dest != NULL_PTR)
     {
         bool openCard = handSource->empty() == false 
-            && handSource->top().isOpened() == false;
+            && handSource->top().opened() == false;
 
         if (dest != handSource) {
             registerMove(handSource, dest, hand.size(), openCard, false);

@@ -245,28 +245,28 @@ void GameLayout::realignStack(const CardStack* stack)
     
     for (int i=0; i<stack->size(); i++) 
     {
-        int cardValue = (*stack)[i].value;
-        cardRects[cardValue] = resultingRect;
+        int cardId = (*stack)[i].id;
+        cardRects[cardId] = resultingRect;
         if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-            resultingRect.y += (*stack)[i].isOpened()
+            resultingRect.y += (*stack)[i].opened()
                 ? CARD_OPEN_SLIDE
                 : CARD_CLOSED_SLIDE;
         }
     }
 }
 
-Rect GameLayout::getDestCardRect(CardStack* stack) const
+Rect GameLayout::getDestCardRect(const CardStack* stack) const
 {
     if (stack->empty()) {
         return stackRects[stack->handle];
     }
 
     GameCard gc = stack->top();
-    Rect res = cardRects[gc.value];
-    if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-        res.y += gc.isOpened()
-            ? CARD_OPEN_SLIDE
-            : CARD_CLOSED_SLIDE;
+    Rect res = cardRects[gc.id];
+    if (stack->type == CardStack::TYPE_TABLEAU 
+        || stack->type == CardStack::TYPE_HAND) 
+    {
+        res.y += gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
     }
 
     return res;
@@ -278,8 +278,8 @@ CardStack* GameLayout::probe(float x, float y, int* idx) const
     {
         CardStack* s = gameState->getStack(i);
         for (int j = s->size() - 1; j >= 0; j--) {
-            int v = (*s)[j].value;
-            if (cardRects[v].inside(x, y)) {
+            int id = (*s)[j].id;
+            if (cardRects[id].inside(x, y)) {
                 *idx = j;
                 return s;
             }
@@ -341,13 +341,13 @@ void GameLayout::TurningAnimation::start(GameLayout* gg, CardStack* srcStack, in
     
     GameCard gc = srcStack->top();
 
-    startRect = gui->cardRects[gc.value];
+    startRect = gui->cardRects[gc.id];
     Rect endRect = startRect;
     endRect.w = 1.f;
     endRect.x += (startRect.w - endRect.w)/2.f;
 
-    movementX = Tween(&gui->cardRects[gc.value].x, (CARD_WIDTH-1.f)/2.f, 6);
-    movementW = Tween(&gui->cardRects[gc.value].w, -(CARD_WIDTH-1.f), 6);
+    movementX = Tween(&gui->cardRects[gc.id].x, (CARD_WIDTH-1.f)/2.f, 6);
+    movementW = Tween(&gui->cardRects[gc.id].w, -(CARD_WIDTH-1.f), 6);
 }
 
 void GameLayout::TurningAnimation::update()
@@ -373,8 +373,8 @@ void GameLayout::TurningAnimation::update()
             {
                 GameCard& gc = src->top();
                 gc.switchState();
-                movementX = Tween(&gui->cardRects[gc.value].x, -(CARD_WIDTH-1.f)/2.f, 6);
-                movementW = Tween(&gui->cardRects[gc.value].w, CARD_WIDTH-1.f, 6);
+                movementX = Tween(&gui->cardRects[gc.id].x, -(CARD_WIDTH-1.f)/2.f, 6);
+                movementW = Tween(&gui->cardRects[gc.id].w, CARD_WIDTH-1.f, 6);
                 movementX.update();
                 movementW.update();
                 midpointPassed = true;
@@ -417,7 +417,7 @@ void GameLayout::MovementAnimation::start(GameLayout* gg, CardStack* srcStack, C
     movementX = Tween(&gui->stackRects[hand->handle].x, endR.x-begR.x, ticks);
     movementY = Tween(&gui->stackRects[hand->handle].y, endR.y-begR.y, ticks);
 
-    if (src != dest && src->empty() == false && src->top().isOpened() == false) {
+    if (src != dest && src->empty() == false && src->top().opened() == false) {
         turningAnimation.start(gui, src, ticks);
     }
 }
@@ -560,9 +560,10 @@ void Commander::handleInput(const Input& input)
     }
     else
     {
-        // TODO:[#014] Block buttons when drag-and-drop is active and vice-versa
+        if (gameState->hand.empty()) {
+            handleInputForButtons(input);
+        }
         handleInputForGame(input);
-        handleInputForButtons(input);
     }
 }
 
@@ -588,7 +589,11 @@ void Commander::handleInputForGame(const Input& input)
         cmdMoveHand(input.dx, input.dy);
     } else if (input.dragEnd) {
         cmdReleaseHand();
-    } else if (input.right.clicked) {
+    } else if (input.right.clicked 
+        && input.left.pressed == false 
+        && input.back.pressed == false 
+        && input.fwrd.pressed == false) 
+    {
         cmdAdvanceStock();
     }
 }
@@ -629,25 +634,26 @@ void Commander::handleInputForButtons(const Input& input)
         }
     }
 
-    // TODO[#014]: Handle simultaneous multiple-button clicks gracefully!
-
-    if (widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].enabled())
+    if (input.left.pressed == false && input.right.pressed == false)
     {
-        if (input.back.pressed) {
-            widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setState(ButtonDesc::STATE_CLICKED);
+        if (widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].enabled())
+        {
+            if (input.back.pressed) {
+                widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setState(ButtonDesc::STATE_CLICKED);
+            }
+            if (input.back.clicked) {
+                cmdUndo();
+            }
         }
-        if (input.back.clicked) {
-            cmdUndo();
-        }
-    }
     
-    if (widgetLayout->buttons[WidgetLayout::BUTTON_REDO].enabled())
-    {
-        if (input.fwrd.pressed) {
-            widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setState(ButtonDesc::STATE_CLICKED);
-        }
-        if (input.fwrd.clicked) {
-            cmdRedo();
+        if (widgetLayout->buttons[WidgetLayout::BUTTON_REDO].enabled())
+        {
+            if (input.fwrd.pressed) {
+                widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setState(ButtonDesc::STATE_CLICKED);
+            }
+            if (input.fwrd.clicked) {
+                cmdRedo();
+            }
         }
     }
 }
@@ -702,13 +708,13 @@ void Commander::cmdPickHand(float x, float y)
     int stackIdx = -1;
     CardStack* stack = gameLayout->probe(x, y, &stackIdx);
 
-    if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
+    if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
         if (stack->type == CardStack::TYPE_WASTE 
             || stack->type == CardStack::TYPE_TABLEAU 
             || stack->type == CardStack::TYPE_FOUNDATION)
         {
-            gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[(*stack)[stackIdx].value];
+            gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[(*stack)[stackIdx].id];
             gameState->fillHand(stack, stackIdx);
         }
     }
@@ -729,7 +735,7 @@ void Commander::cmdReleaseHand()
     }
 
     CardStack* destStack = gameState->handSource;
-    Rect handRect = gameLayout->cardRects[gameState->hand[0].value];
+    Rect handRect = gameLayout->cardRects[gameState->hand[0].id];
     float bestDist = -1.f;
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
@@ -776,7 +782,7 @@ void Commander::cmdAutoClick(float x, float y)
     else if (stack->type == CardStack::TYPE_TABLEAU 
         || stack->type == CardStack::TYPE_WASTE)
     {
-        gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[stack->top().value];
+        gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[stack->top().id];
         gameState->fillHand(stack, stack->size()-1);
         CardStack* destStack = gameState->findFoundationDest();
         gameLayout->movementAnimation.start(gameLayout, stack, destStack);

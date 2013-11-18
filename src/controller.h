@@ -130,7 +130,7 @@ public:
 
     void initRects();
     void realignStack(const CardStack* stack);
-    Rect getDestCardRect(CardStack* stack) const;
+    Rect getDestCardRect(const CardStack* stack) const;
     
     GameState* gameState;
 
