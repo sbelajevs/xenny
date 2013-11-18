@@ -2,9 +2,8 @@
 
 #include "model.h"
 
-class Rect
+struct Rect
 {
-public:
     float x;
     float y;
     float w;
@@ -12,6 +11,8 @@ public:
 
     Rect();
     Rect(float x, float y, float w, float h);
+
+    void translate(float dx, float dy);
 
     Rect flipX() const;
     bool inside(float rx, float ry) const;
@@ -77,6 +78,8 @@ public:
 
     float x;
     float y;
+    float dx;
+    float dy;
 
     bool dragStart;
     bool dragActive;
@@ -88,6 +91,8 @@ public:
     void update();
 
 private:
+    float oldX;
+    float oldY;
     SystemAPI* sys;
 };
 
@@ -126,20 +131,20 @@ public:
 
 private:
     bool isAnimationPlaying() const;
-    void handleClick(CardStack* victim, float x, float y);
     void evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist);
-    void handleHandRelease();
 
     void initRects();
     void updateStackRect(const CardStack* stack, float newX, float newY);
     void updateCardRects(const CardStack* stack);
     Rect getDestCardRect(CardStack* stack) const;
     CardStack* probePos(float x, float y, int* idx) const;
-    void initHand(CardStack* stack, int idx, float x, float y);
-    void updateHand(float x, float y);
     
-    float handDx;
-    float handDy;
+    void doAdvanceStock();
+    void doPickHand(float x, float y);
+    void doMoveHand(float dx, float dy);
+    void doReleaseHand();
+    void doAutoClick(float x, float y);
+
     Rect cardRects[CARDS_TOTAL];
     Rect stackRects[STACK_COUNT];
 

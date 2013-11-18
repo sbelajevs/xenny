@@ -35,6 +35,12 @@ Rect::Rect(float x, float y, float w, float h): x(x), y(y), w(w), h(h)
 {
 }
 
+void Rect::translate(float dx, float dy)
+{
+    x += dx;
+    y += dy;
+}
+
 Rect Rect::flipX() const
 {
     return Rect(x+w, y, -w, h);
@@ -170,6 +176,8 @@ void Input::update()
     Sys_GetMousePos(sys, &ix, &iy);
     x = (float)ix;
     y = (float)iy;
+    dx = x - oldX;
+    dy = y - oldY;
 
     left.update( (mbs & MOUSE_BUTTON_LEFT) != 0, x, y);
     right.update((mbs & MOUSE_BUTTON_RIGHT)!= 0, x, y);
@@ -187,6 +195,9 @@ void Input::update()
     if (dragEnd) {
         dragActive = false;
     }
+
+    oldX = x;
+    oldY = y;
 }
 
 GameGUI::GameGUI(): busy(false)
@@ -238,44 +249,96 @@ void GameGUI::handleControls(const Input* in)
         x = in->left.pressX;
         y = in->left.pressY;
     }
+
+    busy = true;
+    if (in->left.clicked && in->dragEnd == false) {
+        doAutoClick(x, y);
+    } else if (in->dragStart) {
+        doPickHand(x, y);
+    } else if (in->dragActive) {
+        doMoveHand(in->dx, in->dy);
+    } else if (in->dragEnd) {
+        doReleaseHand();
+    } else if (in->right.clicked) {
+        doAdvanceStock();
+    } else {
+        busy = false;
+    }
+}
+
+void GameGUI::doAdvanceStock()
+{
+    gameState->advanceStock();
+}
+
+void GameGUI::doPickHand(float x, float y)
+{
     int stackIdx = -1;
     CardStack* stack = probePos(x, y, &stackIdx);
 
-    busy = true;
-    if (in->left.clicked && in->dragEnd == false)
+    if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
     {
-        handleClick(stack, in->left.pressX, in->left.pressY);
-    }
-    else if (in->dragStart)
-    {
-        if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
+        if (stack->type == CardStack::TYPE_WASTE 
+            || stack->type == CardStack::TYPE_TABLEAU 
+            || stack->type == CardStack::TYPE_FOUNDATION)
         {
-            if (stack->type == CardStack::TYPE_WASTE 
-                || stack->type == CardStack::TYPE_TABLEAU 
-                || stack->type == CardStack::TYPE_FOUNDATION)
-            {
-                initHand(stack, stackIdx, in->left.pressX, in->left.pressY);
-                gameState->fillHand(stack, stackIdx);
-            }
+            stackRects[gameState->hand.handle] = getCardRect((*stack)[stackIdx].value);
+            gameState->fillHand(stack, stackIdx);
         }
     }
-    else if (in->dragActive)
-    {
-        if (gameState->hand.empty() == false) {
-            updateHand(in->x, in->y);
-        }
+}
+
+void GameGUI::doMoveHand(float dx, float dy)
+{
+    if (gameState->hand.empty() == false) {
+        stackRects[gameState->hand.handle].translate(dx, dy);
+        updateCardRects(&gameState->hand);
     }
-    else if (in->dragEnd) 
-    {
-        handleHandRelease();
+}
+
+void GameGUI::doReleaseHand()
+{
+    if (gameState->hand.empty()) {
+        return;
     }
-    else if (in->right.clicked)
-    {
-        gameState->advanceStock();
+
+    CardStack* destStack = gameState->handSource;
+    Rect handRect = getCardRect(gameState->hand[0].value);
+    float bestDist = -1.f;
+    float x = handRect.x + handRect.w / 2.f;
+    float y = handRect.y + handRect.h / 2.f;
+
+    for (int i=0; i<TABLEAU_COUNT; i++) {
+        evaluateHandRelease(&gameState->tableaux[i], x, y, &destStack, &bestDist);
     }
-    else
+
+    for (int i=0; i<FOUNDATION_COUNT; i++) {
+        evaluateHandRelease(&gameState->foundations[i], x, y, &destStack, &bestDist);
+    }
+
+    movementAnimation.start(this, gameState->handSource, destStack);
+}
+
+void GameGUI::doAutoClick(float x, float y)
+{
+    int stackIdx = -1;
+    CardStack* stack = probePos(x, y, &stackIdx);
+
+    if (stack == NULL_PTR) {
+        return;
+    }
+
+    if (stack->type == CardStack::TYPE_STOCK)
     {
-        busy = false;
+        doAdvanceStock();
+    }
+    else if (stack->type == CardStack::TYPE_TABLEAU 
+        || stack->type == CardStack::TYPE_WASTE)
+    {
+        stackRects[gameState->hand.handle] = getCardRect(stack->top().value);
+        gameState->fillHand(stack, stack->size()-1);
+        CardStack* destStack = gameState->findFoundationDest();
+        movementAnimation.start(this, stack, destStack);
     }
 }
 
@@ -320,59 +383,6 @@ void GameGUI::evaluateHandRelease(CardStack* dest, float x, float y, CardStack**
     }
 }
 
-void GameGUI::handleHandRelease()
-{
-    if (gameState->hand.empty()) {
-        return;
-    }
-
-    CardStack* destStack = gameState->handSource;
-    Rect handRect = getCardRect(gameState->hand[0].value);
-    float bestDist = -1.f;
-    float x = handRect.x + handRect.w / 2.f;
-    float y = handRect.y + handRect.h / 2.f;
-
-    for (int i=0; i<TABLEAU_COUNT; i++) {
-        evaluateHandRelease(&gameState->tableaux[i], x, y, &destStack, &bestDist);
-    }
-
-    for (int i=0; i<FOUNDATION_COUNT; i++) {
-        evaluateHandRelease(&gameState->foundations[i], x, y, &destStack, &bestDist);
-    }
-
-    movementAnimation.start(this, gameState->handSource, destStack);
-}
-
-void GameGUI::handleClick(CardStack* victim, float x, float y)
-{
-    if (victim == NULL_PTR) {
-        return;
-    }
-
-    if (victim->type == CardStack::TYPE_STOCK)
-    {
-        gameState->advanceStock();
-    }
-    else if (victim->type == CardStack::TYPE_TABLEAU 
-        || victim->type == CardStack::TYPE_WASTE)
-    {
-        initHand(victim, victim->size()-1, x, y);
-        gameState->fillHand(victim, victim->size()-1);
-        CardStack* destStack = gameState->findFoundationDest();
-        movementAnimation.start(this, victim, destStack);
-    }
-}
-
-void GameGUI::updateStackRect(const CardStack* stack, float newX, float newY)
-{
-    if (stack == NULL_PTR) {
-        return;
-    }
-
-    stackRects[stack->handle] = Layout::getCardScreenRect(newX, newY);
-    updateCardRects(stack);
-}
-
 void GameGUI::updateCardRects(const CardStack* stack)
 {
     if (stack == NULL_PTR) {
@@ -391,20 +401,6 @@ void GameGUI::updateCardRects(const CardStack* stack)
                 : CARD_CLOSED_SLIDE;
         }
     }
-}
-
-void GameGUI::initHand(CardStack* stack, int idx, float x, float y)
-{
-    GameCard card = (*stack)[idx];
-    Rect cardRect = getCardRect(card.value);
-    handDx = cardRect.x - x;
-    handDy = cardRect.y - y;
-    updateHand(x, y);
-}
-
-void GameGUI::updateHand(float x, float y)
-{
-    updateStackRect(&gameState->hand, x + handDx, y + handDy);
 }
 
 Rect GameGUI::getDestCardRect(CardStack* stack) const
