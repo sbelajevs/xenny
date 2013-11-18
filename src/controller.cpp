@@ -308,12 +308,27 @@ void GameGUI::doReleaseHand()
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
 
-    for (int i=0; i<TABLEAU_COUNT; i++) {
-        evaluateHandRelease(&gameState->tableaux[i], x, y, &destStack, &bestDist);
-    }
+    static const int LEN = 2;
+    CardStack* stacks[LEN] = {gameState->tableaux, gameState->foundations};
+    int sizes[LEN] = {TABLEAU_COUNT, FOUNDATION_COUNT};
 
-    for (int i=0; i<FOUNDATION_COUNT; i++) {
-        evaluateHandRelease(&gameState->foundations[i], x, y, &destStack, &bestDist);
+    for (int i=0; i<LEN; i++) {
+        for (int j=0; j<sizes[i]; j++)
+        {
+            CardStack* destCandidate = &stacks[i][j]; 
+            if (destCandidate == gameState->handSource || gameState->canReleaseHand(destCandidate)) 
+            {
+                Rect destRect = getDestCardRect(destCandidate);
+                float destX = destRect.x + destRect.w/2.f;
+                float destY = destRect.y + destRect.h/2.f;
+                float dist = getVAdjustedDistSqr(x, y, destX, destY);
+                if (dist < CARD_HEIGHT*CARD_HEIGHT && (dist < bestDist || bestDist < 0.0))
+                {
+                    destStack = destCandidate;
+                    bestDist = dist;
+                }
+            }
+        }
     }
 
     movementAnimation.start(this, gameState->handSource, destStack);
@@ -365,22 +380,6 @@ Rect GameGUI::getCardRect(int cardValue) const
 Rect GameGUI::getStackRect(const CardStack* stack) const
 {
     return stackRects[stack->handle];
-}
-
-void GameGUI::evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist)
-{
-    if (dest == gameState->handSource || gameState->canReleaseHand(dest)) 
-    {
-        Rect destRect = getDestCardRect(dest);
-        float destX = destRect.x + destRect.w/2.f;
-        float destY = destRect.y + destRect.h/2.f;
-        float dist = getVAdjustedDistSqr(x, y, destX, destY);
-        if (dist < CARD_HEIGHT*CARD_HEIGHT && (dist < *bestDist || *bestDist < 0.0))
-        {
-            *best = dest;
-            *bestDist = dist;
-        }
-    }
 }
 
 void GameGUI::updateCardRects(const CardStack* stack)

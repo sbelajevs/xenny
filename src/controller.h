@@ -131,10 +131,8 @@ public:
 
 private:
     bool isAnimationPlaying() const;
-    void evaluateHandRelease(CardStack* dest, float x, float y, CardStack** best, float* bestDist);
 
     void initRects();
-    void updateStackRect(const CardStack* stack, float newX, float newY);
     void updateCardRects(const CardStack* stack);
     Rect getDestCardRect(CardStack* stack) const;
     CardStack* probePos(float x, float y, int* idx) const;
