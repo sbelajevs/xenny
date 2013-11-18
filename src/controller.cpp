@@ -439,6 +439,7 @@ void GameLayout::MovementAnimation::update()
         if (movementX.finished() && movementY.finished() && turningAnimation.isPlaying() == false)
         {
             gui->gameState->releaseHand(dest);
+            gui->initRects();
             playing = false;
         }
     }
@@ -667,42 +668,43 @@ void Commander::update()
     if (gameLayout.isAnimationPlaying()) {
         // Animation might update hand position, but only for topmost card
         gameLayout.realignStack(&gameState->hand);
-    } else {
-        // Game state could be changed by someone outside of this class, 
-        // so it is better to rebuild rects before rendering.
-        // But we shouldn't mess with animation!
-        gameLayout.initRects();
-   }
+    }
 }
 
 void Commander::cmdUndo()
 {
     gameState->undo();
+    gameLayout.initRects();
 }
 
 void Commander::cmdRedo()
 {
     gameState->redo();
+    gameLayout.initRects();
 }
 
 void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
+    gameLayout.initRects();
 }
 
 void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
+    gameLayout.initRects();
 }
 
 void Commander::cmdNew()
 {
     gameState->init();
+    gameLayout.initRects();
 }
 
 void Commander::cmdAdvanceStock()
 {
     gameState->advanceStock();
+    gameLayout.initRects();
 }
 
 void Commander::cmdPickHand(float x, float y)
