@@ -200,14 +200,13 @@ void Input::update()
     oldY = y;
 }
 
-GameLayout::GameLayout(): busy(false)
+GameLayout::GameLayout()
 {
 }
 
 void GameLayout::init(GameState& gs, const Layout& layout)
 {
     gameState = &gs;
-    busy = false;
 
     for (int i=0; i<STACK_COUNT; i++)
     {
@@ -229,11 +228,6 @@ void GameLayout::initRects()
             realignStack(cs);
         }
     }
-}
-
-bool GameLayout::isBusy() const
-{
-    return busy || isAnimationPlaying();
 }
 
 bool GameLayout::isAnimationPlaying() const
@@ -586,7 +580,6 @@ void Commander::handleInputForGame(const Input& input)
         y = input.left.pressY;
     }
 
-    gameLayout->busy = true;
     if (input.left.clicked && input.dragEnd == false) {
         cmdAutoClick(x, y);
     } else if (input.dragStart) {
@@ -597,8 +590,6 @@ void Commander::handleInputForGame(const Input& input)
         cmdReleaseHand();
     } else if (input.right.clicked) {
         cmdAdvanceStock();
-    } else {
-        gameLayout->busy = false;
     }
 }
 

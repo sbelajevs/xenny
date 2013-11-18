@@ -123,8 +123,6 @@ public:
     void init(GameState& gs, const Layout& l);
     CardStack* probe(float x, float y, int* idx) const;
 
-    bool isBusy() const;
-
     Rect cardRects[CARDS_TOTAL];
     Rect stackRects[STACK_COUNT];
 
@@ -135,7 +133,6 @@ public:
     Rect getDestCardRect(CardStack* stack) const;
     
     GameState* gameState;
-    bool busy;
 
     class TurningAnimation
     {
