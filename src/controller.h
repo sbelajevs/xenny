@@ -116,10 +116,10 @@ private:
     float lastValue;
 };
 
-class GameGUI
+class GameLayout
 {
 public:
-    GameGUI();
+    GameLayout();
 
     void init(GameState& gs, Layout& l);
     bool isBusy() const;
@@ -154,13 +154,13 @@ private:
     {
     public:
         TurningAnimation();
-        void start(GameGUI* gg, CardStack* srcStack, int delayTicks);
+        void start(GameLayout* gg, CardStack* srcStack, int delayTicks);
         void update();
         bool isPlaying() const;
     private:
         Tween movementX;
         Tween movementW;
-        GameGUI* gui;
+        GameLayout* gui;
         CardStack* src;
         Rect startRect;
         bool playing;
@@ -172,13 +172,13 @@ private:
     {
     public:
         MovementAnimation();
-        void start(GameGUI* gg, CardStack* srcStack, CardStack* destStack);
+        void start(GameLayout* gg, CardStack* srcStack, CardStack* destStack);
         void update();
         bool isPlaying() const;
     private:
         Tween movementX;
         Tween movementY;
-        GameGUI* gui;
+        GameLayout* gui;
         CardStack* dest; 
         CardStack* src;
         bool playing;

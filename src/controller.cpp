@@ -200,11 +200,11 @@ void Input::update()
     oldY = y;
 }
 
-GameGUI::GameGUI(): busy(false)
+GameLayout::GameLayout(): busy(false)
 {
 }
 
-void GameGUI::init(GameState& gs, Layout& l)
+void GameLayout::init(GameState& gs, Layout& l)
 {
     gameState = &gs;
     layout = &l;
@@ -213,7 +213,7 @@ void GameGUI::init(GameState& gs, Layout& l)
     initRects();
 }
 
-void GameGUI::initRects()
+void GameLayout::initRects()
 {
     for (int i=0; i<STACK_COUNT; i++) 
     {
@@ -226,17 +226,17 @@ void GameGUI::initRects()
     }
 }
 
-bool GameGUI::isBusy() const
+bool GameLayout::isBusy() const
 {
     return busy || isAnimationPlaying();
 }
 
-bool GameGUI::isAnimationPlaying() const
+bool GameLayout::isAnimationPlaying() const
 {
     return movementAnimation.isPlaying();
 }
 
-void GameGUI::handleControls(const Input* in)
+void GameLayout::handleControls(const Input* in)
 {
     if (isAnimationPlaying()) {
         return;
@@ -266,12 +266,12 @@ void GameGUI::handleControls(const Input* in)
     }
 }
 
-void GameGUI::doAdvanceStock()
+void GameLayout::doAdvanceStock()
 {
     gameState->advanceStock();
 }
 
-void GameGUI::doPickHand(float x, float y)
+void GameLayout::doPickHand(float x, float y)
 {
     int stackIdx = -1;
     CardStack* stack = probePos(x, y, &stackIdx);
@@ -288,7 +288,7 @@ void GameGUI::doPickHand(float x, float y)
     }
 }
 
-void GameGUI::doMoveHand(float dx, float dy)
+void GameLayout::doMoveHand(float dx, float dy)
 {
     if (gameState->hand.empty() == false) {
         stackRects[gameState->hand.handle].translate(dx, dy);
@@ -296,7 +296,7 @@ void GameGUI::doMoveHand(float dx, float dy)
     }
 }
 
-void GameGUI::doReleaseHand()
+void GameLayout::doReleaseHand()
 {
     if (gameState->hand.empty()) {
         return;
@@ -334,7 +334,7 @@ void GameGUI::doReleaseHand()
     movementAnimation.start(this, gameState->handSource, destStack);
 }
 
-void GameGUI::doAutoClick(float x, float y)
+void GameLayout::doAutoClick(float x, float y)
 {
     int stackIdx = -1;
     CardStack* stack = probePos(x, y, &stackIdx);
@@ -357,7 +357,7 @@ void GameGUI::doAutoClick(float x, float y)
     }
 }
 
-void GameGUI::update()
+void GameLayout::update()
 {
     movementAnimation.update();
 
@@ -372,17 +372,17 @@ void GameGUI::update()
    }
 }
 
-Rect GameGUI::getCardRect(int cardValue) const
+Rect GameLayout::getCardRect(int cardValue) const
 {
     return cardRects[cardValue];
 }
 
-Rect GameGUI::getStackRect(const CardStack* stack) const
+Rect GameLayout::getStackRect(const CardStack* stack) const
 {
     return stackRects[stack->handle];
 }
 
-void GameGUI::updateCardRects(const CardStack* stack)
+void GameLayout::updateCardRects(const CardStack* stack)
 {
     if (stack == NULL_PTR) {
         return;
@@ -402,7 +402,7 @@ void GameGUI::updateCardRects(const CardStack* stack)
     }
 }
 
-Rect GameGUI::getDestCardRect(CardStack* stack) const
+Rect GameLayout::getDestCardRect(CardStack* stack) const
 {
     if (stack->empty()) {
         return stackRects[stack->handle];
@@ -419,7 +419,7 @@ Rect GameGUI::getDestCardRect(CardStack* stack) const
     return res;
 }
 
-CardStack* GameGUI::probePos(float x, float y, int* idx) const
+CardStack* GameLayout::probePos(float x, float y, int* idx) const
 {
     for (int i=0; i<STACK_COUNT; i++)
     {
@@ -474,11 +474,11 @@ float Tween::curveLinear(float x)
     return x;
 }
 
-GameGUI::TurningAnimation::TurningAnimation(): playing(false)
+GameLayout::TurningAnimation::TurningAnimation(): playing(false)
 {
 }
 
-void GameGUI::TurningAnimation::start(GameGUI* gg, CardStack* srcStack, int delayTicks)
+void GameLayout::TurningAnimation::start(GameLayout* gg, CardStack* srcStack, int delayTicks)
 {
     gui = gg;
     src = srcStack;
@@ -497,7 +497,7 @@ void GameGUI::TurningAnimation::start(GameGUI* gg, CardStack* srcStack, int dela
     movementW = Tween(&gui->cardRects[gc.value].w, -(CARD_WIDTH-1.f), 6);
 }
 
-void GameGUI::TurningAnimation::update()
+void GameLayout::TurningAnimation::update()
 {
     if (playing)
     {
@@ -535,16 +535,16 @@ void GameGUI::TurningAnimation::update()
     }
 }
 
-bool GameGUI::TurningAnimation::isPlaying() const
+bool GameLayout::TurningAnimation::isPlaying() const
 {
     return playing;
 }
 
-GameGUI::MovementAnimation::MovementAnimation(): playing(false)
+GameLayout::MovementAnimation::MovementAnimation(): playing(false)
 {
 }
 
-void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* srcStack, CardStack* destStack)
+void GameLayout::MovementAnimation::start(GameLayout* gg, CardStack* srcStack, CardStack* destStack)
 {
     gui = gg;
     src = srcStack;
@@ -569,7 +569,7 @@ void GameGUI::MovementAnimation::start(GameGUI* gg, CardStack* srcStack, CardSta
     }
 }
 
-void GameGUI::MovementAnimation::update()
+void GameLayout::MovementAnimation::update()
 {
     if (playing)
     {
@@ -591,7 +591,7 @@ void GameGUI::MovementAnimation::update()
     }
 }
 
-bool GameGUI::MovementAnimation::isPlaying() const
+bool GameLayout::MovementAnimation::isPlaying() const
 {
     return playing;
 }

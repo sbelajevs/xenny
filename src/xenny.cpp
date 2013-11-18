@@ -203,7 +203,7 @@ private:
     WidgetLayout widgetLayout;
     Commander commander;
 
-    GameGUI   gg;
+    GameLayout   gg;
 };
 
 int runGame()
