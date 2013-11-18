@@ -123,26 +123,17 @@ public:
 
     void init(GameState& gs, Layout& l);
     bool isBusy() const;
-    void handleControls(const Input* in);
-    void update();
 
     Rect getCardRect(int cardValue) const;
     Rect getStackRect(const CardStack* stack) const;
 
-private:
     bool isAnimationPlaying() const;
 
     void initRects();
     void updateCardRects(const CardStack* stack);
     Rect getDestCardRect(CardStack* stack) const;
-    CardStack* probePos(float x, float y, int* idx) const;
+    CardStack* probe(float x, float y, int* idx) const;
     
-    void doAdvanceStock();
-    void doPickHand(float x, float y);
-    void doMoveHand(float dx, float dy);
-    void doReleaseHand();
-    void doAutoClick(float x, float y);
-
     Rect cardRects[CARDS_TOTAL];
     Rect stackRects[STACK_COUNT];
 
@@ -242,18 +233,27 @@ class Commander
 {
 public:
     Commander();
-    void init(GameState* aGameState, WidgetLayout* aWidgetLayout);
+    void init(GameState* aGameState, WidgetLayout* aWidgetLayout, GameLayout* aGameLayout);
     void handleInput(const Input& input);
+    void update();
 
     WidgetLayout* widgetLayout;
+    GameLayout*   gameLayout;
 private:
     void handleInputForButtons(const Input& input);
+    void handleInputForGame(const Input& input);
 
     void cmdUndo();
     void cmdRedo();
     void cmdFullUndo();
     void cmdFullRedo();
     void cmdNew();
+
+    void cmdAdvanceStock();
+    void cmdPickHand(float x, float y);
+    void cmdMoveHand(float dx, float dy);
+    void cmdReleaseHand();
+    void cmdAutoClick(float x, float y);
 
     GameState* gameState;
 };

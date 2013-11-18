@@ -80,32 +80,21 @@ public:
         layout.init();
         gameState.init();
         input.init(sys);
-        gg.init(gameState, layout);
 
+        gameLayout.init(gameState, layout);
         widgetLayout.init(layout);
-        commander.init(&gameState, &widgetLayout);
+        commander.init(&gameState, &widgetLayout, &gameLayout);
     }
 
     void handleControls()
     {
         input.update();
-        
-        if (gameState.gameWon()) 
-        {
-            if (input.left.clicked) {
-                gameState.init();
-            }
-        } 
-        else 
-        {
-            gg.handleControls(&input);
-            commander.handleInput(input);
-        }
+        commander.handleInput(input);
     }
 
     void tick()
     {
-        gg.update();
+        commander.update();
     }
 
     void render()
@@ -132,7 +121,7 @@ private:
     {
         if (stack->empty() && emptyTexRect.empty() == false)
         {
-            renderRect(gg.getStackRect(stack), emptyTexRect);
+            renderRect(gameLayout.getStackRect(stack), emptyTexRect);
         }
         else
         {
@@ -145,7 +134,7 @@ private:
                     Rect texRect = (*stack)[i].isOpened()
                         ? cardGfxData.cardFaces[cardValue] 
                         : cardGfxData.cardBack;
-                    renderRect(gg.getCardRect(cardValue), texRect);
+                    renderRect(gameLayout.getCardRect(cardValue), texRect);
                 }
             }
             else
@@ -155,7 +144,7 @@ private:
                 Rect texRect = (*stack)[idx].isOpened() 
                     ? cardGfxData.cardFaces[cardValue] 
                     : cardGfxData.cardBack;
-                renderRect(gg.getCardRect(cardValue), texRect);
+                renderRect(gameLayout.getCardRect(cardValue), texRect);
             }
         }
     }
@@ -201,9 +190,8 @@ private:
     Input     input;
 
     WidgetLayout widgetLayout;
+    GameLayout   gameLayout;
     Commander commander;
-
-    GameLayout   gg;
 };
 
 int runGame()

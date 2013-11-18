@@ -236,142 +236,6 @@ bool GameLayout::isAnimationPlaying() const
     return movementAnimation.isPlaying();
 }
 
-void GameLayout::handleControls(const Input* in)
-{
-    if (isAnimationPlaying()) {
-        return;
-    }
-
-    float x = in->x;
-    float y = in->y;
-    if (in->dragStart)
-    {
-        x = in->left.pressX;
-        y = in->left.pressY;
-    }
-
-    busy = true;
-    if (in->left.clicked && in->dragEnd == false) {
-        doAutoClick(x, y);
-    } else if (in->dragStart) {
-        doPickHand(x, y);
-    } else if (in->dragActive) {
-        doMoveHand(in->dx, in->dy);
-    } else if (in->dragEnd) {
-        doReleaseHand();
-    } else if (in->right.clicked) {
-        doAdvanceStock();
-    } else {
-        busy = false;
-    }
-}
-
-void GameLayout::doAdvanceStock()
-{
-    gameState->advanceStock();
-}
-
-void GameLayout::doPickHand(float x, float y)
-{
-    int stackIdx = -1;
-    CardStack* stack = probePos(x, y, &stackIdx);
-
-    if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
-    {
-        if (stack->type == CardStack::TYPE_WASTE 
-            || stack->type == CardStack::TYPE_TABLEAU 
-            || stack->type == CardStack::TYPE_FOUNDATION)
-        {
-            stackRects[gameState->hand.handle] = getCardRect((*stack)[stackIdx].value);
-            gameState->fillHand(stack, stackIdx);
-        }
-    }
-}
-
-void GameLayout::doMoveHand(float dx, float dy)
-{
-    if (gameState->hand.empty() == false) {
-        stackRects[gameState->hand.handle].translate(dx, dy);
-        updateCardRects(&gameState->hand);
-    }
-}
-
-void GameLayout::doReleaseHand()
-{
-    if (gameState->hand.empty()) {
-        return;
-    }
-
-    CardStack* destStack = gameState->handSource;
-    Rect handRect = getCardRect(gameState->hand[0].value);
-    float bestDist = -1.f;
-    float x = handRect.x + handRect.w / 2.f;
-    float y = handRect.y + handRect.h / 2.f;
-
-    static const int LEN = 2;
-    CardStack* stacks[LEN] = {gameState->tableaux, gameState->foundations};
-    int sizes[LEN] = {TABLEAU_COUNT, FOUNDATION_COUNT};
-
-    for (int i=0; i<LEN; i++) {
-        for (int j=0; j<sizes[i]; j++)
-        {
-            CardStack* destCandidate = &stacks[i][j]; 
-            if (destCandidate == gameState->handSource || gameState->canReleaseHand(destCandidate)) 
-            {
-                Rect destRect = getDestCardRect(destCandidate);
-                float destX = destRect.x + destRect.w/2.f;
-                float destY = destRect.y + destRect.h/2.f;
-                float dist = getVAdjustedDistSqr(x, y, destX, destY);
-                if (dist < CARD_HEIGHT*CARD_HEIGHT && (dist < bestDist || bestDist < 0.0))
-                {
-                    destStack = destCandidate;
-                    bestDist = dist;
-                }
-            }
-        }
-    }
-
-    movementAnimation.start(this, gameState->handSource, destStack);
-}
-
-void GameLayout::doAutoClick(float x, float y)
-{
-    int stackIdx = -1;
-    CardStack* stack = probePos(x, y, &stackIdx);
-
-    if (stack == NULL_PTR) {
-        return;
-    }
-
-    if (stack->type == CardStack::TYPE_STOCK)
-    {
-        doAdvanceStock();
-    }
-    else if (stack->type == CardStack::TYPE_TABLEAU 
-        || stack->type == CardStack::TYPE_WASTE)
-    {
-        stackRects[gameState->hand.handle] = getCardRect(stack->top().value);
-        gameState->fillHand(stack, stack->size()-1);
-        CardStack* destStack = gameState->findFoundationDest();
-        movementAnimation.start(this, stack, destStack);
-    }
-}
-
-void GameLayout::update()
-{
-    movementAnimation.update();
-
-    if (isAnimationPlaying()) {
-        // Animation might update hand position, but only for topmost card
-        updateCardRects(&gameState->hand);
-    } else {
-        // Game state could be changed by someone outside of this class, 
-        // so it is better to rebuild rects before rendering.
-        // But we shouldn't mess with animation!
-        initRects();
-   }
-}
-
 Rect GameLayout::getCardRect(int cardValue) const
 {
     return cardRects[cardValue];
@@ -419,7 +283,7 @@ Rect GameLayout::getDestCardRect(CardStack* stack) const
     return res;
 }
 
-CardStack* GameLayout::probePos(float x, float y, int* idx) const
+CardStack* GameLayout::probe(float x, float y, int* idx) const
 {
     for (int i=0; i<STACK_COUNT; i++)
     {
@@ -686,20 +550,61 @@ WidgetLayout::ButtonType WidgetLayout::probe(float x, float y)
     return BUTTON_MAX;
 }
 
-Commander::Commander(): gameState(NULL_PTR), widgetLayout(NULL_PTR)
+Commander::Commander(): gameState(NULL_PTR), widgetLayout(NULL_PTR), gameLayout(NULL_PTR)
 {
 }
 
-void Commander::init(GameState* aGameState, WidgetLayout* aWidgetLayout)
+void Commander::init(GameState* aGameState, WidgetLayout* aWidgetLayout, GameLayout* aGameLayout)
 {
     gameState = aGameState;
     widgetLayout = aWidgetLayout;
+    gameLayout = aGameLayout;
 }
 
 void Commander::handleInput(const Input& input)
 {
-    // TODO:[#014] Block buttons when drag-and-drop is active and vice-versa~
-    handleInputForButtons(input);
+    if (gameState->gameWon()) 
+    {
+        if (input.left.clicked) {
+            cmdNew();
+        }
+    }
+    else
+    {
+        // TODO:[#014] Block buttons when drag-and-drop is active and vice-versa
+        handleInputForGame(input);
+        handleInputForButtons(input);
+    }
+}
+
+void Commander::handleInputForGame(const Input& input)
+{
+    if (gameLayout->isAnimationPlaying()) {
+        return;
+    }
+
+    float x = input.x;
+    float y = input.y;
+    if (input.dragStart)
+    {
+        x = input.left.pressX;
+        y = input.left.pressY;
+    }
+
+    gameLayout->busy = true;
+    if (input.left.clicked && input.dragEnd == false) {
+        cmdAutoClick(x, y);
+    } else if (input.dragStart) {
+        cmdPickHand(x, y);
+    } else if (input.dragActive) {
+        cmdMoveHand(input.dx, input.dy);
+    } else if (input.dragEnd) {
+        cmdReleaseHand();
+    } else if (input.right.clicked) {
+        cmdAdvanceStock();
+    } else {
+        gameLayout->busy = false;
+    }
 }
 
 void Commander::handleInputForButtons(const Input& input)
@@ -761,6 +666,21 @@ void Commander::handleInputForButtons(const Input& input)
     }
 }
 
+void Commander::update()
+{
+    gameLayout->movementAnimation.update();
+
+    if (gameLayout->isAnimationPlaying()) {
+        // Animation might update hand position, but only for topmost card
+        gameLayout->updateCardRects(&gameState->hand);
+    } else {
+        // Game state could be changed by someone outside of this class, 
+        // so it is better to rebuild rects before rendering.
+        // But we shouldn't mess with animation!
+        gameLayout->initRects();
+   }
+}
+
 void Commander::cmdUndo()
 {
     gameState->undo();
@@ -784,4 +704,95 @@ void Commander::cmdFullRedo()
 void Commander::cmdNew()
 {
     gameState->init();
+}
+
+void Commander::cmdAdvanceStock()
+{
+    gameState->advanceStock();
+}
+
+void Commander::cmdPickHand(float x, float y)
+{
+    int stackIdx = -1;
+    CardStack* stack = gameLayout->probe(x, y, &stackIdx);
+
+    if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].isOpened())
+    {
+        if (stack->type == CardStack::TYPE_WASTE 
+            || stack->type == CardStack::TYPE_TABLEAU 
+            || stack->type == CardStack::TYPE_FOUNDATION)
+        {
+            gameLayout->stackRects[gameState->hand.handle] = gameLayout->getCardRect((*stack)[stackIdx].value);
+            gameState->fillHand(stack, stackIdx);
+        }
+    }
+}
+
+void Commander::cmdMoveHand(float dx, float dy)
+{
+    if (gameState->hand.empty() == false) {
+        gameLayout->stackRects[gameState->hand.handle].translate(dx, dy);
+        gameLayout->updateCardRects(&gameState->hand);
+    }
+}
+
+void Commander::cmdReleaseHand()
+{
+    if (gameState->hand.empty()) {
+        return;
+    }
+
+    CardStack* destStack = gameState->handSource;
+    Rect handRect = gameLayout->getCardRect(gameState->hand[0].value);
+    float bestDist = -1.f;
+    float x = handRect.x + handRect.w / 2.f;
+    float y = handRect.y + handRect.h / 2.f;
+
+    static const int LEN = 2;
+    CardStack* stacks[LEN] = {gameState->tableaux, gameState->foundations};
+    int sizes[LEN] = {TABLEAU_COUNT, FOUNDATION_COUNT};
+
+    for (int i=0; i<LEN; i++) {
+        for (int j=0; j<sizes[i]; j++)
+        {
+            CardStack* destCandidate = &stacks[i][j]; 
+            if (destCandidate == gameState->handSource || gameState->canReleaseHand(destCandidate)) 
+            {
+                Rect destRect = gameLayout->getDestCardRect(destCandidate);
+                float destX = destRect.x + destRect.w/2.f;
+                float destY = destRect.y + destRect.h/2.f;
+                float dist = getVAdjustedDistSqr(x, y, destX, destY);
+                if (dist < CARD_HEIGHT*CARD_HEIGHT && (dist < bestDist || bestDist < 0.0))
+                {
+                    destStack = destCandidate;
+                    bestDist = dist;
+                }
+            }
+        }
+    }
+
+    gameLayout->movementAnimation.start(gameLayout, gameState->handSource, destStack);
+}
+
+void Commander::cmdAutoClick(float x, float y)
+{
+    int stackIdx = -1;
+    CardStack* stack = gameLayout->probe(x, y, &stackIdx);
+
+    if (stack == NULL_PTR) {
+        return;
+    }
+
+    if (stack->type == CardStack::TYPE_STOCK)
+    {
+        cmdAdvanceStock();
+    }
+    else if (stack->type == CardStack::TYPE_TABLEAU 
+        || stack->type == CardStack::TYPE_WASTE)
+    {
+        gameLayout->stackRects[gameState->hand.handle] = gameLayout->getCardRect(stack->top().value);
+        gameState->fillHand(stack, stack->size()-1);
+        CardStack* destStack = gameState->findFoundationDest();
+        gameLayout->movementAnimation.start(gameLayout, stack, destStack);
+    }
 }
