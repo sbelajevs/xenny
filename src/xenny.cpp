@@ -75,15 +75,11 @@ public:
     {
         sys = s;
         Sys_LoadMainTexture(sys, MAIN_TEXTURE, MAIN_TEXTURE_SIZE);
-        
         cardGfxData.init();
-        layout.init();
-        gameState.init();
         input.init(sys);
 
-        gameLayout.init(gameState, layout);
-        widgetLayout.init(layout);
-        commander.init(&gameState, &widgetLayout, &gameLayout);
+        gameState.init();
+        commander.init(&gameState);
     }
 
     void handleControls()
@@ -105,7 +101,7 @@ public:
         renderControlsGUI();
 
         if (gameState.gameWon()) {
-            renderRect(layout.getYouWonRect(), cardGfxData.youWon);
+            renderRect(commander.layout.getYouWonRect(), cardGfxData.youWon);
         }
     }
 
@@ -121,7 +117,7 @@ private:
     {
         if (stack->empty() && emptyTexRect.empty() == false)
         {
-            renderRect(gameLayout.stackRects[stack->handle], emptyTexRect);
+            renderRect(commander.gameLayout.stackRects[stack->handle], emptyTexRect);
         }
         else
         {
@@ -134,7 +130,7 @@ private:
                     Rect texRect = (*stack)[i].opened()
                         ? cardGfxData.cardFaces[cardId] 
                         : cardGfxData.cardBack;
-                    renderRect(gameLayout.cardRects[cardId], texRect);
+                    renderRect(commander.gameLayout.cardRects[cardId], texRect);
                 }
             }
             else
@@ -144,7 +140,7 @@ private:
                 Rect texRect = (*stack)[idx].opened() 
                     ? cardGfxData.cardFaces[cardId] 
                     : cardGfxData.cardBack;
-                renderRect(gameLayout.cardRects[cardId], texRect);
+                renderRect(commander.gameLayout.cardRects[cardId], texRect);
             }
         }
     }
@@ -166,31 +162,27 @@ private:
 
     void renderControlsGUI()
     {
-        const ButtonDesc fullUndo = widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
+        const ButtonDesc fullUndo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
         renderRect(fullUndo.getRect(), cardGfxData.fullUndo[fullUndo.getState()]);
 
-        const ButtonDesc undo = widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
+        const ButtonDesc undo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
         renderRect(undo.getRect(), cardGfxData.undo[undo.getState()]);
 
-        const ButtonDesc redo = widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
+        const ButtonDesc redo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
         renderRect(redo.getRect(), cardGfxData.undo[redo.getState()].flipX());
 
-        const ButtonDesc fullRedo = widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
+        const ButtonDesc fullRedo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
         renderRect(fullRedo.getRect(), cardGfxData.fullUndo[fullRedo.getState()].flipX());
 
-        const ButtonDesc newGame = widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
+        const ButtonDesc newGame = commander.widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
         renderRect(newGame.getRect(), cardGfxData.newGame[newGame.getState()]);
     }
 
     SystemAPI*  sys;
     CardGfxData cardGfxData;
 
+    Input input;
     GameState gameState;
-    Layout    layout;
-    Input     input;
-
-    WidgetLayout widgetLayout;
-    GameLayout   gameLayout;
     Commander commander;
 };
 

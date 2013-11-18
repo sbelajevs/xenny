@@ -225,12 +225,13 @@ class Commander
 {
 public:
     Commander();
-    void init(GameState* aGameState, WidgetLayout* aWidgetLayout, GameLayout* aGameLayout);
+    void init(GameState* aGameState);
     void handleInput(const Input& input);
     void update();
 
-    WidgetLayout* widgetLayout;
-    GameLayout*   gameLayout;
+    Layout layout;
+    WidgetLayout widgetLayout;
+    GameLayout gameLayout;
 private:
     void handleInputForButtons(const Input& input);
     void handleInputForGame(const Input& input);

@@ -539,15 +539,17 @@ WidgetLayout::ButtonType WidgetLayout::probe(float x, float y)
     return BUTTON_MAX;
 }
 
-Commander::Commander(): gameState(NULL_PTR), widgetLayout(NULL_PTR), gameLayout(NULL_PTR)
+Commander::Commander(): gameState(NULL_PTR)
 {
 }
 
-void Commander::init(GameState* aGameState, WidgetLayout* aWidgetLayout, GameLayout* aGameLayout)
+void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
-    widgetLayout = aWidgetLayout;
-    gameLayout = aGameLayout;
+
+    layout.init();
+    widgetLayout.init(layout);
+    gameLayout.init(*gameState, layout);
 }
 
 void Commander::handleInput(const Input& input)
@@ -569,7 +571,7 @@ void Commander::handleInput(const Input& input)
 
 void Commander::handleInputForGame(const Input& input)
 {
-    if (gameLayout->isAnimationPlaying()) {
+    if (gameLayout.isAnimationPlaying()) {
         return;
     }
 
@@ -600,17 +602,17 @@ void Commander::handleInputForGame(const Input& input)
 
 void Commander::handleInputForButtons(const Input& input)
 {
-    widgetLayout->buttons[WidgetLayout::BUTTON_NEW].setState(ButtonDesc::STATE_NORMAL);
-    widgetLayout->buttons[WidgetLayout::BUTTON_FULL_REDO].setEnabled(gameState->history.canRedo());
-    widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setEnabled(gameState->history.canRedo());
-    widgetLayout->buttons[WidgetLayout::BUTTON_FULL_UNDO].setEnabled(gameState->history.canUndo());
-    widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
+    widgetLayout.buttons[WidgetLayout::BUTTON_NEW].setState(ButtonDesc::STATE_NORMAL);
+    widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO].setEnabled(gameState->history.canRedo());
+    widgetLayout.buttons[WidgetLayout::BUTTON_REDO].setEnabled(gameState->history.canRedo());
+    widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO].setEnabled(gameState->history.canUndo());
+    widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
     
-    WidgetLayout::ButtonType focusButton = widgetLayout->probe(input.x, input.y);
+    WidgetLayout::ButtonType focusButton = widgetLayout.probe(input.x, input.y);
 
     for (int i=0; i<WidgetLayout::BUTTON_MAX; i++)
     {
-        ButtonDesc& bd = widgetLayout->buttons[i];
+        ButtonDesc& bd = widgetLayout.buttons[i];
         if (bd.enabled())
         {
             bd.setState(focusButton == i 
@@ -636,20 +638,20 @@ void Commander::handleInputForButtons(const Input& input)
 
     if (input.left.pressed == false && input.right.pressed == false)
     {
-        if (widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].enabled())
+        if (widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].enabled())
         {
             if (input.back.pressed) {
-                widgetLayout->buttons[WidgetLayout::BUTTON_UNDO].setState(ButtonDesc::STATE_CLICKED);
+                widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].setState(ButtonDesc::STATE_CLICKED);
             }
             if (input.back.clicked) {
                 cmdUndo();
             }
         }
     
-        if (widgetLayout->buttons[WidgetLayout::BUTTON_REDO].enabled())
+        if (widgetLayout.buttons[WidgetLayout::BUTTON_REDO].enabled())
         {
             if (input.fwrd.pressed) {
-                widgetLayout->buttons[WidgetLayout::BUTTON_REDO].setState(ButtonDesc::STATE_CLICKED);
+                widgetLayout.buttons[WidgetLayout::BUTTON_REDO].setState(ButtonDesc::STATE_CLICKED);
             }
             if (input.fwrd.clicked) {
                 cmdRedo();
@@ -660,16 +662,16 @@ void Commander::handleInputForButtons(const Input& input)
 
 void Commander::update()
 {
-    gameLayout->movementAnimation.update();
+    gameLayout.movementAnimation.update();
 
-    if (gameLayout->isAnimationPlaying()) {
+    if (gameLayout.isAnimationPlaying()) {
         // Animation might update hand position, but only for topmost card
-        gameLayout->realignStack(&gameState->hand);
+        gameLayout.realignStack(&gameState->hand);
     } else {
         // Game state could be changed by someone outside of this class, 
         // so it is better to rebuild rects before rendering.
         // But we shouldn't mess with animation!
-        gameLayout->initRects();
+        gameLayout.initRects();
    }
 }
 
@@ -706,7 +708,7 @@ void Commander::cmdAdvanceStock()
 void Commander::cmdPickHand(float x, float y)
 {
     int stackIdx = -1;
-    CardStack* stack = gameLayout->probe(x, y, &stackIdx);
+    CardStack* stack = gameLayout.probe(x, y, &stackIdx);
 
     if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
@@ -714,7 +716,7 @@ void Commander::cmdPickHand(float x, float y)
             || stack->type == CardStack::TYPE_TABLEAU 
             || stack->type == CardStack::TYPE_FOUNDATION)
         {
-            gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[(*stack)[stackIdx].id];
+            gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[(*stack)[stackIdx].id];
             gameState->fillHand(stack, stackIdx);
         }
     }
@@ -723,8 +725,8 @@ void Commander::cmdPickHand(float x, float y)
 void Commander::cmdMoveHand(float dx, float dy)
 {
     if (gameState->hand.empty() == false) {
-        gameLayout->stackRects[gameState->hand.handle].translate(dx, dy);
-        gameLayout->realignStack(&gameState->hand);
+        gameLayout.stackRects[gameState->hand.handle].translate(dx, dy);
+        gameLayout.realignStack(&gameState->hand);
     }
 }
 
@@ -735,7 +737,7 @@ void Commander::cmdReleaseHand()
     }
 
     CardStack* destStack = gameState->handSource;
-    Rect handRect = gameLayout->cardRects[gameState->hand[0].id];
+    Rect handRect = gameLayout.cardRects[gameState->hand[0].id];
     float bestDist = -1.f;
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
@@ -750,7 +752,7 @@ void Commander::cmdReleaseHand()
             CardStack* destCandidate = &stacks[i][j]; 
             if (destCandidate == gameState->handSource || gameState->canReleaseHand(destCandidate)) 
             {
-                Rect destRect = gameLayout->getDestCardRect(destCandidate);
+                Rect destRect = gameLayout.getDestCardRect(destCandidate);
                 float destX = destRect.x + destRect.w/2.f;
                 float destY = destRect.y + destRect.h/2.f;
                 float dist = getVAdjustedDistSqr(x, y, destX, destY);
@@ -763,13 +765,13 @@ void Commander::cmdReleaseHand()
         }
     }
 
-    gameLayout->movementAnimation.start(gameLayout, gameState->handSource, destStack);
+    gameLayout.movementAnimation.start(&gameLayout, gameState->handSource, destStack);
 }
 
 void Commander::cmdAutoClick(float x, float y)
 {
     int stackIdx = -1;
-    CardStack* stack = gameLayout->probe(x, y, &stackIdx);
+    CardStack* stack = gameLayout.probe(x, y, &stackIdx);
 
     if (stack == NULL_PTR) {
         return;
@@ -782,9 +784,9 @@ void Commander::cmdAutoClick(float x, float y)
     else if (stack->type == CardStack::TYPE_TABLEAU 
         || stack->type == CardStack::TYPE_WASTE)
     {
-        gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[stack->top().id];
+        gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[stack->top().id];
         gameState->fillHand(stack, stack->size()-1);
         CardStack* destStack = gameState->findFoundationDest();
-        gameLayout->movementAnimation.start(gameLayout, stack, destStack);
+        gameLayout.movementAnimation.start(&gameLayout, stack, destStack);
     }
 }
