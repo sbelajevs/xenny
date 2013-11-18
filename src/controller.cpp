@@ -204,11 +204,18 @@ GameLayout::GameLayout(): busy(false)
 {
 }
 
-void GameLayout::init(GameState& gs, Layout& l)
+void GameLayout::init(GameState& gs, const Layout& layout)
 {
     gameState = &gs;
-    layout = &l;
     busy = false;
+
+    for (int i=0; i<STACK_COUNT; i++)
+    {
+        CardStack*cs = gameState->getStack(i);
+        if (cs->type != CardStack::TYPE_HAND) {
+            stackRects[cs->handle] = layout.getStackRect(cs);
+        }
+    }
 
     initRects();
 }
@@ -218,10 +225,8 @@ void GameLayout::initRects()
     for (int i=0; i<STACK_COUNT; i++) 
     {
         CardStack* cs = gameState->getStack(i);
-        if (cs->type != CardStack::TYPE_HAND)
-        {
-            stackRects[cs->handle] = layout->getStackRect(cs);
-            updateCardRects(cs);
+        if (cs->type != CardStack::TYPE_HAND) {
+            realignStack(cs);
         }
     }
 }
@@ -236,17 +241,7 @@ bool GameLayout::isAnimationPlaying() const
     return movementAnimation.isPlaying();
 }
 
-Rect GameLayout::getCardRect(int cardValue) const
-{
-    return cardRects[cardValue];
-}
-
-Rect GameLayout::getStackRect(const CardStack* stack) const
-{
-    return stackRects[stack->handle];
-}
-
-void GameLayout::updateCardRects(const CardStack* stack)
+void GameLayout::realignStack(const CardStack* stack)
 {
     if (stack == NULL_PTR) {
         return;
@@ -273,7 +268,7 @@ Rect GameLayout::getDestCardRect(CardStack* stack) const
     }
 
     GameCard gc = stack->top();
-    Rect res = getCardRect(gc.value);
+    Rect res = cardRects[gc.value];
     if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
         res.y += gc.isOpened()
             ? CARD_OPEN_SLIDE
@@ -290,7 +285,7 @@ CardStack* GameLayout::probe(float x, float y, int* idx) const
         CardStack* s = gameState->getStack(i);
         for (int j = s->size() - 1; j >= 0; j--) {
             int v = (*s)[j].value;
-            if (getCardRect(v).inside(x, y)) {
+            if (cardRects[v].inside(x, y)) {
                 *idx = j;
                 return s;
             }
@@ -672,7 +667,7 @@ void Commander::update()
 
     if (gameLayout->isAnimationPlaying()) {
         // Animation might update hand position, but only for topmost card
-        gameLayout->updateCardRects(&gameState->hand);
+        gameLayout->realignStack(&gameState->hand);
     } else {
         // Game state could be changed by someone outside of this class, 
         // so it is better to rebuild rects before rendering.
@@ -722,7 +717,7 @@ void Commander::cmdPickHand(float x, float y)
             || stack->type == CardStack::TYPE_TABLEAU 
             || stack->type == CardStack::TYPE_FOUNDATION)
         {
-            gameLayout->stackRects[gameState->hand.handle] = gameLayout->getCardRect((*stack)[stackIdx].value);
+            gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[(*stack)[stackIdx].value];
             gameState->fillHand(stack, stackIdx);
         }
     }
@@ -732,7 +727,7 @@ void Commander::cmdMoveHand(float dx, float dy)
 {
     if (gameState->hand.empty() == false) {
         gameLayout->stackRects[gameState->hand.handle].translate(dx, dy);
-        gameLayout->updateCardRects(&gameState->hand);
+        gameLayout->realignStack(&gameState->hand);
     }
 }
 
@@ -743,7 +738,7 @@ void Commander::cmdReleaseHand()
     }
 
     CardStack* destStack = gameState->handSource;
-    Rect handRect = gameLayout->getCardRect(gameState->hand[0].value);
+    Rect handRect = gameLayout->cardRects[gameState->hand[0].value];
     float bestDist = -1.f;
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
@@ -790,7 +785,7 @@ void Commander::cmdAutoClick(float x, float y)
     else if (stack->type == CardStack::TYPE_TABLEAU 
         || stack->type == CardStack::TYPE_WASTE)
     {
-        gameLayout->stackRects[gameState->hand.handle] = gameLayout->getCardRect(stack->top().value);
+        gameLayout->stackRects[gameState->hand.handle] = gameLayout->cardRects[stack->top().value];
         gameState->fillHand(stack, stack->size()-1);
         CardStack* destStack = gameState->findFoundationDest();
         gameLayout->movementAnimation.start(gameLayout, stack, destStack);

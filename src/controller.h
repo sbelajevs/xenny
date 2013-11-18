@@ -120,25 +120,21 @@ class GameLayout
 {
 public:
     GameLayout();
+    void init(GameState& gs, const Layout& l);
+    CardStack* probe(float x, float y, int* idx) const;
 
-    void init(GameState& gs, Layout& l);
     bool isBusy() const;
 
-    Rect getCardRect(int cardValue) const;
-    Rect getStackRect(const CardStack* stack) const;
+    Rect cardRects[CARDS_TOTAL];
+    Rect stackRects[STACK_COUNT];
 
     bool isAnimationPlaying() const;
 
     void initRects();
-    void updateCardRects(const CardStack* stack);
+    void realignStack(const CardStack* stack);
     Rect getDestCardRect(CardStack* stack) const;
-    CardStack* probe(float x, float y, int* idx) const;
     
-    Rect cardRects[CARDS_TOTAL];
-    Rect stackRects[STACK_COUNT];
-
     GameState* gameState;
-    Layout* layout;
     bool busy;
 
     class TurningAnimation
@@ -223,7 +219,6 @@ public:
 
     WidgetLayout();
     void init(const Layout& layout);
-
     ButtonType probe(float x, float y);
 
     ButtonDesc buttons[BUTTON_MAX];

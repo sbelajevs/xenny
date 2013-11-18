@@ -121,7 +121,7 @@ private:
     {
         if (stack->empty() && emptyTexRect.empty() == false)
         {
-            renderRect(gameLayout.getStackRect(stack), emptyTexRect);
+            renderRect(gameLayout.stackRects[stack->handle], emptyTexRect);
         }
         else
         {
@@ -134,7 +134,7 @@ private:
                     Rect texRect = (*stack)[i].isOpened()
                         ? cardGfxData.cardFaces[cardValue] 
                         : cardGfxData.cardBack;
-                    renderRect(gameLayout.getCardRect(cardValue), texRect);
+                    renderRect(gameLayout.cardRects[cardValue], texRect);
                 }
             }
             else
@@ -144,7 +144,7 @@ private:
                 Rect texRect = (*stack)[idx].isOpened() 
                     ? cardGfxData.cardFaces[cardValue] 
                     : cardGfxData.cardBack;
-                renderRect(gameLayout.getCardRect(cardValue), texRect);
+                renderRect(gameLayout.cardRects[cardValue], texRect);
             }
         }
     }
