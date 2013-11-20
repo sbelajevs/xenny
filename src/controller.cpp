@@ -294,16 +294,14 @@ void GameLayout::init(GameState& gs, const Layout& layout)
 
 Rect GameLayout::getDestCardRect(const CardStack* stack) const
 {
-    if (stack->empty()) {
-        return stackRects[stack->handle];
-    }
+    Rect screenRect = stackRects[stack->handle];
 
-    CardDesc cd = cardDescs[stack->top().id];
-    Rect screenRect = cd.screenRect;
     if (stack->type == CardStack::TYPE_TABLEAU 
-        || stack->type == CardStack::TYPE_HAND) 
+        || stack->type == CardStack::TYPE_HAND)
     {
-        screenRect.y += cd.opened ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+        for (int i=0; i<stack->size(); i++) {
+            screenRect.y += (*stack)[i].opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+        }
     }
 
     return screenRect;
@@ -571,41 +569,89 @@ void Commander::handleInputForButtons(const Input& input)
 
 void Commander::update()
 {
+    int idx = 0;
+    while (idx < tweens.size())
+    {
+        tweens[idx].update();
+        if (tweens[idx].finished()) 
+        {
+            tweens[idx] = tweens.top();
+            tweens.pop();
+        } 
+        else 
+        {
+            idx++;
+        }
+    }
+}
+
+void Commander::addMovementAnimation(CardStack* dest)
+{
+    CardStack* hand = &gameState->hand;
+
+    Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
+    Rect endR = gameLayout.getDestCardRect(dest);
+    float distSqr = getDistSqr(begR.x, begR.y, endR.x, endR.y);
+    int ticks = 4 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
+    if (ticks > 24) {
+        ticks = 24;
+    }
+
+    for (int i=0; i<hand->size(); i++)
+    {
+        GameCard gc = (*hand)[i];
+        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.x, endR.x-begR.x, ticks));
+        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, ticks));
+    }
+
+    // TODO[#014]: get rid of it after card turning is implemented
+    if (gameState->handSource != dest 
+        && gameState->handSource->empty() == false 
+        && gameState->handSource->top().opened() == false) 
+    {
+        gameLayout.cardDescs[gameState->handSource->top().id].opened = true;
+    }
 }
 
 void Commander::cmdUndo()
 {
     gameState->undo();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdRedo()
 {
     gameState->redo();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdNew()
 {
     gameState->init();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAdvanceStock()
 {
     gameState->advanceStock();
+    tweens.clear();
     gameLayout.reset(*gameState);
 }
 
@@ -622,10 +668,15 @@ void Commander::cmdPickHand(float x, float y)
             || stack->type == CardStack::TYPE_FOUNDATION)
         {
             gameState->fillHand(stack, stackIdx);
-            for (int i=0; i<gameState->hand.size(); i++) {
-                gameLayout.raiseZ(gameState->hand[i].id);
-            }
+            raiseHand();
         }
+    }
+}
+
+void Commander::raiseHand()
+{
+    for (int i=0; i<gameState->hand.size(); i++) {
+        gameLayout.raiseZ(gameState->hand[i].id);
     }
 }
 
@@ -676,8 +727,8 @@ void Commander::cmdReleaseHand()
         }
     }
 
+    addMovementAnimation(destStack);
     gameState->releaseHand(destStack);
-    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAutoClick(float x, float y)
@@ -698,8 +749,9 @@ void Commander::cmdAutoClick(float x, float y)
         && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE))
     {
         gameState->fillHand(stack, stack->size()-1);
+        raiseHand();
         CardStack* destStack = gameState->findHandAutoDest();
+        addMovementAnimation(destStack);
         gameState->releaseHand(destStack);
-        gameLayout.reset(*gameState);
     }
 }
