@@ -200,9 +200,84 @@ void Input::update()
     oldY = y;
 }
 
+CardDesc::CardDesc(): id(-1), z(0), opened(false)
+{
+}
+
+CardDesc::CardDesc(int id, int z, bool opened, Rect screenPos)
+    : id(id), z(z), opened(opened), screenPos(screenPos)
+{
+}
+
 GameLayout::GameLayout()
 {
 }
+
+void GameLayout::reset(GameState& gameState)
+{
+    curZ = 0;
+    for (int i=0; i<STACK_COUNT; i++)
+    {
+        CardStack* cs = gameState.getStack(i);
+        Rect screenPos = stackRects[cs->handle];
+        for (int j=0; j<cs->size(); j++, curZ++)
+        {
+            GameCard gc = (*cs)[j];
+            cardDescs[curZ] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
+            if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
+                screenPos.y += gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+            }
+        }
+    }
+    normalized = true;
+}
+
+void GameLayout::ensureNormalize()
+{
+    if (normalized) {
+        return;
+    }
+
+    int zToId[MAX_Z];
+    for (int i=0; i<MAX_Z; i++) {
+        zToId[i] = -1;
+    }
+
+    for (int i=0; i<CARDS_TOTAL; i++) {
+        zToId[cardDescs[i].z] = cardDescs[i].id;
+    }
+
+    curZ = 0;
+    for (int i=0; i<MAX_Z; i++) {
+        if (zToId[i] != -1) {
+            cardDescs[zToId[i]].z = curZ++;
+        }
+    }
+
+    // assert(curZ == CARDS_TOTAL)
+
+    for (int i=0; i<CARDS_TOTAL; i++) {
+        orderedIds[cardDescs[i].z] = i;
+    }
+    
+    normalized = true;
+}
+
+void GameLayout::raiseZ(int cardId)
+{
+    cardDescs[cardId].z = curZ++;
+    normalized = false;
+    if (curZ >= MAX_Z) {
+        ensureNormalize();
+    }
+}
+
+const CardDesc& GameLayout::getOrderedCard(int ordinal)
+{
+    ensureNormalize();
+    return cardDescs[orderedIds[ordinal]];
+}
+
 
 void GameLayout::init(GameState& gs, const Layout& layout)
 {
@@ -551,6 +626,7 @@ void Commander::init(GameState* aGameState)
     layout.init();
     widgetLayout.init(layout);
     gameLayout.init(*gameState, layout);
+    gameLayout.reset(*gameState);
 }
 
 void Commander::handleInput(const Input& input)
@@ -675,36 +751,42 @@ void Commander::cmdUndo()
 {
     gameState->undo();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdRedo()
 {
     gameState->redo();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdNew()
 {
     gameState->init();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAdvanceStock()
 {
     gameState->advanceStock();
     gameLayout.initRects();
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdPickHand(float x, float y)
@@ -720,8 +802,13 @@ void Commander::cmdPickHand(float x, float y)
         {
             gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[(*stack)[stackIdx].id];
             gameState->fillHand(stack, stackIdx);
+            for (int i=0; i<gameState->hand.size(); i++) {
+                gameLayout.raiseZ(gameState->hand[i].id);
+            }
         }
     }
+    
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdMoveHand(float dx, float dy)
@@ -730,6 +817,8 @@ void Commander::cmdMoveHand(float dx, float dy)
         gameLayout.stackRects[gameState->hand.handle].translate(dx, dy);
         gameLayout.realignStack(&gameState->hand);
     }
+
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdReleaseHand()
@@ -768,6 +857,7 @@ void Commander::cmdReleaseHand()
     }
 
     gameLayout.movementAnimation.start(&gameLayout, gameState->handSource, destStack);
+    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAutoClick(float x, float y)
@@ -791,4 +881,6 @@ void Commander::cmdAutoClick(float x, float y)
         CardStack* destStack = gameState->findFoundationDest();
         gameLayout.movementAnimation.start(&gameLayout, stack, destStack);
     }
+
+    gameLayout.reset(*gameState);
 }

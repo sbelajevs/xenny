@@ -116,6 +116,18 @@ private:
     float lastValue;
 };
 
+class CardDesc
+{
+public:
+    CardDesc();
+    CardDesc(int id, int z, bool opened, Rect screenPos);
+
+    int id;
+    int z;
+    bool opened;
+    Rect screenPos;
+};
+
 class GameLayout
 {
 public:
@@ -169,6 +181,19 @@ public:
         TurningAnimation turningAnimation;
     };
     MovementAnimation movementAnimation;
+
+    void reset(GameState& gameState);
+    void raiseZ(int cardId);
+    const CardDesc& getOrderedCard(int ordinal);
+
+private:
+    void ensureNormalize();
+
+    static const int MAX_Z = 128;
+    CardDesc cardDescs[CARDS_TOTAL];
+    int orderedIds[CARDS_TOTAL];
+    int curZ;
+    bool normalized;
 };
 
 class ButtonDesc
