@@ -120,77 +120,34 @@ class CardDesc
 {
 public:
     CardDesc();
-    CardDesc(int id, int z, bool opened, Rect screenPos);
+    CardDesc(int id, int z, bool opened, Rect screenRect);
 
     int id;
     int z;
     bool opened;
-    Rect screenPos;
+    Rect screenRect;
 };
 
 class GameLayout
 {
 public:
     GameLayout();
+
     void init(GameState& gs, const Layout& l);
-    CardStack* probe(float x, float y, int* idx) const;
-
-    Rect cardRects[CARDS_TOTAL];
-    Rect stackRects[STACK_COUNT];
-
-    bool isAnimationPlaying() const;
-
-    void initRects();
-    void realignStack(const CardStack* stack);
-    Rect getDestCardRect(const CardStack* stack) const;
-    
-    GameState* gameState;
-
-    class TurningAnimation
-    {
-    public:
-        TurningAnimation();
-        void start(GameLayout* gg, CardStack* srcStack, int delayTicks);
-        void update();
-        bool isPlaying() const;
-    private:
-        Tween movementX;
-        Tween movementW;
-        GameLayout* gui;
-        CardStack* src;
-        Rect startRect;
-        bool playing;
-        bool midpointPassed;
-        int waitTicks;
-    };
-
-    class MovementAnimation
-    {
-    public:
-        MovementAnimation();
-        void start(GameLayout* gg, CardStack* srcStack, CardStack* destStack);
-        void update();
-        bool isPlaying() const;
-    private:
-        Tween movementX;
-        Tween movementY;
-        GameLayout* gui;
-        CardStack* dest; 
-        CardStack* src;
-        bool playing;
-        TurningAnimation turningAnimation;
-    };
-    MovementAnimation movementAnimation;
-
     void reset(GameState& gameState);
     void raiseZ(int cardId);
+
+    int probe(float x, float y);
+    Rect getDestCardRect(const CardStack* stack) const;
     const CardDesc& getOrderedCard(int ordinal);
+    
+    Rect stackRects[STACK_COUNT];
+    CardDesc cardDescs[CARDS_TOTAL];
 
 private:
     void ensureNormalize();
 
     static const int MAX_Z = 128;
-    CardDesc cardDescs[CARDS_TOTAL];
     int orderedIds[CARDS_TOTAL];
     int curZ;
     bool normalized;

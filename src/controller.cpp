@@ -204,8 +204,8 @@ CardDesc::CardDesc(): id(-1), z(0), opened(false)
 {
 }
 
-CardDesc::CardDesc(int id, int z, bool opened, Rect screenPos)
-    : id(id), z(z), opened(opened), screenPos(screenPos)
+CardDesc::CardDesc(int id, int z, bool opened, Rect screenRect)
+    : id(id), z(z), opened(opened), screenRect(screenRect)
 {
 }
 
@@ -223,7 +223,8 @@ void GameLayout::reset(GameState& gameState)
         for (int j=0; j<cs->size(); j++, curZ++)
         {
             GameCard gc = (*cs)[j];
-            cardDescs[curZ] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
+            cardDescs[gc.id] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
+            orderedIds[curZ] = gc.id;
             if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
                 screenPos.y += gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
             }
@@ -257,7 +258,7 @@ void GameLayout::ensureNormalize()
     // assert(curZ == CARDS_TOTAL)
 
     for (int i=0; i<CARDS_TOTAL; i++) {
-        orderedIds[cardDescs[i].z] = i;
+        orderedIds[cardDescs[i].z] = cardDescs[i].id;
     }
     
     normalized = true;
@@ -278,56 +279,17 @@ const CardDesc& GameLayout::getOrderedCard(int ordinal)
     return cardDescs[orderedIds[ordinal]];
 }
 
-
 void GameLayout::init(GameState& gs, const Layout& layout)
 {
-    gameState = &gs;
-
     for (int i=0; i<STACK_COUNT; i++)
     {
-        CardStack*cs = gameState->getStack(i);
+        CardStack*cs = gs.getStack(i);
         if (cs->type != CardStack::TYPE_HAND) {
             stackRects[cs->handle] = layout.getStackRect(cs);
         }
     }
 
-    initRects();
-}
-
-void GameLayout::initRects()
-{
-    for (int i=0; i<STACK_COUNT; i++) 
-    {
-        CardStack* cs = gameState->getStack(i);
-        if (cs->type != CardStack::TYPE_HAND) {
-            realignStack(cs);
-        }
-    }
-}
-
-bool GameLayout::isAnimationPlaying() const
-{
-    return movementAnimation.isPlaying();
-}
-
-void GameLayout::realignStack(const CardStack* stack)
-{
-    if (stack == NULL_PTR) {
-        return;
-    }
-
-    Rect resultingRect = stackRects[stack->handle];
-    
-    for (int i=0; i<stack->size(); i++) 
-    {
-        int cardId = (*stack)[i].id;
-        cardRects[cardId] = resultingRect;
-        if (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_HAND) {
-            resultingRect.y += (*stack)[i].opened()
-                ? CARD_OPEN_SLIDE
-                : CARD_CLOSED_SLIDE;
-        }
-    }
+    reset(gs);
 }
 
 Rect GameLayout::getDestCardRect(const CardStack* stack) const
@@ -336,32 +298,30 @@ Rect GameLayout::getDestCardRect(const CardStack* stack) const
         return stackRects[stack->handle];
     }
 
-    GameCard gc = stack->top();
-    Rect res = cardRects[gc.id];
+    CardDesc cd = cardDescs[stack->top().id];
+    Rect screenRect = cd.screenRect;
     if (stack->type == CardStack::TYPE_TABLEAU 
         || stack->type == CardStack::TYPE_HAND) 
     {
-        res.y += gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+        screenRect.y += cd.opened ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
     }
 
-    return res;
+    return screenRect;
 }
 
-CardStack* GameLayout::probe(float x, float y, int* idx) const
+int GameLayout::probe(float x, float y)
 {
-    for (int i=0; i<STACK_COUNT; i++)
+    ensureNormalize();
+
+    for (int i=CARDS_TOTAL-1; i>=0; i--)
     {
-        CardStack* s = gameState->getStack(i);
-        for (int j = s->size() - 1; j >= 0; j--) {
-            int id = (*s)[j].id;
-            if (cardRects[id].inside(x, y)) {
-                *idx = j;
-                return s;
-            }
+        CardDesc cd = cardDescs[orderedIds[i]];
+        if (cd.screenRect.inside(x, y)) {
+            return cd.id;
         }
     }
 
-    return NULL_PTR;
+    return -1;
 }
 
 Tween::Tween(): receiver(NULL_PTR), ticksLeft(0), delayLeft(0)
@@ -400,129 +360,6 @@ bool Tween::finished()
 float Tween::curveLinear(float x)
 {
     return x;
-}
-
-GameLayout::TurningAnimation::TurningAnimation(): playing(false)
-{
-}
-
-void GameLayout::TurningAnimation::start(GameLayout* gg, CardStack* srcStack, int delayTicks)
-{
-    gui = gg;
-    src = srcStack;
-    playing = true;
-    midpointPassed = false;
-    waitTicks = delayTicks;
-    
-    GameCard gc = srcStack->top();
-
-    startRect = gui->cardRects[gc.id];
-    Rect endRect = startRect;
-    endRect.w = 1.f;
-    endRect.x += (startRect.w - endRect.w)/2.f;
-
-    movementX = Tween(&gui->cardRects[gc.id].x, (CARD_WIDTH-1.f)/2.f, 6);
-    movementW = Tween(&gui->cardRects[gc.id].w, -(CARD_WIDTH-1.f), 6);
-}
-
-void GameLayout::TurningAnimation::update()
-{
-    if (playing)
-    {
-        if (waitTicks > 0) 
-        {
-            waitTicks--;
-            return;
-        }
-
-        if (movementX.finished() == false) {
-            movementX.update();
-        }
-        if (movementW.finished() == false) {
-            movementW.update();
-        }
-
-        if (movementX.finished() && movementW.finished())
-        {
-            if (midpointPassed == false)
-            {
-                GameCard& gc = src->top();
-                gc.switchState();
-                movementX = Tween(&gui->cardRects[gc.id].x, -(CARD_WIDTH-1.f)/2.f, 6);
-                movementW = Tween(&gui->cardRects[gc.id].w, CARD_WIDTH-1.f, 6);
-                movementX.update();
-                movementW.update();
-                midpointPassed = true;
-            }
-            else
-            {
-                src->top().switchState();
-                playing = false;
-            }
-        }
-    }
-}
-
-bool GameLayout::TurningAnimation::isPlaying() const
-{
-    return playing;
-}
-
-GameLayout::MovementAnimation::MovementAnimation(): playing(false)
-{
-}
-
-void GameLayout::MovementAnimation::start(GameLayout* gg, CardStack* srcStack, CardStack* destStack)
-{
-    gui = gg;
-    src = srcStack;
-    dest = destStack;
-    playing = true;
-    
-    CardStack* hand = &gui->gameState->hand;
-
-    Rect begR = gui->stackRects[hand->handle];
-    Rect endR = gui->getDestCardRect(destStack);
-    float distSqr = getDistSqr(begR.x, begR.y, endR.x, endR.y);
-    int ticks = 4 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
-    if (ticks > 24) {
-        ticks = 24;
-    }
-
-    movementX = Tween(&gui->stackRects[hand->handle].x, endR.x-begR.x, ticks);
-    movementY = Tween(&gui->stackRects[hand->handle].y, endR.y-begR.y, ticks);
-
-    if (src != dest && src->empty() == false && src->top().opened() == false) {
-        turningAnimation.start(gui, src, ticks);
-    }
-}
-
-void GameLayout::MovementAnimation::update()
-{
-    if (playing)
-    {
-        if (movementX.finished() == false) {
-            movementX.update();
-        }
-        if (movementY.finished() == false) {
-            movementY.update();
-        }
-        if (turningAnimation.isPlaying()) {
-            turningAnimation.update();
-        }
-
-        if (movementX.finished() && movementY.finished() && turningAnimation.isPlaying() == false)
-        {
-            gui->gameState->releaseHand(dest);
-            gui->initRects();
-            playing = false;
-        }
-    }
-}
-
-bool GameLayout::MovementAnimation::isPlaying() const
-{
-    return playing;
 }
 
 ButtonDesc::ButtonDesc(): isVisible(false)
@@ -626,7 +463,6 @@ void Commander::init(GameState* aGameState)
     layout.init();
     widgetLayout.init(layout);
     gameLayout.init(*gameState, layout);
-    gameLayout.reset(*gameState);
 }
 
 void Commander::handleInput(const Input& input)
@@ -648,10 +484,6 @@ void Commander::handleInput(const Input& input)
 
 void Commander::handleInputForGame(const Input& input)
 {
-    if (gameLayout.isAnimationPlaying()) {
-        return;
-    }
-
     float x = input.x;
     float y = input.y;
     if (input.dragStart)
@@ -739,86 +571,74 @@ void Commander::handleInputForButtons(const Input& input)
 
 void Commander::update()
 {
-    gameLayout.movementAnimation.update();
-
-    if (gameLayout.isAnimationPlaying()) {
-        // Animation might update hand position, but only for topmost card
-        gameLayout.realignStack(&gameState->hand);
-    }
 }
 
 void Commander::cmdUndo()
 {
     gameState->undo();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdRedo()
 {
     gameState->redo();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdNew()
 {
     gameState->init();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAdvanceStock()
 {
     gameState->advanceStock();
-    gameLayout.initRects();
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdPickHand(float x, float y)
 {
     int stackIdx = -1;
-    CardStack* stack = gameLayout.probe(x, y, &stackIdx);
-
+    int cardId = gameLayout.probe(x, y);
+    CardStack* stack = gameState->findById(cardId, &stackIdx);
+    
     if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
         if (stack->type == CardStack::TYPE_WASTE 
             || stack->type == CardStack::TYPE_TABLEAU 
             || stack->type == CardStack::TYPE_FOUNDATION)
         {
-            gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[(*stack)[stackIdx].id];
             gameState->fillHand(stack, stackIdx);
             for (int i=0; i<gameState->hand.size(); i++) {
                 gameLayout.raiseZ(gameState->hand[i].id);
             }
         }
     }
-    
-    gameLayout.reset(*gameState);
 }
 
 void Commander::cmdMoveHand(float dx, float dy)
 {
     if (gameState->hand.empty() == false) {
-        gameLayout.stackRects[gameState->hand.handle].translate(dx, dy);
-        gameLayout.realignStack(&gameState->hand);
-    }
 
-    gameLayout.reset(*gameState);
+        for (int i=0; i<gameState->hand.size(); i++)
+        {
+            GameCard gc = gameState->hand[i];
+            gameLayout.cardDescs[gc.id].screenRect.translate(dx, dy);
+        }
+    }
 }
 
 void Commander::cmdReleaseHand()
@@ -828,7 +648,7 @@ void Commander::cmdReleaseHand()
     }
 
     CardStack* destStack = gameState->handSource;
-    Rect handRect = gameLayout.cardRects[gameState->hand[0].id];
+    Rect handRect = gameLayout.cardDescs[gameState->hand[0].id].screenRect;
     float bestDist = -1.f;
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
@@ -856,14 +676,15 @@ void Commander::cmdReleaseHand()
         }
     }
 
-    gameLayout.movementAnimation.start(&gameLayout, gameState->handSource, destStack);
+    gameState->releaseHand(destStack);
     gameLayout.reset(*gameState);
 }
 
 void Commander::cmdAutoClick(float x, float y)
 {
     int stackIdx = -1;
-    CardStack* stack = gameLayout.probe(x, y, &stackIdx);
+    int cardId = gameLayout.probe(x, y);
+    CardStack* stack = gameState->findById(cardId, &stackIdx);
 
     if (stack == NULL_PTR) {
         return;
@@ -876,11 +697,9 @@ void Commander::cmdAutoClick(float x, float y)
     else if (stackIdx == stack->size() - 1
         && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE))
     {
-        gameLayout.stackRects[gameState->hand.handle] = gameLayout.cardRects[stack->top().id];
         gameState->fillHand(stack, stack->size()-1);
-        CardStack* destStack = gameState->findFoundationDest();
-        gameLayout.movementAnimation.start(&gameLayout, stack, destStack);
+        CardStack* destStack = gameState->findHandAutoDest();
+        gameState->releaseHand(destStack);
+        gameLayout.reset(*gameState);
     }
-
-    gameLayout.reset(*gameState);
 }

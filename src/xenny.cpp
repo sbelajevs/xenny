@@ -113,51 +113,22 @@ private:
         );
     }
 
-    void renderCardStack(const CardStack* stack, Rect emptyTexRect)
-    {
-        if (stack->empty() && emptyTexRect.empty() == false)
-        {
-            renderRect(commander.gameLayout.stackRects[stack->handle], emptyTexRect);
-        }
-        else
-        {
-            if (stack->type == CardStack::TYPE_HAND 
-                || stack->type == CardStack::TYPE_TABLEAU)
-            {
-                for (int i=0; i<stack->size(); i++)
-                {
-                    int cardId = (*stack)[i].id;
-                    Rect texRect = (*stack)[i].opened()
-                        ? cardGfxData.cardFaces[cardId] 
-                        : cardGfxData.cardBack;
-                    renderRect(commander.gameLayout.cardRects[cardId], texRect);
-                }
-            }
-            else
-            {
-                int idx = stack->size()-1;
-                int cardId = (*stack)[idx].id;
-                Rect texRect = (*stack)[idx].opened() 
-                    ? cardGfxData.cardFaces[cardId] 
-                    : cardGfxData.cardBack;
-                renderRect(commander.gameLayout.cardRects[cardId], texRect);
-            }
-        }
-    }
-
     void renderGameGUI()
     {
-        for (int i=0; i<FOUNDATION_COUNT; i++) {
-            renderCardStack(&gameState.foundations[i], cardGfxData.cardFoundation);
+        for (int i=0; i<STACK_COUNT; i++) 
+        {
+            CardStack* cs = gameState.getStack(i);
+            Rect screenRect = commander.gameLayout.stackRects[cs->handle];
+            Rect texRect = cs->type == CardStack::TYPE_FOUNDATION ? cardGfxData.cardFoundation : cardGfxData.cardEmpty;
+            renderRect(screenRect, texRect);
         }
 
-        for (int i=0; i<TABLEAU_COUNT; i++) {
-            renderCardStack(&gameState.tableaux[i], cardGfxData.cardEmpty);
+        for (int i=0; i<CARDS_TOTAL; i++)
+        {
+            CardDesc cd = commander.gameLayout.getOrderedCard(i);
+            Rect texRect = cd.opened ? cardGfxData.cardFaces[cd.id] : cardGfxData.cardBack;
+            renderRect(cd.screenRect, texRect);
         }
-
-        renderCardStack(&gameState.stock, cardGfxData.cardEmpty);
-        renderCardStack(&gameState.waste, cardGfxData.cardEmpty);
-        renderCardStack(&gameState.hand,  Rect());
     }
 
     void renderControlsGUI()

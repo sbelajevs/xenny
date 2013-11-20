@@ -342,7 +342,24 @@ CardStack* GameState::getStack(int n)
     }
 }
 
-CardStack* GameState::findFoundationDest()
+CardStack* GameState::findById(int cardId, int* idx)
+{
+    for (int i=0; i<STACK_COUNT; i++)
+    {
+        CardStack* cs = getStack(i);
+        for (int j=0; j<cs->size(); j++) {
+            if ((*cs)[j].id == cardId) 
+            {
+                *idx = j;
+                return cs;
+            }
+        }
+    }
+
+    return NULL_PTR;
+}
+
+CardStack* GameState::findHandAutoDest()
 {
     if (hand.empty()) {
         return NULL_PTR;

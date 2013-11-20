@@ -127,10 +127,11 @@ public:
     bool gameWon() const;
 
     CardStack* getStack(int n);
+    CardStack* findById(int cardId, int* idx);
 
     void advanceStock();
     void fillHand(CardStack* stack, int idx);
     void releaseHand(CardStack* dest);
     bool canReleaseHand(CardStack* dest) const;
-    CardStack* findFoundationDest();
+    CardStack* findHandAutoDest();
 };
