@@ -264,15 +264,14 @@ void GameState::releaseHand(CardStack* dest)
 {
     if (hand.empty() == false && dest != NULL_PTR)
     {
-        bool openCard = handSource->empty() == false 
-            && handSource->top().opened() == false;
+        bool doOpenCard = shouldOpenCard();
 
         if (dest != handSource) {
-            registerMove(handSource, dest, hand.size(), openCard, false);
+            registerMove(handSource, dest, hand.size(), doOpenCard, false);
         }
 
         hand.transfer(*dest, hand.size());
-        if (openCard) {
+        if (doOpenCard) {
             handSource->top().open();
         }
         handSource = NULL_PTR;
@@ -315,6 +314,13 @@ bool GameState::canReleaseHand(CardStack* dest) const
     }
 
     return false;
+}
+
+bool GameState::shouldOpenCard() const
+{
+    return handSource != NULL_PTR 
+        && handSource->empty() == false 
+        && handSource->top().opened() == false;
 }
 
 CardStack* GameState::getStack(int n)

@@ -100,17 +100,21 @@ class Tween
 {
 public:
     Tween();
-    explicit Tween(float* receiver, float delta, int ticks, int delay = 0);
+    explicit Tween(float* receiver, float delta, int ticks, int delay = 0, bool doRoundTrip = false);
+    explicit Tween(bool* receiver, int delay);
     void update();
     bool finished();
 private:
     static float curveLinear(float x);
 
-    float* receiver;
-    float delta;
     int ticksLeft;
+    int backTicksLeft;
     int delayLeft;
 
+    bool* bReceiver;
+
+    float* fReceiver;
+    float delta;
     float step;
     float accumulatedStep;
     float lastValue;

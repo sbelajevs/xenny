@@ -133,5 +133,6 @@ public:
     void fillHand(CardStack* stack, int idx);
     void releaseHand(CardStack* dest);
     bool canReleaseHand(CardStack* dest) const;
+    bool shouldOpenCard() const;
     CardStack* findHandAutoDest();
 };

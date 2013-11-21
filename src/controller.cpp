@@ -322,14 +322,16 @@ int GameLayout::probe(float x, float y)
     return -1;
 }
 
-Tween::Tween(): receiver(NULL_PTR), ticksLeft(0), delayLeft(0)
+Tween::Tween(): bReceiver(NULL_PTR), fReceiver(NULL_PTR), ticksLeft(0), backTicksLeft(0), delayLeft(0)
 {
 }
 
-Tween::Tween(float* receiver, float delta, int ticks, int delay)
-    : receiver(receiver)
+Tween::Tween(float* receiver, float delta, int ticks, int delay, bool doRoundTrip)
+    : bReceiver(NULL_PTR)
+    , fReceiver(receiver)
     , delta(delta)
     , ticksLeft(ticks)
+    , backTicksLeft(doRoundTrip ? ticks : 0)
     , delayLeft(delay)
     , step(1.f/ticks)
     , accumulatedStep(0.f)
@@ -337,22 +339,50 @@ Tween::Tween(float* receiver, float delta, int ticks, int delay)
 {
 }
 
+Tween::Tween(bool* receiver, int delay)
+    : bReceiver(receiver)
+    , fReceiver(NULL_PTR)
+    , ticksLeft(1)
+    , backTicksLeft(0)
+    , delayLeft(delay)
+{
+}
+
 void Tween::update()
 {
-    if (delayLeft > 0) {
+    if (delayLeft > 0) 
+    {
         delayLeft--;
-    } else if (ticksLeft > 0) {
+    } 
+    else if (ticksLeft > 0) 
+    {
         ticksLeft--;
-        accumulatedStep += step;
-        float value = ticksLeft == 0 ? 1.f : curveLinear(accumulatedStep);
-        *receiver += (value - lastValue) * delta;
+        if (fReceiver != NULL_PTR)
+        {
+            accumulatedStep += step;
+            float value = ticksLeft == 0 ? 1.f : curveLinear(accumulatedStep);
+            *fReceiver += (value - lastValue) * delta;
+            lastValue = value;
+        }
+        else
+        {
+            *bReceiver = *bReceiver == false;
+        }
+    }
+    else if (backTicksLeft > 0)
+    {
+        // assert(fReceiver != NULL_PTR && bReceiver == NULL_PTR);
+        backTicksLeft--;
+        accumulatedStep -= step;
+        float value = backTicksLeft == 0 ? 0.f : curveLinear(accumulatedStep);
+        *fReceiver += (value - lastValue) * delta;
         lastValue = value;
     }
 }
 
 bool Tween::finished()
 {
-    return ticksLeft == 0 && delayLeft == 0;
+    return ticksLeft == 0 && delayLeft == 0 && backTicksLeft == 0;
 }
 
 float Tween::curveLinear(float x)
@@ -604,12 +634,12 @@ void Commander::addMovementAnimation(CardStack* dest)
         tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, ticks));
     }
 
-    // TODO[#014]: get rid of it after card turning is implemented
-    if (gameState->handSource != dest 
-        && gameState->handSource->empty() == false 
-        && gameState->handSource->top().opened() == false) 
+    if (gameState->shouldOpenCard())
     {
-        gameLayout.cardDescs[gameState->handSource->top().id].opened = true;
+        int id = gameState->handSource->top().id;
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-1.f)/2.f, 7, ticks/2, true));
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-1.f), 7, ticks/2, true));
+        tweens.push(Tween(&gameLayout.cardDescs[id].opened, 8));
     }
 }
 
@@ -704,9 +734,9 @@ void Commander::cmdReleaseHand()
     float x = handRect.x + handRect.w / 2.f;
     float y = handRect.y + handRect.h / 2.f;
 
-    static const int LEN = 2;
-    CardStack* stacks[LEN] = {gameState->tableaux, gameState->foundations};
-    int sizes[LEN] = {TABLEAU_COUNT, FOUNDATION_COUNT};
+    static const int LEN = 3;
+    CardStack* stacks[LEN] = {gameState->tableaux, gameState->foundations, &gameState->waste};
+    int sizes[LEN] = {TABLEAU_COUNT, FOUNDATION_COUNT, WASTE_COUNT};
 
     for (int i=0; i<LEN; i++) {
         for (int j=0; j<sizes[i]; j++)
