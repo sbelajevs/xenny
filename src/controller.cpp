@@ -634,7 +634,7 @@ void Commander::addMovementAnimation(CardStack* dest)
         tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, ticks));
     }
 
-    if (gameState->shouldOpenCard())
+    if (gameState->shouldOpenCard() && dest != gameState->handSource)
     {
         int id = gameState->handSource->top().id;
         tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-1.f)/2.f, 7, ticks/2, true));

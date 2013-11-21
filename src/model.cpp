@@ -268,12 +268,12 @@ void GameState::releaseHand(CardStack* dest)
 
         if (dest != handSource) {
             registerMove(handSource, dest, hand.size(), doOpenCard, false);
+            if (doOpenCard) {
+                handSource->top().open();
+            }
         }
 
         hand.transfer(*dest, hand.size());
-        if (doOpenCard) {
-            handSource->top().open();
-        }
         handSource = NULL_PTR;
     }
 }
