@@ -322,6 +322,36 @@ int GameLayout::probe(float x, float y)
     return -1;
 }
 
+Alarm::Alarm(): type(Alarm::ALARM_RAISE_Z), delayLeft(0), arg(-1)
+{
+}
+
+Alarm::Alarm(Alarm::Type type, int delay, int arg): type(type), delayLeft(delay), arg(arg)
+{
+}
+
+void Alarm::update()
+{
+    if (delayLeft > 0) {
+        delayLeft--;
+    }
+}
+
+bool Alarm::fired() const
+{
+    return delayLeft <= 0;
+}
+
+int Alarm::getArg() const
+{
+    return arg;
+}
+
+Alarm::Type Alarm::getType() const
+{
+    return type;
+}
+
 Tween::Tween(): bReceiver(NULL_PTR), fReceiver(NULL_PTR), ticksLeft(0), backTicksLeft(0), delayLeft(0)
 {
 }
@@ -518,6 +548,7 @@ Commander::Commander(): gameState(NULL_PTR)
 void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
+    stockFrozen = false;
 
     layout.init();
     widgetLayout.init(layout);
@@ -562,7 +593,7 @@ void Commander::handleInputForGame(const Input& input)
     } else if (input.right.clicked 
         && input.left.pressed == false 
         && input.back.pressed == false 
-        && input.fwrd.pressed == false) 
+        && input.fwrd.pressed == false)
     {
         cmdAdvanceStock();
     }
@@ -628,6 +659,21 @@ void Commander::handleInputForButtons(const Input& input)
     }
 }
 
+void Commander::handleAlarm(const Alarm& alarm)
+{
+    switch (alarm.getType())
+    {
+    case Alarm::ALARM_RAISE_Z:
+        gameLayout.raiseZ(alarm.getArg());
+        break;
+    case Alarm::ALARM_THAW_STOCK:
+        stockFrozen = false;
+        break;
+    default:
+        break;
+    }
+}
+
 void Commander::update()
 {
     int idx = 0;
@@ -640,6 +686,22 @@ void Commander::update()
             tweens.pop();
         } 
         else 
+        {
+            idx++;
+        }
+    }
+
+    idx = 0;
+    while (idx < alarms.size())
+    {
+        alarms[idx].update();
+        if (alarms[idx].fired())
+        {
+            handleAlarm(alarms[idx]);
+            alarms[idx] = alarms.top();
+            alarms.pop();
+        }
+        else
         {
             idx++;
         }
@@ -672,6 +734,44 @@ void Commander::addHandMovementAnimation(CardStack* dest)
         tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
         tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
         tweens.push(Tween(&gameLayout.cardDescs[id].opened, TURN_HALF_TICKS+1));
+    }
+}
+
+void Commander::addAdvanceStockAnimation()
+{
+    static const int HALF_TICKS = 8;
+
+    if (gameState->stock.empty() == false)
+    {
+        CardDesc cd = gameLayout.cardDescs[gameState->stock.top().id];
+        Rect endR = gameLayout.stackRects[gameState->waste.handle];
+        
+        gameLayout.raiseZ(cd.id);
+
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS*2+1));
+    }
+    else
+    {
+        for (int i=0; i<gameState->waste.size(); i++)
+        {
+            CardDesc cd = gameLayout.cardDescs[gameState->waste[-i-1].id];
+            Rect endR = gameLayout.stackRects[gameState->stock.handle];
+
+            int delay = i*2;
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, delay+HALF_TICKS*2+1));
+            alarms.push(Alarm(Alarm::ALARM_RAISE_Z, delay+HALF_TICKS*2+1, cd.id));
+        }
+
+        stockFrozen = true;
+        alarms.push(Alarm(Alarm::ALARM_THAW_STOCK, gameState->waste.size()*2+HALF_TICKS*3));
     }
 }
 
@@ -712,29 +812,11 @@ void Commander::cmdNew()
 
 void Commander::cmdAdvanceStock()
 {
-    if (gameState->stock.empty() == false)
+    if (stockFrozen == false) 
     {
-        CardDesc cd = gameLayout.cardDescs[gameState->stock.top().id];
-        Rect endR = gameLayout.stackRects[gameState->waste.handle];
-        
-        gameLayout.raiseZ(cd.id);
-        static const int HALF_TICKS = 8;
-
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS*2+1));
-
+        addAdvanceStockAnimation();
         gameState->advanceStock();
     }
-    else
-    {
-        gameState->advanceStock();
-        tweens.clear();
-        gameLayout.reset(*gameState);
-    }
-
 }
 
 void Commander::cmdPickHand(float x, float y)
@@ -745,6 +827,10 @@ void Commander::cmdPickHand(float x, float y)
     
     if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
+        if (stockFrozen && (stack->type == CardStack::TYPE_WASTE || stack->type == CardStack::TYPE_STOCK)) {
+            return;
+        }
+
         if (stack->type == CardStack::TYPE_WASTE && stackIdx != stack->size()-1) {
             return;
         }

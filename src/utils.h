@@ -56,7 +56,11 @@ public:
 
     Element& operator[](int idx)
     {
-        return coll[idx];
+        if (idx < 0) {
+            return coll[count+idx];
+        } else {
+            return coll[idx];
+        }
     }
 
     const Element& operator[](int idx) const

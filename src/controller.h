@@ -96,6 +96,29 @@ private:
     SystemAPI* sys;
 };
 
+class Alarm
+{
+public:
+    enum Type
+    {
+        ALARM_RAISE_Z = 0,
+        ALARM_THAW_STOCK,
+    };
+
+    Alarm();
+    Alarm(Type type, int delay, int arg = 0);
+
+    void update();
+    bool fired() const;
+    int getArg() const;
+    Type getType() const;
+
+private:
+    int delayLeft;
+    int arg;
+    Type type;
+};
+
 class Tween
 {
 public:
@@ -248,9 +271,15 @@ private:
     void cmdReleaseHand();
     void cmdAutoClick(float x, float y);
 
+    void handleAlarm(const Alarm& alarm);
+
     void raiseHand();
+    void addAdvanceStockAnimation();
     void addHandMovementAnimation(CardStack* dest);
+
+    bool stockFrozen;
 
     GameState* gameState;
     FixedVec<Tween, 256> tweens;
+    FixedVec<Alarm, 256> alarms;
 };
