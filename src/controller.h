@@ -235,7 +235,7 @@ private:
     void cmdAutoClick(float x, float y);
 
     void raiseHand();
-    void addMovementAnimation(CardStack* dest);
+    void addHandMovementAnimation(CardStack* dest);
 
     GameState* gameState;
     FixedVec<Tween, 256> tweens;

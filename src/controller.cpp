@@ -615,7 +615,7 @@ void Commander::update()
     }
 }
 
-void Commander::addMovementAnimation(CardStack* dest)
+void Commander::addHandMovementAnimation(CardStack* dest)
 {
     CardStack* hand = &gameState->hand;
 
@@ -680,9 +680,29 @@ void Commander::cmdNew()
 
 void Commander::cmdAdvanceStock()
 {
-    gameState->advanceStock();
-    tweens.clear();
-    gameLayout.reset(*gameState);
+    if (gameState->stock.empty() == false)
+    {
+        CardDesc cd = gameLayout.cardDescs[gameState->stock.top().id];
+        Rect endR = gameLayout.stackRects[gameState->waste.handle];
+        
+        gameLayout.raiseZ(cd.id);
+        static const int HALF_TICKS = 7;
+
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-1.f)/2.f, HALF_TICKS, 0, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-1.f), HALF_TICKS, 0, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS+1));
+
+        gameState->advanceStock();
+    }
+    else
+    {
+        gameState->advanceStock();
+        tweens.clear();
+        gameLayout.reset(*gameState);
+    }
+
 }
 
 void Commander::cmdPickHand(float x, float y)
@@ -757,7 +777,7 @@ void Commander::cmdReleaseHand()
         }
     }
 
-    addMovementAnimation(destStack);
+    addHandMovementAnimation(destStack);
     gameState->releaseHand(destStack);
 }
 
@@ -781,7 +801,7 @@ void Commander::cmdAutoClick(float x, float y)
         gameState->fillHand(stack, stack->size()-1);
         raiseHand();
         CardStack* destStack = gameState->findHandAutoDest();
-        addMovementAnimation(destStack);
+        addHandMovementAnimation(destStack);
         gameState->releaseHand(destStack);
     }
 }
