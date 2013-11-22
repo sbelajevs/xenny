@@ -326,8 +326,9 @@ Tween::Tween(): bReceiver(NULL_PTR), fReceiver(NULL_PTR), ticksLeft(0), backTick
 {
 }
 
-Tween::Tween(float* receiver, float delta, int ticks, int delay, bool doRoundTrip)
-    : bReceiver(NULL_PTR)
+Tween::Tween(float* receiver, float delta, Tween::CurveType curveType, int ticks, int delay, bool doRoundTrip)
+    : curveType(curveType)
+    , bReceiver(NULL_PTR)
     , fReceiver(receiver)
     , delta(delta)
     , ticksLeft(ticks)
@@ -360,7 +361,7 @@ void Tween::update()
         if (fReceiver != NULL_PTR)
         {
             accumulatedStep += step;
-            float value = ticksLeft == 0 ? 1.f : curveLinear(accumulatedStep);
+            float value = ticksLeft == 0 ? 1.f : curve(curveType, accumulatedStep);
             *fReceiver += (value - lastValue) * delta;
             lastValue = value;
         }
@@ -374,7 +375,7 @@ void Tween::update()
         // assert(fReceiver != NULL_PTR && bReceiver == NULL_PTR);
         backTicksLeft--;
         accumulatedStep -= step;
-        float value = backTicksLeft == 0 ? 0.f : curveLinear(accumulatedStep);
+        float value = backTicksLeft == 0 ? 0.f : curve(curveType, accumulatedStep);
         *fReceiver += (value - lastValue) * delta;
         lastValue = value;
     }
@@ -385,9 +386,39 @@ bool Tween::finished()
     return ticksLeft == 0 && delayLeft == 0 && backTicksLeft == 0;
 }
 
+float Tween::curve(Tween::CurveType type, float x)
+{
+    switch (type)
+    {
+    case Tween::CURVE_SIN:
+        return curveSin(x);
+    case Tween::CURVE_SMOOTH:
+        return curveSmoothStep(x);
+    case Tween::CURVE_SMOOTH2:
+        return curveSmoothStep2(x);
+    default:
+        return curveLinear(x);
+    }
+}
+
 float Tween::curveLinear(float x)
 {
     return x;
+}
+
+float Tween::curveSin(float x)
+{
+    return x == 1.0f ? 1.0f : Sys_Sin(x * 3.1415926f/2.f);
+}
+
+float Tween::curveSmoothStep(float x)
+{
+    return x*x*(3-2*x);
+}
+
+float Tween::curveSmoothStep2(float x)
+{
+    return curveSmoothStep(curveSmoothStep(x));
 }
 
 ButtonDesc::ButtonDesc(): isVisible(false)
@@ -622,24 +653,25 @@ void Commander::addHandMovementAnimation(CardStack* dest)
     Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
     Rect endR = gameLayout.getDestCardRect(dest);
     float distSqr = getDistSqr(begR.x, begR.y, endR.x, endR.y);
-    int ticks = 4 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
-    if (ticks > 24) {
-        ticks = 24;
+    int ticks = 10 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
+    if (ticks > 40) {
+        ticks = 40;
     }
+    static const int TURN_HALF_TICKS = 10;
 
     for (int i=0; i<hand->size(); i++)
     {
         GameCard gc = (*hand)[i];
-        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.x, endR.x-begR.x, ticks));
-        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, ticks));
+        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH2, ticks));
+        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
     }
 
     if (gameState->shouldOpenCard() && dest != gameState->handSource)
     {
         int id = gameState->handSource->top().id;
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-1.f)/2.f, 7, ticks/2, true));
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-1.f), 7, ticks/2, true));
-        tweens.push(Tween(&gameLayout.cardDescs[id].opened, 8));
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
+        tweens.push(Tween(&gameLayout.cardDescs[id].opened, TURN_HALF_TICKS+1));
     }
 }
 
@@ -686,13 +718,13 @@ void Commander::cmdAdvanceStock()
         Rect endR = gameLayout.stackRects[gameState->waste.handle];
         
         gameLayout.raiseZ(cd.id);
-        static const int HALF_TICKS = 7;
+        static const int HALF_TICKS = 8;
 
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-1.f)/2.f, HALF_TICKS, 0, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-1.f), HALF_TICKS, 0, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS+1));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS*2+1));
 
         gameState->advanceStock();
     }
@@ -713,6 +745,10 @@ void Commander::cmdPickHand(float x, float y)
     
     if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
+        if (stack->type == CardStack::TYPE_WASTE && stackIdx != stack->size()-1) {
+            return;
+        }
+
         if (stack->type == CardStack::TYPE_WASTE 
             || stack->type == CardStack::TYPE_TABLEAU 
             || stack->type == CardStack::TYPE_FOUNDATION)

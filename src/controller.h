@@ -99,13 +99,27 @@ private:
 class Tween
 {
 public:
+    enum CurveType
+    {
+        CURVE_LINEAR = 0,
+        CURVE_SIN,
+        CURVE_SMOOTH,
+        CURVE_SMOOTH2,
+    };
+
     Tween();
-    explicit Tween(float* receiver, float delta, int ticks, int delay = 0, bool doRoundTrip = false);
+    explicit Tween(float* receiver, float delta, CurveType curveType, int ticks, int delay = 0, bool doRoundTrip = false);
     explicit Tween(bool* receiver, int delay);
     void update();
     bool finished();
 private:
+    static float curve(CurveType curve, float x);
     static float curveLinear(float x);
+    static float curveSin(float x);
+    static float curveSmoothStep(float x);
+    static float curveSmoothStep2(float x);
+
+    CurveType curveType;
 
     int ticksLeft;
     int backTicksLeft;

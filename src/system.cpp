@@ -426,6 +426,11 @@ void Sys_GetRandomPermutation(int* begin, int count)
     std::random_shuffle(begin, begin+count);
 }
 
+float Sys_Sin(float rad)
+{
+    return sin(rad);
+}
+
 struct HINSTANCE__;
 int __stdcall WinMain(HINSTANCE__*, HINSTANCE__*, char*, int)
 {
