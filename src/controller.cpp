@@ -352,14 +352,13 @@ Alarm::Type Alarm::getType() const
     return type;
 }
 
-Tween::Tween(): bReceiver(NULL_PTR), fReceiver(NULL_PTR), ticksLeft(0), backTicksLeft(0), delayLeft(0)
+Tween::Tween(): receiver(NULL_PTR), ticksLeft(0), backTicksLeft(0), delayLeft(0)
 {
 }
 
 Tween::Tween(float* receiver, float delta, Tween::CurveType curveType, int ticks, int delay, bool doRoundTrip)
     : curveType(curveType)
-    , bReceiver(NULL_PTR)
-    , fReceiver(receiver)
+    , receiver(receiver)
     , delta(delta)
     , ticksLeft(ticks)
     , backTicksLeft(doRoundTrip ? ticks : 0)
@@ -367,15 +366,6 @@ Tween::Tween(float* receiver, float delta, Tween::CurveType curveType, int ticks
     , step(1.f/ticks)
     , accumulatedStep(0.f)
     , lastValue(0.f)
-{
-}
-
-Tween::Tween(bool* receiver, int delay)
-    : bReceiver(receiver)
-    , fReceiver(NULL_PTR)
-    , ticksLeft(1)
-    , backTicksLeft(0)
-    , delayLeft(delay)
 {
 }
 
@@ -388,17 +378,10 @@ void Tween::update()
     else if (ticksLeft > 0) 
     {
         ticksLeft--;
-        if (fReceiver != NULL_PTR)
-        {
-            accumulatedStep += step;
-            float value = ticksLeft == 0 ? 1.f : curve(curveType, accumulatedStep);
-            *fReceiver += (value - lastValue) * delta;
-            lastValue = value;
-        }
-        else
-        {
-            *bReceiver = *bReceiver == false;
-        }
+        accumulatedStep += step;
+        float value = ticksLeft == 0 ? 1.f : curve(curveType, accumulatedStep);
+        *receiver += (value - lastValue) * delta;
+        lastValue = value;
     }
     else if (backTicksLeft > 0)
     {
@@ -406,7 +389,7 @@ void Tween::update()
         backTicksLeft--;
         accumulatedStep -= step;
         float value = backTicksLeft == 0 ? 0.f : curve(curveType, accumulatedStep);
-        *fReceiver += (value - lastValue) * delta;
+        *receiver += (value - lastValue) * delta;
         lastValue = value;
     }
 }
@@ -669,6 +652,9 @@ void Commander::handleAlarm(const Alarm& alarm)
     case Alarm::ALARM_THAW_STOCK:
         stockFrozen = false;
         break;
+    case Alarm::ALARM_TURN_CARD:
+        flip(gameLayout.cardDescs[alarm.getArg()].opened);
+        break;
     default:
         break;
     }
@@ -733,7 +719,7 @@ void Commander::addHandMovementAnimation(CardStack* dest)
         int id = gameState->handSource->top().id;
         tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
         tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
-        tweens.push(Tween(&gameLayout.cardDescs[id].opened, TURN_HALF_TICKS+1));
+        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, TURN_HALF_TICKS+1, id));
     }
 }
 
@@ -752,7 +738,7 @@ void Commander::addAdvanceStockAnimation()
         tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2));
         tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
         tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, HALF_TICKS*2+1));
+        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, HALF_TICKS*2+1, cd.id));
     }
     else
     {
@@ -767,7 +753,7 @@ void Commander::addAdvanceStockAnimation()
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, delay+HALF_TICKS*2+1));
+            alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+HALF_TICKS*2+1, cd.id));
             alarms.push(Alarm(Alarm::ALARM_RAISE_Z, delay+HALF_TICKS*2+1, cd.id));
         }
 

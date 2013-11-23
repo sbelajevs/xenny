@@ -72,3 +72,8 @@ private:
     Element coll[MaxCount];
     int count;
 };
+
+inline void flip(bool& a)
+{
+    a = a == false;
+}

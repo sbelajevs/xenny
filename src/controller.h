@@ -103,6 +103,7 @@ public:
     {
         ALARM_RAISE_Z = 0,
         ALARM_THAW_STOCK,
+        ALARM_TURN_CARD,
     };
 
     Alarm();
@@ -132,7 +133,6 @@ public:
 
     Tween();
     explicit Tween(float* receiver, float delta, CurveType curveType, int ticks, int delay = 0, bool doRoundTrip = false);
-    explicit Tween(bool* receiver, int delay);
     void update();
     bool finished();
 private:
@@ -148,9 +148,7 @@ private:
     int backTicksLeft;
     int delayLeft;
 
-    bool* bReceiver;
-
-    float* fReceiver;
+    float* receiver;
     float delta;
     float step;
     float accumulatedStep;
