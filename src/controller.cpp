@@ -766,6 +766,8 @@ void Commander::cmdUndo()
 {
     gameState->undo();
     tweens.clear();
+    alarms.clear();
+    stockFrozen = false;
     gameLayout.reset(*gameState);
 }
 
@@ -773,6 +775,8 @@ void Commander::cmdRedo()
 {
     gameState->redo();
     tweens.clear();
+    alarms.clear();
+    stockFrozen = false;
     gameLayout.reset(*gameState);
 }
 
@@ -780,6 +784,8 @@ void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
     tweens.clear();
+    alarms.clear();
+    stockFrozen = false;
     gameLayout.reset(*gameState);
 }
 
@@ -787,6 +793,8 @@ void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
     tweens.clear();
+    alarms.clear();
+    stockFrozen = false;
     gameLayout.reset(*gameState);
 }
 
@@ -794,6 +802,8 @@ void Commander::cmdNew()
 {
     gameState->init();
     tweens.clear();
+    alarms.clear();
+    stockFrozen = false;
     gameLayout.reset(*gameState);
 }
 
