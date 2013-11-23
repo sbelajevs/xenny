@@ -756,14 +756,15 @@ void Commander::addAdvanceStockAnimation()
     }
     else
     {
+        Rect begR = gameLayout.stackRects[gameState->waste.handle];
+        Rect endR = gameLayout.stackRects[gameState->stock.handle];
+
         for (int i=0; i<gameState->waste.size(); i++)
         {
             CardDesc cd = gameLayout.cardDescs[gameState->waste[-i-1].id];
-            Rect endR = gameLayout.stackRects[gameState->stock.handle];
-
             int delay = i*2;
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
+            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
             tweens.push(Tween(&gameLayout.cardDescs[cd.id].opened, delay+HALF_TICKS*2+1));
