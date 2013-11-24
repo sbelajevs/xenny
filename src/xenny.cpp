@@ -7,7 +7,9 @@ public:
     Rect cardFaces[CARDS_TOTAL];
     Rect cardBack;
     Rect cardFoundation;
-    Rect cardEmpty;
+    Rect cardTableau;
+    Rect cardWaste;
+    Rect cardStock;
 
     Rect undo[BUTTON_STATES];
     Rect fullUndo[BUTTON_STATES];
@@ -34,15 +36,25 @@ public:
         cardBack.w = CARD_TEX_DIMENSIONS[0];
         cardBack.h = CARD_TEX_DIMENSIONS[1];
 
-        cardFoundation.x = CARD_STOCK_TEX_POS[0];
-        cardFoundation.y = CARD_STOCK_TEX_POS[1];
-        cardFoundation.w = CARD_TEX_DIMENSIONS[0];
-        cardFoundation.h = CARD_TEX_DIMENSIONS[1];
+        cardFoundation = Rect(CARD_FOUNDATION_TEX_POS[0], 
+                              CARD_FOUNDATION_TEX_POS[1], 
+                              CARD_TEX_DIMENSIONS[0], 
+                              CARD_TEX_DIMENSIONS[1]);
 
-        cardEmpty.x = CARD_EMPTY_TEX_POS[0];
-        cardEmpty.y = CARD_EMPTY_TEX_POS[1];
-        cardEmpty.w = CARD_TEX_DIMENSIONS[0];
-        cardEmpty.h = CARD_TEX_DIMENSIONS[1];
+        cardTableau = Rect(CARD_TABLEAU_TEX_POS[0], 
+                           CARD_TABLEAU_TEX_POS[1], 
+                           CARD_TEX_DIMENSIONS[0], 
+                           CARD_TEX_DIMENSIONS[1]);
+
+        cardStock = Rect(CARD_STOCK_TEX_POS[0], 
+                         CARD_STOCK_TEX_POS[1], 
+                         CARD_TEX_DIMENSIONS[0], 
+                         CARD_TEX_DIMENSIONS[1]);
+
+        cardWaste = Rect(CARD_WASTE_TEX_POS[0], 
+                         CARD_WASTE_TEX_POS[1], 
+                         CARD_TEX_DIMENSIONS[0], 
+                         CARD_TEX_DIMENSIONS[1]);
 
         for (int i=0; i<BUTTON_STATES; i++)
         {
@@ -119,7 +131,14 @@ private:
         {
             CardStack* cs = gameState.getStack(i);
             Rect screenRect = commander.gameLayout.stackRects[cs->handle];
-            Rect texRect = cs->type == CardStack::TYPE_FOUNDATION ? cardGfxData.cardFoundation : cardGfxData.cardEmpty;
+            Rect texRect = cardGfxData.cardWaste;
+            if (cs->type == CardStack::TYPE_FOUNDATION) {
+                texRect = cardGfxData.cardFoundation;
+            } else if (cs->type == CardStack::TYPE_TABLEAU) {
+                texRect = cardGfxData.cardTableau;
+            } else if (cs->type == CardStack::TYPE_STOCK) {
+                texRect = cardGfxData.cardStock;
+            }
             renderRect(screenRect, texRect);
         }
 

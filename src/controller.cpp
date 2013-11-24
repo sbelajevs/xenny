@@ -906,15 +906,11 @@ void Commander::cmdAutoClick(float x, float y)
     int cardId = gameLayout.probe(x, y);
     CardStack* stack = gameState->findById(cardId, &stackIdx);
 
-    if (stack == NULL_PTR) {
-        return;
-    }
-
-    if (stack->type == CardStack::TYPE_STOCK)
+    if (gameLayout.stackRects[gameState->stock.handle].inside(x, y))
     {
         cmdAdvanceStock();
     }
-    else if (stackIdx == stack->size() - 1
+    else if (stack != NULL_PTR && stackIdx == stack->size() - 1
         && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE))
     {
         gameState->fillHand(stack, stack->size()-1);

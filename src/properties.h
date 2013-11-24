@@ -32,8 +32,8 @@ static const int WASTE_COUNT = 1;
 static const int HAND_COUNT = 1;
 static const int STACK_COUNT = TABLEAU_COUNT + FOUNDATION_COUNT + STOCK_COUNT + WASTE_COUNT + HAND_COUNT;
 
-static const int CARD_OPEN_SLIDE = (int)((42.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
-static const int CARD_CLOSED_SLIDE = (int)((21.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
+static const int CARD_OPEN_SLIDE = (int)((44.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
+static const int CARD_CLOSED_SLIDE = (int)((22.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
 
 static const int CARD_ID_NULL = -1;
 static const int STACK_ID_NULL = -1;
@@ -113,5 +113,7 @@ static const float CARD_FACES_TEX_POS[][2] = {
 };
 
 static const float CARD_BACK_TEX_POS[2]  = {0.f, 149/1024.f};
-static const float CARD_STOCK_TEX_POS[2] = {125/2048.f, 149/1024.f};
-static const float CARD_EMPTY_TEX_POS[2] = {250/2048.f, 149/1024.f};
+static const float CARD_TABLEAU_TEX_POS[2] = {375/2048.f, 149/1024.f};
+static const float CARD_FOUNDATION_TEX_POS[2] = {500/2048.f, 149/1024.f};
+static const float CARD_STOCK_TEX_POS[2] = {625/2048.f, 149/1024.f};
+static const float CARD_WASTE_TEX_POS[2] = {750/2048.f, 149/1024.f};
