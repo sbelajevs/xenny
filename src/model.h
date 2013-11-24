@@ -125,6 +125,7 @@ public:
     void fullUndo();
 
     bool gameWon() const;
+    bool canAutoPlay() const;
 
     CardStack* getStack(int n);
     CardStack* findById(int cardId, int* idx);

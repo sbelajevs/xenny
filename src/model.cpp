@@ -391,3 +391,13 @@ bool GameState::gameWon() const
 
     return won;
 }
+
+bool GameState::canAutoPlay() const
+{
+    for (int i=0; i<TABLEAU_COUNT; i++) {
+        if (tableaux[i].empty() == false && tableaux[i][0].opened() == false) {
+            return false;
+        }
+    }
+    return true;
+}

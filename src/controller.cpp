@@ -511,6 +511,12 @@ void WidgetLayout::init(const Layout& layout)
         ButtonDesc::STATE_NORMAL, 
         true
     );
+
+    buttons[BUTTON_AUTO].init(
+        Rect(buttons[BUTTON_NEW].getRect().x + BUTTON_NEW_WIDTH + interval*2.f, undoTopLeftY, BUTTON_AUTO_WIDTH, BUTTON_AUTO_HEIGHT),
+        ButtonDesc::STATE_NORMAL,
+        true
+    );
 }
 
 WidgetLayout::ButtonType WidgetLayout::probe(float x, float y)
@@ -584,12 +590,14 @@ void Commander::handleInputForGame(const Input& input)
 
 void Commander::handleInputForButtons(const Input& input)
 {
+    widgetLayout.buttons[WidgetLayout::BUTTON_AUTO].setVisible(gameState->canAutoPlay());
+    widgetLayout.buttons[WidgetLayout::BUTTON_AUTO].setState(ButtonDesc::STATE_NORMAL);
     widgetLayout.buttons[WidgetLayout::BUTTON_NEW].setState(ButtonDesc::STATE_NORMAL);
     widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO].setEnabled(gameState->history.canRedo());
     widgetLayout.buttons[WidgetLayout::BUTTON_REDO].setEnabled(gameState->history.canRedo());
     widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO].setEnabled(gameState->history.canUndo());
     widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
-    
+
     WidgetLayout::ButtonType focusButton = widgetLayout.probe(input.x, input.y);
 
     for (int i=0; i<WidgetLayout::BUTTON_MAX; i++)

@@ -232,6 +232,7 @@ public:
         BUTTON_REDO,
         BUTTON_FULL_REDO,
         BUTTON_NEW,
+        BUTTON_AUTO,
         BUTTON_MAX,
     };
 

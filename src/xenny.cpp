@@ -14,6 +14,7 @@ public:
     Rect undo[BUTTON_STATES];
     Rect fullUndo[BUTTON_STATES];
     Rect newGame[BUTTON_STATES];
+    Rect autoPlay[BUTTON_STATES];
     Rect youWon;
 
     void init()
@@ -72,6 +73,11 @@ public:
             newGame[i].y = BUTTON_NEW_TEX_POS[1];
             newGame[i].w = BUTTON_NEW_TEX_DIMENSIONS[0];
             newGame[i].h = BUTTON_NEW_TEX_DIMENSIONS[1];
+
+            autoPlay[i].x = BUTTON_AUTO_TEX_POS[0] + BUTTON_AUTO_TEX_DIMENSIONS[0]*i;
+            autoPlay[i].y = BUTTON_AUTO_TEX_POS[1];
+            autoPlay[i].w = BUTTON_AUTO_TEX_DIMENSIONS[0];
+            autoPlay[i].h = BUTTON_AUTO_TEX_DIMENSIONS[1];
         }
     }
 };
@@ -166,6 +172,11 @@ private:
 
         const ButtonDesc newGame = commander.widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
         renderRect(newGame.getRect(), cardGfxData.newGame[newGame.getState()]);
+
+        const ButtonDesc autoPlay = commander.widgetLayout.buttons[WidgetLayout::BUTTON_AUTO];
+        if (autoPlay.visible()) {
+            renderRect(autoPlay.getRect(), cardGfxData.autoPlay[autoPlay.getState()]);
+        }
     }
 
     SystemAPI*  sys;

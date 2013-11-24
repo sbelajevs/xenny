@@ -50,6 +50,11 @@ static const float BUTTON_NEW_HEIGHT = 48.f;
 static const float BUTTON_NEW_TEX_DIMENSIONS[2] = {BUTTON_NEW_WIDTH/2048.f, BUTTON_NEW_HEIGHT/1024.f};
 static const float BUTTON_NEW_TEX_POS[2] = {384.f/2048.f, 0/1024.f};
 
+static const float BUTTON_AUTO_WIDTH = 96.f;
+static const float BUTTON_AUTO_HEIGHT = 48.f;
+static const float BUTTON_AUTO_TEX_DIMENSIONS[2] = {BUTTON_AUTO_WIDTH/2048.f, BUTTON_AUTO_HEIGHT/1024.f};
+static const float BUTTON_AUTO_TEX_POS[2] = {0.f/2048.f, 48.f/1024.f};
+
 static const float YOU_WON_WIDTH = 300.f;
 static const float YOU_WON_HEIGHT = 48.f;
 static const float YOU_WON_TEX_DIMENSIONS[2] = {YOU_WON_WIDTH/2048.f, YOU_WON_HEIGHT/1024.f};
