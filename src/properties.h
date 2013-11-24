@@ -8,6 +8,9 @@ static const double FRAME_TIME = 1/60.;
 
 static const int NULL_PTR = 0;
 
+static const int CARD_ORIGINAL_WIDTH = 125;
+static const int CARD_ORIGINAL_HEIGHT = 175;
+
 static const int CARD_WIDTH = 125;
 static const int CARD_HEIGHT = 175;
 
@@ -29,8 +32,8 @@ static const int WASTE_COUNT = 1;
 static const int HAND_COUNT = 1;
 static const int STACK_COUNT = TABLEAU_COUNT + FOUNDATION_COUNT + STOCK_COUNT + WASTE_COUNT + HAND_COUNT;
 
-static const int CARD_OPEN_SLIDE = 42;
-static const int CARD_CLOSED_SLIDE = 21;
+static const int CARD_OPEN_SLIDE = (int)((42.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
+static const int CARD_CLOSED_SLIDE = (int)((21.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
 
 static const int CARD_ID_NULL = -1;
 static const int STACK_ID_NULL = -1;
@@ -52,7 +55,7 @@ static const float YOU_WON_HEIGHT = 48.f;
 static const float YOU_WON_TEX_DIMENSIONS[2] = {YOU_WON_WIDTH/2048.f, YOU_WON_HEIGHT/1024.f};
 static const float YOU_WON_TEX_POS[2] = {672.f/2048.f, 0/2048.f};
 
-static const float CARD_TEX_DIMENSIONS[2] = {CARD_WIDTH/2048.f, CARD_HEIGHT/1024.f};
+static const float CARD_TEX_DIMENSIONS[2] = {CARD_ORIGINAL_WIDTH/2048.f, CARD_ORIGINAL_HEIGHT/1024.f};
 
 static const float CARD_FACES_TEX_POS[][2] = {
     {0/2048.f, 849/1024.f},
