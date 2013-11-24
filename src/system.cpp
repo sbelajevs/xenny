@@ -61,7 +61,8 @@ struct SystemAPI
 
 static float round(float f)
 {
-  return floor(f + 0.5f);
+    static const float EPS = 1.f/8192.f;
+    return floor(f + 0.5f + EPS);
 }
 
 SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char* windowTitle)
