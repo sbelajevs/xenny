@@ -250,6 +250,7 @@ public:
     void init(GameState* aGameState);
     void handleInput(const Input& input);
     void update();
+    bool gameEnded() const;
 
     Layout layout;
     WidgetLayout widgetLayout;

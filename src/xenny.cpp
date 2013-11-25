@@ -118,7 +118,7 @@ public:
         renderGameGUI();
         renderControlsGUI();
 
-        if (gameState.gameWon()) {
+        if (commander.gameEnded()) {
             renderRect(commander.layout.getYouWonRect(), cardGfxData.youWon);
         }
     }

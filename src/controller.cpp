@@ -544,9 +544,14 @@ void Commander::init(GameState* aGameState)
     gameLayout.init(*gameState, layout);
 }
 
+bool Commander::gameEnded() const
+{
+    return gameState->gameWon() && alarms.empty() && tweens.empty();
+}
+
 void Commander::handleInput(const Input& input)
 {
-    if (gameState->gameWon()) 
+    if (gameEnded()) 
     {
         if (input.left.clicked) {
             cmdNew();
