@@ -140,7 +140,12 @@ public:
     bool shouldOpenCard() const;
     CardStack* findHandAutoDest();
 
+    CardStack* findAutoMove(CardStack** destStack, int* srcIdx);
+    void doAutoMove(CardStack* srcStack, int srcIdx, CardStack* destStack);
+
 private:
+    int getNextFoundationCard(int topCardId, int suit = -1) const;
+
     void fillStackWithCards(CardStack* stack, const char* cards[], int count, bool opened);
     void initAllStacks();
     void dealRandomGame();

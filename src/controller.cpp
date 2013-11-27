@@ -5,6 +5,16 @@ static float getDistSqr(float x1, float y1, float x2, float y2)
     return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
 }
 
+static int getMovememntTicks(const Rect& start, const Rect& end)
+{
+    float distSqr = getDistSqr(start.x, start.y, end.x, end.y);
+    int ticks = 10 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
+    if (ticks > 40) {
+        ticks = 40;
+    }
+    return ticks;
+}
+
 static float getVAdjustedDistSqr(float x1, float y1, float x2, float y2)
 {
     float dx = x2-x1;
@@ -628,6 +638,8 @@ void Commander::handleInputForButtons(const Input& input)
             cmdRedo();
         } else if (focusButton == WidgetLayout::BUTTON_UNDO) {
             cmdUndo();
+        } else if (focusButton == WidgetLayout::BUTTON_AUTO) {
+            cmdAutoPlay();
         }
     }
 
@@ -707,18 +719,32 @@ void Commander::update()
     }
 }
 
+void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
+{
+    Rect begR = gameLayout.cardDescs[cardId].screenRect;
+    Rect endR = gameLayout.stackRects[dst->handle];
+    static const int TURN_HALF_TICKS = 10;
+    int ticks = getMovememntTicks(begR, endR);
+
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH2, ticks));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
+
+    if (gameLayout.cardDescs[cardId].opened == false)
+    {
+        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
+        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, TURN_HALF_TICKS+1, cardId));
+    }
+}
+
 void Commander::addHandMovementAnimation(CardStack* dest)
 {
     CardStack* hand = &gameState->hand;
 
     Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
     Rect endR = gameLayout.getDestCardRect(dest);
-    float distSqr = getDistSqr(begR.x, begR.y, endR.x, endR.y);
-    int ticks = 10 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
-    if (ticks > 40) {
-        ticks = 40;
-    }
     static const int TURN_HALF_TICKS = 10;
+    int ticks = getMovememntTicks(begR, endR);
 
     for (int i=0; i<hand->size(); i++)
     {
@@ -932,4 +958,26 @@ void Commander::cmdAutoClick(float x, float y)
         addHandMovementAnimation(destStack);
         gameState->releaseHand(destStack);
     }
+}
+
+void Commander::cmdAutoPlay()
+{
+    CardStack* src = NULL_PTR;
+    CardStack* dst = NULL_PTR;
+    int srcIdx = -1;
+
+    src = gameState->findAutoMove(&dst, &srcIdx);
+
+    if (src == NULL_PTR) {
+        return;
+    }
+
+    int cardId = (*src)[srcIdx].id;
+
+    addAutoMoveAnimation(cardId, dst);
+    gameLayout.raiseZ(cardId);
+    for (int i=srcIdx+1; i<src->size(); i++) {
+        gameLayout.raiseZ((*src)[i].id);
+    }
+    gameState->doAutoMove(src, srcIdx, dst);
 }

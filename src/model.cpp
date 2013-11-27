@@ -449,6 +449,108 @@ CardStack* GameState::findHandAutoDest()
     return handSource;
 }
 
+int GameState::getNextFoundationCard(int topCardId, int suit) const
+{
+    if (topCardId == -1) {
+        return (suit+1)*CARDS_PER_SUIT - 1;
+    } 
+
+    GameCard gc(topCardId);
+    if (gc.getValue() == CARDS_PER_SUIT - 1) {
+        return -1;
+    } else {
+        return gc.getSuit() * CARDS_PER_SUIT + gc.getValue();
+    }
+}
+
+CardStack* GameState::findAutoMove(CardStack** destStack, int* srcIdx)
+{
+    // Step #1: Find what card is needed next for each foundation
+
+    bool suitUsed[FOUNDATION_COUNT];
+    int desiredCardIds[FOUNDATION_COUNT];
+
+    for (int i=0; i<FOUNDATION_COUNT; i++) {
+        suitUsed[i] = false;
+        desiredCardIds[i] = -1;
+    }
+
+    for (int i=0; i<FOUNDATION_COUNT; i++) {
+        if (foundations[i].empty() == false) {
+            suitUsed[foundations[i].top().getSuit()] = true;
+        }
+    }
+
+    for (int i=0; i<FOUNDATION_COUNT; i++) {
+        if (foundations[i].empty()) {
+            for (int j=0; j<FOUNDATION_COUNT; j++) {
+                if (suitUsed[j] == false) 
+                {
+                    desiredCardIds[i] = getNextFoundationCard(-1, j);
+                    suitUsed[j] = true;
+                    break;
+                }
+            }
+        } else {
+            desiredCardIds[i] = getNextFoundationCard(foundations[i].top().id);
+        }
+    }
+
+    // Step #2: loop through all tableaus and check if there is any of the desired cards
+
+    for (int i=0; i<TABLEAU_COUNT; i++) {
+        if (tableaux[i].empty() == false) {
+            for (int j=0; j<FOUNDATION_COUNT; j++) {
+                if (tableaux[i].top().id == desiredCardIds[j])
+                {
+                    *destStack = &foundations[j];
+                    *srcIdx = tableaux[i].size() - 1;
+                    return &tableaux[i];
+                }
+            }
+        }
+    }
+
+    // Step #3: loop through stock
+
+    for (int i=0; i<stock.size(); i++) {
+        for (int j=0; j<FOUNDATION_COUNT; j++) {
+            if (stock[i].id == desiredCardIds[j])
+            {
+                *destStack = &foundations[j];
+                *srcIdx = i;
+                return &stock;
+            }
+        }
+    }
+
+    // Step #4: loop through waste
+
+    for (int i=0; i<waste.size(); i++) {
+        for (int j=0; j<FOUNDATION_COUNT; j++) {
+            if (waste[i].id == desiredCardIds[j])
+            {
+                *destStack = &foundations[j];
+                *srcIdx = i;
+                return &waste;
+            }
+        }
+    }
+
+    // Step #5: nothing found - either the game is already finished or we have a bug here
+
+    return NULL_PTR;
+}
+
+void GameState::doAutoMove(CardStack* srcStack, int srcIdx, CardStack* destStack)
+{
+    destStack->push((*srcStack)[srcIdx]);
+    for (int i=srcIdx+1; i<srcStack->size(); i++) {
+        (*srcStack)[i-1] = (*srcStack)[i];
+    }
+    srcStack->pop();
+}
+
 bool GameState::gameWon() const
 {
     bool won = true;

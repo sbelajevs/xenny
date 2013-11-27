@@ -270,10 +270,12 @@ private:
     void cmdMoveHand(float dx, float dy);
     void cmdReleaseHand();
     void cmdAutoClick(float x, float y);
+    void cmdAutoPlay();
 
     void handleAlarm(const Alarm& alarm);
 
     void raiseHand();
+    void addAutoMoveAnimation(int cardId, CardStack* dest);
     void addAdvanceStockAnimation();
     void addHandMovementAnimation(CardStack* dest);
 
