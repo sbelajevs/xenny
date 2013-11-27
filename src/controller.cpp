@@ -729,11 +729,12 @@ void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH2, ticks));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
 
+    int delayTicks = ticks/2;
     if (gameLayout.cardDescs[cardId].opened == false)
     {
-        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
-        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, TURN_HALF_TICKS+1, cardId));
+        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, delayTicks, true));
+        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, delayTicks, true));
+        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delayTicks+TURN_HALF_TICKS+1, cardId));
     }
 }
 
@@ -753,12 +754,13 @@ void Commander::addHandMovementAnimation(CardStack* dest)
         tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
     }
 
+    int turnDelay = ticks/2;
     if (gameState->shouldOpenCard() && dest != gameState->handSource)
     {
         int id = gameState->handSource->top().id;
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, ticks/2, true));
-        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, TURN_HALF_TICKS+1, id));
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, turnDelay, true));
+        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, turnDelay, true));
+        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, turnDelay+TURN_HALF_TICKS+1, id));
     }
 }
 
