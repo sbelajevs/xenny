@@ -1,84 +1,59 @@
-Version 0.0.2:
- - Add animation for card movement
- - Add animation for card turning
- - Add animation for game start
- - Add animation for game end (after "New game" pressed)
- - Add animation for (full) undo/redo
- - Implement automatic game finishing with animation (new GUI button should appear when "end is near")
-
 Version 0.0.3:
- - Implement tweening for animation
- - Add motion blur effect and evaluate if it is cool
- - Alpha-blend closed card on top of the stack when hand is far enough from it
- - Try optimizing rendering - batch render calls
- - Play with gradient backgrounds
- - Add some shaking animation when something cannot be done
- - Try checking mouse movement direction vector when drag-and-dropping a card - take into acount also velocity of the dragging
-
-Version 0.0.4:
- - Allow animation to be non-blocking - it should be possible to do things while animation is playing
- - Implement smart game-over check and show skull-icon when game is lost, do the brute-forcing in a separate thread
- - Check for some simple unsolvable cases right after a game is generated and generate a new one if found
+ === Focus on helping to play more efficiently ===
  - Consider generating only 100% solvable games
  - Implement special case of "undo" that undoes until a chosen card is moved
- - Add a confirmation when pressing "New game" (but only if no "game over" situation is in place)
+ - Do some simple game-over checks
+ - Research brute-forcing for checking game-over cases, check if it won't drain laptop battery too much
 
-Version 0.0.5
- - Show amount of cards left in the stock/waste
- - Show how many undos/redos can be done
+version 0.0.4:
+ === Focus on user experience, resizing game window ===
+ - Replace glfw/OpenGL with custom-made-code/DirectX
+ - Use distance fields to generate ideal border around cards at any scale
+ - Try optimizing rendering - batch render calls, sort rectangles and don't draw many of them at one place
+ - Module separation - OS module as executable and game module as .dll
+ - Allow to resize window and scale graphics in a smart way, make game layout more generic
+ - Add keyboard shortcuts for controling window and control buttons
+ 
+version 0.0.5:
+ === Focus on stability and small tweaks ===
+ - Add logging and all kinds of error checking to the OS module
  - Add lots of debug assertions and run the game in debug mode
+ - Show "Are you sure?" when "New game" is pressed
+ - Fix remaining FPS issues
  - Do something with max allowed moves in game history
- - Move FPS from windows title to the game window (somewhere in the corner), allow to toggle its visibility
- - Add keyboard shortcuts too for all buttons and meaningful actions
- - Allow to play the game using only keyboard
+ - Show amount of cards left in the stock/waste
 
 Version 0.0.6
- - Replace glfw/OpenGL with custom-made-code/DirectX
- - Module separation - OS module as executable and game module as .dll
- - Add logging and all kinds of error checking to the OS module
- - Tie FPS to refresh rate, make it dynamically adjustable
+ === Focus on making the game more juicy ===
+ - Implement (full) undo/redo animation
+ - Implement end game animation
+ - Add some shaking animation when something cannot be done
  - Change mouse cursor pointers depending on screen position
+ - Add motion blur effect and evaluate if it is cool
+ - Think how to implement hints if user is stuck
 
 Version 0.1
- - Start implementing scalable vector graphics and engine to generate it
- - Regenerate graphics depending on the screen size used 
- - Allow to resize window and make it full-screen, tie it also to shortcuts
+ === Focus on adding new games ===
+ - Implement a simple GUI framework, refactor existing code
+ - Add different Klondaike types of game
 
 Version 0.2
- - Add different Klondaike variations
+ === Focus on adding even more games ===
+ - Add other more or less popular types of patience games
 
 Version 0.3
- - Add other types of patience games, introduce Start-screen and state-switching
- - Add some support for text engine and simple GUI engine
+ === Focus on adding new type of game ===
+ - Add bubble shooter game, just for lulz
 
-Version 0.4
+Must-have features that are not yet planned:
  - Add some statistics saving for each type of game
  - Add recommendations to try new games and "Try something new" button
+ - Check if user uses shortcuts and inform them about their existance
  - Add threading and optimizations to get rid of possible hanging
  - Do lots of refactoring (focus on modularity and cohesion)
-
-Version 0.5
- - Improve graphics, UI and UX
- - Add some simple sound effects? (Uh-oh for no-more-moves, ticks for card picking, something for dealing), allow to easily disable all sounds or set the volume
+ - Some general improvements to graphics, UI and UX
+ - Add some simple sound effects? (Uh-oh for no-more-moves, ticks for card picking, something for dealing)
  - Consider adding background noises for relaxation, see mynoise.net for nice(?) examples
  - Implement unicode support? Add localizations
- - Start thinking about analytics that will be sent to the server
-
-
-
-General ideas: 
- - Add mahjong and memory category of games
- - Add color-lines category of games
- - Add bubble-shooter category of games
- - Match-3?
- - Branches/pipes?
- - Blendoku?
- - Minesweeper?
- ------------------------------------------------
- - Port to windows 8 (and RT?)
- - Port to android
- - Port to iOS
- - Port to linux
- - Port to OSX
- - Port to Web
- - Port to Chrome OS
+ - Start thinking about analytics that will be sent to the server (if any)
+ - Think about settings - what can user tweak (music/sound volume, colors, skins, animation speed).
