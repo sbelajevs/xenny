@@ -116,10 +116,11 @@ public:
         //0x2f9672
         Sys_ClearScreen(sys, 0x119573);
         renderGameGUI();
-        renderControlsGUI();
 
         if (commander.gameEnded()) {
             renderRect(commander.layout.getYouWonRect(), cardGfxData.youWon);
+        } else {
+            renderControlsGUI();
         }
     }
 
