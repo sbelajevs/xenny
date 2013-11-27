@@ -32,7 +32,7 @@ void Sys_GetInfoString(SystemAPI* sys, char* s, int size);
 double Sys_GetTime(SystemAPI* sys);
 void Sys_Sleep(double seconds);
 
-void Sys_GetRandomPermutation(int* begin, int count);
+void Sys_GenRandomPermutation(int* begin, int count);
 
 int  Sys_TimeToQuit(SystemAPI* sys);
 

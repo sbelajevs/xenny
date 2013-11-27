@@ -8,6 +8,35 @@ GameCard::GameCard(int id): id(id), state(STATE_CLOSED)
 {
 }
 
+GameCard::GameCard(const char* code, bool opened): id(CodeToId(code)), state(opened ? STATE_OPEN : STATE_CLOSED)
+{
+}
+
+int GameCard::CodeToId(const char* code)
+{
+    int value = 0;
+    static const char VALUES[] = "223344556677889900JjQqKkAa";
+    for (int i=0; VALUES[i]; i++) {
+        if (VALUES[i] == code[0]) 
+        {
+            value = i/2;
+            break;
+        }
+    }
+
+    int suit = 0;
+    static const char SUITS[] = "DdHhSsCc";
+    for (int i=0; SUITS[i]; i++) {
+        if (SUITS[i] == code[1]) 
+        {
+            suit = i/2;
+            break;
+        }
+    }
+    
+    return suit * CARDS_PER_SUIT + value;
+}
+
 void GameCard::switchState()
 {
     state = opened() ? STATE_CLOSED : STATE_OPEN;
@@ -120,44 +149,84 @@ GameState::GameState(): handSource(NULL_PTR)
 {
 }
 
-void GameState::init()
+void GameState::initAllStacks()
 {
-    GameCard allCards[CARDS_TOTAL];
-    int cards[CARDS_TOTAL];
-    int cur = 0;
-    int last = CARD_ID_NULL;
-
-    for (int i=0; i<CARDS_TOTAL; i++)
-    {
-        allCards[i] = GameCard(i);
-    }
-
-    Sys_GetRandomPermutation(cards, CARDS_TOTAL);
-
-    for (int i=0; i<TABLEAU_COUNT; i++)
-    {
+    for (int i=0; i<TABLEAU_COUNT; i++) {
         tableaux[i].init(CardStack::TYPE_TABLEAU, i);
-        for (int j=0; j<i; j++) {
-            tableaux[i].push(allCards[cards[cur++]]);
-        }
-        allCards[cards[cur]].open();
-        tableaux[i].push(allCards[cards[cur++]]);
     }
 
-    stock.init(CardStack::TYPE_STOCK);
-    while (cur < CARDS_TOTAL) {
-        stock.push(allCards[cards[cur++]]);
-    }
-    
     for (int i=0; i<FOUNDATION_COUNT; i++) {
         foundations[i].init(CardStack::TYPE_FOUNDATION, i);
     }
 
+    stock.init(CardStack::TYPE_STOCK);
     waste.init(CardStack::TYPE_WASTE);
     hand.init(CardStack::TYPE_HAND);
+}
 
+void GameState::dealRandomGame()
+{
+    GameCard cardData[CARDS_TOTAL];
+    for (int i=0; i<CARDS_TOTAL; i++) {
+        cardData[i] = GameCard(i);
+    }
+
+    int cardIdx[CARDS_TOTAL];
+    Sys_GenRandomPermutation(cardIdx, CARDS_TOTAL);
+
+    int top = 0;
+    for (int i=0; i<TABLEAU_COUNT; i++)
+    {
+        for (int j=0; j<i; j++) {
+            tableaux[i].push(cardData[cardIdx[top++]]);
+        }
+        cardData[cardIdx[top]].open();
+        tableaux[i].push(cardData[cardIdx[top++]]);
+    }
+
+    while (top < CARDS_TOTAL) {
+        stock.push(cardData[cardIdx[top++]]);
+    }
+}
+
+void GameState::fillStackWithCards(CardStack* stack, const char* cards[], int count, bool opened)
+{
+    for (int i=0; i<count; i++) {
+        stack->push(GameCard(cards[i], opened));
+    }
+}
+
+void GameState::dealReadyToAuto()
+{
+    static const char* F1[] = {"aC"};
+    static const char* F3[] = {"aH", "2H", "3H"};
+
+    fillStackWithCards(&foundations[1], F1, sizeof(F1)/sizeof(const char*), true);
+    fillStackWithCards(&foundations[3], F3, sizeof(F3)/sizeof(const char*), true);
+
+    static const char* T1[] = {"kS", "qD", "jC", "0H", "9C", "8H", "7C", "6D", "5S"};
+    static const char* T2[] = {"kD", "qS", "jH", "0C", "9D", "8S", "7D", "6S", "5D", "4S", "3D"};
+    static const char* T3[] = {"kC", "qH", "jS", "0D", "9S", "8D", "7S"};
+    static const char* T4[] = {"kH", "qC", "jD", "0S"};
+
+    fillStackWithCards(&tableaux[1], T1, sizeof(T1)/sizeof(const char*), true);
+    fillStackWithCards(&tableaux[2], T2, sizeof(T2)/sizeof(const char*), true);
+    fillStackWithCards(&tableaux[3], T3, sizeof(T3)/sizeof(const char*), true);
+    fillStackWithCards(&tableaux[4], T4, sizeof(T4)/sizeof(const char*), true);
+
+    static const char* WASTE[] = { "aS", "6H", "4D", "8C", "5H", "7H", "9H", "5C", "6C" };
+    fillStackWithCards(&waste, WASTE, sizeof(WASTE)/sizeof(const char*), true);
+
+    static const char* STOCK[] = { "3C", "aD", "4C", "2S", "3S", "2D", "4H", "2C" };
+    fillStackWithCards(&stock, STOCK, sizeof(STOCK)/sizeof(const char*), false);
+}
+
+void GameState::init()
+{
+    initAllStacks();
+    //dealReadyToAuto();
+    dealRandomGame();
     handSource = NULL_PTR;
-
     history.clear();
 }
 

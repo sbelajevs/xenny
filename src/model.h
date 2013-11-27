@@ -16,6 +16,7 @@ struct GameCard
 
     GameCard();
     GameCard(int id);
+    GameCard(const char* code, bool opened);
 
     void switchState();
     void open();
@@ -25,6 +26,8 @@ struct GameCard
     int getSuit() const;
     int getValue() const;
     Color getColor() const;
+
+    static int CodeToId(const char* code);
 
 private:
     enum State
@@ -136,4 +139,10 @@ public:
     bool canReleaseHand(CardStack* dest) const;
     bool shouldOpenCard() const;
     CardStack* findHandAutoDest();
+
+private:
+    void fillStackWithCards(CardStack* stack, const char* cards[], int count, bool opened);
+    void initAllStacks();
+    void dealRandomGame();
+    void dealReadyToAuto();
 };

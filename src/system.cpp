@@ -419,7 +419,7 @@ int Sys_GetMouseButtonState(SystemAPI* sys)
     return result;
 }
 
-void Sys_GetRandomPermutation(int* begin, int count)
+void Sys_GenRandomPermutation(int* begin, int count)
 {
     for (int i=0; i<count; i++)
     {
