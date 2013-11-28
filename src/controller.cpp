@@ -571,6 +571,7 @@ void Commander::handleInput(const Input& input)
     {
         if (input.left.clicked) {
             cmdNew();
+            clearControlButtons();
         }
     }
     else
@@ -609,7 +610,7 @@ void Commander::handleInputForGame(const Input& input)
     }
 }
 
-void Commander::handleInputForButtons(const Input& input)
+void Commander::clearControlButtons()
 {
     widgetLayout.buttons[WidgetLayout::BUTTON_AUTO].setVisible(gameState->canAutoPlay());
     widgetLayout.buttons[WidgetLayout::BUTTON_AUTO].setState(ButtonDesc::STATE_NORMAL);
@@ -618,7 +619,11 @@ void Commander::handleInputForButtons(const Input& input)
     widgetLayout.buttons[WidgetLayout::BUTTON_REDO].setEnabled(gameState->history.canRedo());
     widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO].setEnabled(gameState->history.canUndo());
     widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
+}
 
+void Commander::handleInputForButtons(const Input& input)
+{
+    clearControlButtons();
     WidgetLayout::ButtonType focusButton = widgetLayout.probe(input.x, input.y);
 
     for (int i=0; i<WidgetLayout::BUTTON_MAX; i++)
@@ -937,8 +942,7 @@ void Commander::cmdAutoClick(float x, float y)
     int cardId = gameLayout.probe(x, y);
     CardStack* stack = gameState->findById(cardId, &stackIdx);
 
-    if (gameLayout.stackRects[gameState->stock.handle].inside(x, y))
-    {
+    if (gameLayout.stackRects[gameState->stock.handle].inside(x, y)) {
         cmdAdvanceStock();
     }
     else if (stack != NULL_PTR && stackIdx == stack->size() - 1
