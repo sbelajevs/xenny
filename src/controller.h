@@ -274,6 +274,8 @@ private:
 
     void handleAlarm(const Alarm& alarm);
 
+    void resetGameLayout();
+
     void raiseHand();
     void addAutoMoveAnimation(int cardId, CardStack* dest);
     void addAdvanceStockAnimation();

@@ -803,49 +803,42 @@ void Commander::addAdvanceStockAnimation()
     }
 }
 
-void Commander::cmdUndo()
+void Commander::resetGameLayout()
 {
-    gameState->undo();
     tweens.clear();
     alarms.clear();
     stockFrozen = false;
     gameLayout.reset(*gameState);
+}
+
+void Commander::cmdUndo()
+{
+    gameState->undo();
+    resetGameLayout();
 }
 
 void Commander::cmdRedo()
 {
     gameState->redo();
-    tweens.clear();
-    alarms.clear();
-    stockFrozen = false;
-    gameLayout.reset(*gameState);
+    resetGameLayout();
 }
 
 void Commander::cmdFullUndo()
 {
     gameState->fullUndo();
-    tweens.clear();
-    alarms.clear();
-    stockFrozen = false;
-    gameLayout.reset(*gameState);
+    resetGameLayout();
 }
 
 void Commander::cmdFullRedo()
 {
     gameState->fullRedo();
-    tweens.clear();
-    alarms.clear();
-    stockFrozen = false;
-    gameLayout.reset(*gameState);
+    resetGameLayout();
 }
 
 void Commander::cmdNew()
 {
     gameState->init();
-    tweens.clear();
-    alarms.clear();
-    stockFrozen = false;
-    gameLayout.reset(*gameState);
+    resetGameLayout();
 }
 
 void Commander::cmdAdvanceStock()
