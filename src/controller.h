@@ -283,6 +283,9 @@ private:
     void addAdvanceStockAnimation();
     void addHandMovementAnimation(CardStack* dest);
 
+    void moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower = false, int delay=0);
+    void turnAnimation(int cardId, int halfTicks, int delay);
+
     bool stockFrozen;
     bool autoPlayOn;
 

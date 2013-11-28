@@ -724,48 +724,46 @@ void Commander::update()
     }
 }
 
+void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
+{
+    Tween::CurveType curve = slower ? Tween::CURVE_SMOOTH : Tween::CURVE_SMOOTH2;
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, end.x-beg.x, curve, ticks, delay));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, end.y-beg.y, curve, ticks, delay));
+}
+
+void Commander::turnAnimation(int cardId, int halfTicks, int delay)
+{
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
+    alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+halfTicks+1, cardId));
+}
+
 void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
 {
+    static const int TURN_HALF_TICKS = 10;
     Rect begR = gameLayout.cardDescs[cardId].screenRect;
     Rect endR = gameLayout.stackRects[dst->handle];
-    static const int TURN_HALF_TICKS = 10;
     int ticks = getMovememntTicks(begR, endR);
 
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH2, ticks));
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
-
-    int delayTicks = ticks/2;
-    if (gameLayout.cardDescs[cardId].opened == false)
-    {
-        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, delayTicks, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, delayTicks, true));
-        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delayTicks+TURN_HALF_TICKS+1, cardId));
+    moveAnimation(cardId, begR, endR, ticks);
+    if (gameLayout.cardDescs[cardId].opened == false) {
+        turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
     }
 }
 
 void Commander::addHandMovementAnimation(CardStack* dest)
 {
+    static const int TURN_HALF_TICKS = 10;
     CardStack* hand = &gameState->hand;
-
     Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
     Rect endR = gameLayout.getDestCardRect(dest);
-    static const int TURN_HALF_TICKS = 10;
     int ticks = getMovememntTicks(begR, endR);
 
-    for (int i=0; i<hand->size(); i++)
-    {
-        GameCard gc = (*hand)[i];
-        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH2, ticks));
-        tweens.push(Tween(&gameLayout.cardDescs[gc.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH2, ticks));
+    for (int i=0; i<hand->size(); i++) {
+        moveAnimation((*hand)[i].id, begR, endR, ticks);
     }
-
-    int turnDelay = ticks/2;
-    if (gameState->shouldOpenCard() && dest != gameState->handSource)
-    {
-        int id = gameState->handSource->top().id;
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, TURN_HALF_TICKS, turnDelay, true));
-        tweens.push(Tween(&gameLayout.cardDescs[id].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, TURN_HALF_TICKS, turnDelay, true));
-        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, turnDelay+TURN_HALF_TICKS+1, id));
+    if (gameState->shouldOpenCard() && dest != gameState->handSource) {
+        turnAnimation(gameState->handSource->top().id, TURN_HALF_TICKS, ticks/2);
     }
 }
 
@@ -779,12 +777,8 @@ void Commander::addAdvanceStockAnimation()
         Rect endR = gameLayout.stackRects[gameState->waste.handle];
         
         gameLayout.raiseZ(cd.id);
-
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-cd.screenRect.x, Tween::CURVE_SMOOTH, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-cd.screenRect.y, Tween::CURVE_SMOOTH, HALF_TICKS*2));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
-        tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, HALF_TICKS, true));
-        alarms.push(Alarm(Alarm::ALARM_TURN_CARD, HALF_TICKS*2+1, cd.id));
+        moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
+        turnAnimation(cd.id, HALF_TICKS, HALF_TICKS);
     }
     else
     {
@@ -795,11 +789,8 @@ void Commander::addAdvanceStockAnimation()
         {
             CardDesc cd = gameLayout.cardDescs[gameState->waste[-i-1].id];
             int delay = i*2;
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, endR.x-begR.x, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.y, endR.y-begR.y, Tween::CURVE_SMOOTH, HALF_TICKS*2, delay));
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
-            tweens.push(Tween(&gameLayout.cardDescs[cd.id].screenRect.w, -(CARD_WIDTH-2.f), Tween::CURVE_SIN, HALF_TICKS, delay+HALF_TICKS, true));
-            alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+HALF_TICKS*2+1, cd.id));
+            moveAnimation(cd.id, begR, endR, HALF_TICKS*2, true, delay);
+            turnAnimation(cd.id, HALF_TICKS, delay+HALF_TICKS);
             alarms.push(Alarm(Alarm::ALARM_RAISE_Z, delay+HALF_TICKS*2+1, cd.id));
         }
 
