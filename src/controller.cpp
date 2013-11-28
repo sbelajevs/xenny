@@ -548,10 +548,16 @@ void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
     stockFrozen = false;
+    autoPlayOn = false;
 
     layout.init();
     widgetLayout.init(layout);
     gameLayout.init(*gameState, layout);
+}
+
+bool Commander::autoPlaying() const
+{
+    return autoPlayOn;
 }
 
 bool Commander::gameEnded() const
@@ -561,7 +567,7 @@ bool Commander::gameEnded() const
 
 void Commander::handleInput(const Input& input)
 {
-    if (gameEnded()) 
+    if (gameEnded() || autoPlaying()) 
     {
         if (input.left.clicked) {
             cmdNew();
@@ -680,6 +686,9 @@ void Commander::handleAlarm(const Alarm& alarm)
     case Alarm::ALARM_TURN_CARD:
         flip(gameLayout.cardDescs[alarm.getArg()].opened);
         break;
+    case Alarm::ALARM_DO_AUTO_MOVE:
+        doAutoMove();
+        break;
     default:
         break;
     }
@@ -695,9 +704,7 @@ void Commander::update()
         {
             tweens[idx] = tweens.top();
             tweens.pop();
-        } 
-        else 
-        {
+        } else {
             idx++;
         }
     }
@@ -711,9 +718,7 @@ void Commander::update()
             handleAlarm(alarms[idx]);
             alarms[idx] = alarms.top();
             alarms.pop();
-        }
-        else
-        {
+        } else {
             idx++;
         }
     }
@@ -839,6 +844,7 @@ void Commander::cmdNew()
 {
     gameState->init();
     resetGameLayout();
+    autoPlayOn = false;
 }
 
 void Commander::cmdAdvanceStock()
@@ -956,6 +962,17 @@ void Commander::cmdAutoClick(float x, float y)
 }
 
 void Commander::cmdAutoPlay()
+{
+    static const int DELAY_TICKS = 6;
+    resetGameLayout();
+    int movesLeft = gameState->countCardsLeft();
+    for (int i=0; i<movesLeft; i++) {
+        alarms.push(Alarm(Alarm::ALARM_DO_AUTO_MOVE, i*DELAY_TICKS));
+    }
+    autoPlayOn = true;
+}
+
+void Commander::doAutoMove()
 {
     CardStack* src = NULL_PTR;
     CardStack* dst = NULL_PTR;

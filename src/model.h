@@ -129,6 +129,7 @@ public:
 
     bool gameWon() const;
     bool canAutoPlay() const;
+    int countCardsLeft() const;
 
     CardStack* getStack(int n);
     CardStack* findById(int cardId, int* idx);

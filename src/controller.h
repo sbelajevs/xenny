@@ -104,6 +104,7 @@ public:
         ALARM_RAISE_Z = 0,
         ALARM_THAW_STOCK,
         ALARM_TURN_CARD,
+        ALARM_DO_AUTO_MOVE,
     };
 
     Alarm();
@@ -251,6 +252,7 @@ public:
     void handleInput(const Input& input);
     void update();
     bool gameEnded() const;
+    bool autoPlaying() const;
 
     Layout layout;
     WidgetLayout widgetLayout;
@@ -273,7 +275,7 @@ private:
     void cmdAutoPlay();
 
     void handleAlarm(const Alarm& alarm);
-
+    void doAutoMove();
     void resetGameLayout();
 
     void raiseHand();
@@ -282,6 +284,7 @@ private:
     void addHandMovementAnimation(CardStack* dest);
 
     bool stockFrozen;
+    bool autoPlayOn;
 
     GameState* gameState;
     FixedVec<Tween, 256> tweens;

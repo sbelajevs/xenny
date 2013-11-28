@@ -572,3 +572,15 @@ bool GameState::canAutoPlay() const
     }
     return true;
 }
+
+int GameState::countCardsLeft() const
+{
+    int count = 0;
+    for (int i=0; i<TABLEAU_COUNT; i++) {
+        count += tableaux[i].size();
+    }
+    count += waste.size();
+    count += stock.size();
+    count += hand.size();  // this one should be 0
+    return count;
+}
