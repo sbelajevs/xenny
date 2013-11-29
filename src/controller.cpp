@@ -547,8 +547,9 @@ Commander::Commander(): gameState(NULL_PTR)
 void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
-    stockFrozen = false;
     autoPlayOn = false;
+    stockLock = false;
+    unlockAllCards();
 
     layout.init();
     widgetLayout.init(layout);
@@ -680,19 +681,23 @@ void Commander::handleInputForButtons(const Input& input)
 
 void Commander::handleAlarm(const Alarm& alarm)
 {
+    int arg = alarm.getArg();
     switch (alarm.getType())
     {
     case Alarm::ALARM_RAISE_Z:
-        gameLayout.raiseZ(alarm.getArg());
+        gameLayout.raiseZ(arg);
         break;
     case Alarm::ALARM_THAW_STOCK:
-        stockFrozen = false;
+        stockLock = false;
         break;
     case Alarm::ALARM_TURN_CARD:
-        flip(gameLayout.cardDescs[alarm.getArg()].opened);
+        flip(gameLayout.cardDescs[arg].opened);
         break;
     case Alarm::ALARM_DO_AUTO_MOVE:
         doAutoMove();
+        break;
+    case Alarm::ALARM_UNLOCK_CARD:
+        cardLock[arg] = false;
         break;
     default:
         break;
@@ -729,18 +734,20 @@ void Commander::update()
     }
 }
 
-void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
+int Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
 {
     Tween::CurveType curve = slower ? Tween::CURVE_SMOOTH : Tween::CURVE_SMOOTH2;
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, end.x-beg.x, curve, ticks, delay));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, end.y-beg.y, curve, ticks, delay));
+    return delay + ticks;
 }
 
-void Commander::turnAnimation(int cardId, int halfTicks, int delay)
+int Commander::turnAnimation(int cardId, int halfTicks, int delay)
 {
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
     alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+halfTicks+1, cardId));
+    return delay + halfTicks*2;
 }
 
 void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
@@ -749,11 +756,14 @@ void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
     Rect begR = gameLayout.cardDescs[cardId].screenRect;
     Rect endR = gameLayout.stackRects[dst->handle];
     int ticks = getMovememntTicks(begR, endR);
-
-    moveAnimation(cardId, begR, endR, ticks);
+    int unlockDelay = moveAnimation(cardId, begR, endR, ticks);
+    
     if (gameLayout.cardDescs[cardId].opened == false) {
-        turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
+        unlockDelay = max(unlockDelay, turnAnimation(cardId, TURN_HALF_TICKS, ticks/2));
     }
+
+    cardLock[cardId] = true;
+    alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
 }
 
 void Commander::addHandMovementAnimation(CardStack* dest)
@@ -764,11 +774,19 @@ void Commander::addHandMovementAnimation(CardStack* dest)
     Rect endR = gameLayout.getDestCardRect(dest);
     int ticks = getMovememntTicks(begR, endR);
 
-    for (int i=0; i<hand->size(); i++) {
-        moveAnimation((*hand)[i].id, begR, endR, ticks);
+    for (int i=0; i<hand->size(); i++) 
+    {
+        int cardId = (*hand)[i].id;
+        int unlockDelay = moveAnimation(cardId, begR, endR, ticks);
+        cardLock[cardId] = true;
+        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
     }
-    if (gameState->shouldOpenCard() && dest != gameState->handSource) {
-        turnAnimation(gameState->handSource->top().id, TURN_HALF_TICKS, ticks/2);
+    if (gameState->shouldOpenCard() && dest != gameState->handSource) 
+    {
+        int cardId = gameState->handSource->top().id;
+        int unlockDelay = turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
+        cardLock[cardId] = true;
+        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
     }
 }
 
@@ -782,11 +800,14 @@ void Commander::addAdvanceStockAnimation()
         Rect endR = gameLayout.stackRects[gameState->waste.handle];
         
         gameLayout.raiseZ(cd.id);
-        moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
-        turnAnimation(cd.id, HALF_TICKS, HALF_TICKS);
+        int unlockDelay = moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
+        unlockDelay = max(unlockDelay, turnAnimation(cd.id, HALF_TICKS, HALF_TICKS));
+        cardLock[cd.id] = true;
+        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cd.id));
     }
     else
     {
+        // No need for card locking here - we're locking the whole stock!
         Rect begR = gameLayout.stackRects[gameState->waste.handle];
         Rect endR = gameLayout.stackRects[gameState->stock.handle];
 
@@ -799,7 +820,7 @@ void Commander::addAdvanceStockAnimation()
             alarms.push(Alarm(Alarm::ALARM_RAISE_Z, delay+HALF_TICKS*2+1, cd.id));
         }
 
-        stockFrozen = true;
+        stockLock = true;
         alarms.push(Alarm(Alarm::ALARM_THAW_STOCK, gameState->waste.size()*2+HALF_TICKS*3));
     }
 }
@@ -808,7 +829,8 @@ void Commander::resetGameLayout()
 {
     tweens.clear();
     alarms.clear();
-    stockFrozen = false;
+    unlockAllCards();
+    stockLock = false;
     gameLayout.reset(*gameState);
 }
 
@@ -845,7 +867,7 @@ void Commander::cmdNew()
 
 void Commander::cmdAdvanceStock()
 {
-    if (stockFrozen == false) 
+    if (stockLock == false) 
     {
         addAdvanceStockAnimation();
         gameState->advanceStock();
@@ -860,10 +882,19 @@ void Commander::cmdPickHand(float x, float y)
     
     if (stack != NULL_PTR && stack->empty() == false && (*stack)[stackIdx].opened())
     {
-        if (stockFrozen && (stack->type == CardStack::TYPE_WASTE || stack->type == CardStack::TYPE_STOCK)) {
+        if (cardLock[cardId]) {
             return;
         }
-
+        if (stack->type == CardStack::TYPE_TABLEAU) {
+            for (int i=0; i<stack->size(); i++) {
+                if (cardLock[(*stack)[i].id]) {
+                    return;
+                }
+            }
+        }
+        if (stockLock && (stack->type == CardStack::TYPE_WASTE || stack->type == CardStack::TYPE_STOCK)) {
+            return;
+        }
         if (stack->type == CardStack::TYPE_WASTE && stackIdx != stack->size()-1) {
             return;
         }
@@ -888,7 +919,6 @@ void Commander::raiseHand()
 void Commander::cmdMoveHand(float dx, float dy)
 {
     if (gameState->hand.empty() == false) {
-
         for (int i=0; i<gameState->hand.size(); i++)
         {
             GameCard gc = gameState->hand[i];
@@ -987,4 +1017,11 @@ void Commander::doAutoMove()
         gameLayout.raiseZ((*src)[i].id);
     }
     gameState->doAutoMove(src, srcIdx, dst);
+}
+
+void Commander::unlockAllCards()
+{
+    for (int i=0; i<CARDS_TOTAL; i++) {
+        cardLock[i] = false;
+    }
 }
