@@ -356,32 +356,52 @@ int GameLayout::probe(float x, float y)
     return -1;
 }
 
-Alarm::Alarm(): type(Alarm::ALARM_RAISE_Z), delayLeft(0), arg(-1)
+Event::Event(): type(Event::RAISE_Z), delayLeft(0), arg(-1)
 {
 }
 
-Alarm::Alarm(Alarm::Type type, int delay, int arg): type(type), delayLeft(delay), arg(arg)
+Event::Event(Event::Type type, int delay, int arg): type(type), delayLeft(delay), arg(arg)
 {
 }
 
-void Alarm::update()
+Event Event::RaiseZ(int delay, int cardId)
+{
+    return Event(Event::RAISE_Z, delay, cardId);
+}
+
+Event Event::ThawStock(int delay)
+{
+    return Event(Event::THAW_STOCK, delay);
+}
+
+Event Event::TurnCard(int delay, int cardId)
+{
+    return Event(Event::TURN_CARD, delay, cardId);
+}
+
+Event Event::DoAutoMove(int delay)
+{
+    return Event(Event::DO_AUTO_MOVE, delay);
+}
+
+void Event::update()
 {
     if (delayLeft > 0) {
         delayLeft--;
     }
 }
 
-bool Alarm::fired() const
+bool Event::fired() const
 {
     return delayLeft <= 0;
 }
 
-int Alarm::getArg() const
+int Event::getArg() const
 {
     return arg;
 }
 
-Alarm::Type Alarm::getType() const
+Event::Type Event::getType() const
 {
     return type;
 }
@@ -586,7 +606,7 @@ bool Commander::autoPlaying() const
 
 bool Commander::gameEnded() const
 {
-    return gameState->gameWon() && alarms.empty() && tweens.empty();
+    return gameState->gameWon() && events.empty() && tweens.empty();
 }
 
 void Commander::handleInput(const Input& input)
@@ -702,21 +722,21 @@ void Commander::handleInputForButtons(const Input& input)
     }
 }
 
-void Commander::handleAlarm(const Alarm& alarm)
+void Commander::handleEvent(const Event& e)
 {
-    int arg = alarm.getArg();
-    switch (alarm.getType())
+    int arg = e.getArg();
+    switch (e.getType())
     {
-    case Alarm::ALARM_RAISE_Z:
+    case Event::RAISE_Z:
         gameLayout.raiseZ(arg);
         break;
-    case Alarm::ALARM_THAW_STOCK:
+    case Event::THAW_STOCK:
         stockLock = false;
         break;
-    case Alarm::ALARM_TURN_CARD:
+    case Event::TURN_CARD:
         doFlip(gameLayout.cardDescs[arg].opened);
         break;
-    case Alarm::ALARM_DO_AUTO_MOVE:
+    case Event::DO_AUTO_MOVE:
         doAutoMove();
         break;
     default:
@@ -740,14 +760,14 @@ void Commander::update()
     }
 
     idx = 0;
-    while (idx < alarms.size())
+    while (idx < events.size())
     {
-        alarms[idx].update();
-        if (alarms[idx].fired())
+        events[idx].update();
+        if (events[idx].fired())
         {
-            handleAlarm(alarms[idx]);
-            alarms[idx] = alarms.top();
-            alarms.pop();
+            handleEvent(events[idx]);
+            events[idx] = events.top();
+            events.pop();
         } else {
             idx++;
         }
@@ -775,7 +795,7 @@ void Commander::turnAnimation(int cardId, int halfTicks, int delay)
 {
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
-    alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+halfTicks+1, cardId));
+    events.push(Event::TurnCard(delay+halfTicks+1, cardId));
     // Not really sure why we need +1 here, but autoplayed game looks crappy without it
     doMax(cardLock[cardId], delay + halfTicks*2 + 1);
 }
@@ -834,18 +854,18 @@ void Commander::addAdvanceStockAnimation()
             int delay = i*2;
             moveAnimation(cd.id, begR, endR, HALF_TICKS*2, true, delay);
             turnAnimation(cd.id, HALF_TICKS, delay+HALF_TICKS);
-            alarms.push(Alarm(Alarm::ALARM_RAISE_Z, delay+HALF_TICKS*2+1, cd.id));
+            events.push(Event::RaiseZ(delay+HALF_TICKS*2+1, cd.id));
         }
 
         stockLock = true;
-        alarms.push(Alarm(Alarm::ALARM_THAW_STOCK, gameState->waste.size()*2+HALF_TICKS*3));
+        events.push(Event::ThawStock(gameState->waste.size()*2+HALF_TICKS*3));
     }
 }
 
 void Commander::resetGameLayout()
 {
     tweens.clear();
-    alarms.clear();
+    events.clear();
     unlockAllCards();
     stockLock = false;
     gameLayout.reset(*gameState);
@@ -1009,7 +1029,7 @@ void Commander::cmdAutoPlay()
     resetGameLayout();
     int movesLeft = gameState->countCardsLeft();
     for (int i=0; i<movesLeft; i++) {
-        alarms.push(Alarm(Alarm::ALARM_DO_AUTO_MOVE, i*DELAY_TICKS));
+        events.push(Event::DoAutoMove(i*DELAY_TICKS));
     }
     autoPlayOn = true;
 }

@@ -96,19 +96,24 @@ private:
     SystemAPI* sys;
 };
 
-class Alarm
+class Event
 {
 public:
     enum Type
     {
-        ALARM_RAISE_Z = 0,
-        ALARM_THAW_STOCK,
-        ALARM_TURN_CARD,
-        ALARM_DO_AUTO_MOVE,
+        RAISE_Z = 0,
+        THAW_STOCK,
+        TURN_CARD,
+        DO_AUTO_MOVE,
     };
 
-    Alarm();
-    Alarm(Type type, int delay, int arg = 0);
+    static Event RaiseZ(int delay, int cardId);
+    static Event ThawStock(int delay);
+    static Event TurnCard(int delay, int cardId);
+    static Event DoAutoMove(int delay);
+
+    Event();
+    Event(Type type, int delay, int arg = 0);
 
     void update();
     bool fired() const;
@@ -275,7 +280,7 @@ private:
     void cmdAutoClick(float x, float y);
     void cmdAutoPlay();
 
-    void handleAlarm(const Alarm& alarm);
+    void handleEvent(const Event& event);
     void doAutoMove();
     void resetGameLayout();
     void clearControlButtons();
@@ -296,5 +301,5 @@ private:
 
     GameState* gameState;
     FixedVec<Tween, 256> tweens;
-    FixedVec<Alarm, 256> alarms;
+    FixedVec<Event, 256> events;
 };
