@@ -279,9 +279,6 @@ void Sys_DrawMainTex(SystemAPI* sysApi,
         float ty;
     };
 
-    sx = round(sx);
-    sy = round(sy);
-
     Vertex vertices[4];
 
     vertices[0].x = sx;
@@ -431,6 +428,11 @@ void Sys_GenRandomPermutation(int* begin, int count)
 float Sys_Sin(float rad)
 {
     return sin(rad);
+}
+
+float Sys_Floor(float arg)
+{
+    return floor(arg + 1.f/8192.f);
 }
 
 struct HINSTANCE__;

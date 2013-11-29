@@ -40,6 +40,7 @@ int  Sys_GetMouseButtonState(SystemAPI* sys);
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y);
 
 float Sys_Sin(float rad);
+float Sys_Floor(float arg);
 
 #ifdef __cplusplus
 }

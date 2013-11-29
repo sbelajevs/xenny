@@ -91,12 +91,22 @@ void Layout::init()
 
 Rect Layout::getWorkingArea() const
 {
-    return Rect(borderH, borderV, SCREEN_WIDTH-2*borderH, SCREEN_HEIGHT-2*borderV);
+    return Rect(
+        Sys_Floor(borderH), 
+        Sys_Floor(borderV), 
+        Sys_Floor(SCREEN_WIDTH-2*borderH), 
+        Sys_Floor(SCREEN_HEIGHT-2*borderV)
+    );
 }
 
 Rect Layout::getYouWonRect() const
 {
-    return Rect((SCREEN_WIDTH-YOU_WON_WIDTH)*0.5f, (SCREEN_HEIGHT-YOU_WON_HEIGHT)*0.75f, YOU_WON_WIDTH, YOU_WON_HEIGHT);
+    return Rect(
+        Sys_Floor((SCREEN_WIDTH-YOU_WON_WIDTH)*0.5f), 
+        Sys_Floor((SCREEN_HEIGHT-YOU_WON_HEIGHT)*0.75f), 
+        Sys_Floor(YOU_WON_WIDTH), 
+        Sys_Floor(YOU_WON_HEIGHT)
+    );
 }
 
 Rect Layout::getStackRect(const CardStack* stack) const
@@ -105,18 +115,18 @@ Rect Layout::getStackRect(const CardStack* stack) const
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            foundationsTopLeftX + (tableauInterval/2.f + CARD_WIDTH)*stack->ordinal,
-            foundationsTopLeftY
+            Sys_Floor(foundationsTopLeftX + (tableauInterval/2.f + CARD_WIDTH)*stack->ordinal),
+            Sys_Floor(foundationsTopLeftY)
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            tableausTopLeftX + (tableauInterval+CARD_WIDTH)*stack->ordinal,
-            tableausTopLeftY
+            Sys_Floor(tableausTopLeftX + (tableauInterval+CARD_WIDTH)*stack->ordinal),
+            Sys_Floor(tableausTopLeftY)
         );
     case CardStack::TYPE_STOCK:
-        return getCardScreenRect(stockTopLeftX, stockTopLeftY);
+        return getCardScreenRect(Sys_Floor(stockTopLeftX), Sys_Floor(stockTopLeftY));
     case CardStack::TYPE_WASTE:
-        return getCardScreenRect(wasteTopLeftX, wasteTopLeftY);
+        return getCardScreenRect(Sys_Floor(wasteTopLeftX), Sys_Floor(wasteTopLeftY));
     default:
         return getCardScreenRect(-1.f, -1.f);
     }
@@ -236,7 +246,7 @@ void GameLayout::reset(GameState& gameState)
             cardDescs[gc.id] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
             orderedIds[curZ] = gc.id;
             if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-                screenPos.y += gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+                screenPos.y += Sys_Floor(.5f + (gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE));
             }
         }
     }
@@ -381,8 +391,7 @@ Tween::Tween(float* receiver, float delta, Tween::CurveType curveType, int ticks
 
 void Tween::update()
 {
-    if (delayLeft > 0) 
-    {
+    if (delayLeft > 0) {
         delayLeft--;
     } 
     else if (ticksLeft > 0) 
@@ -691,13 +700,10 @@ void Commander::handleAlarm(const Alarm& alarm)
         stockLock = false;
         break;
     case Alarm::ALARM_TURN_CARD:
-        flip(gameLayout.cardDescs[arg].opened);
+        doFlip(gameLayout.cardDescs[arg].opened);
         break;
     case Alarm::ALARM_DO_AUTO_MOVE:
         doAutoMove();
-        break;
-    case Alarm::ALARM_UNLOCK_CARD:
-        cardLock[arg] = false;
         break;
     default:
         break;
@@ -732,22 +738,34 @@ void Commander::update()
             idx++;
         }
     }
+
+    for (int i=0; i<CARDS_TOTAL; i++) {
+        if (cardLock[i] > 0) {
+            if (--cardLock[i] == 0)
+            {
+                doFloor(gameLayout.cardDescs[i].screenRect.x);
+                doFloor(gameLayout.cardDescs[i].screenRect.y);
+            }
+        }
+    }
 }
 
-int Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
+void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
 {
     Tween::CurveType curve = slower ? Tween::CURVE_SMOOTH : Tween::CURVE_SMOOTH2;
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, end.x-beg.x, curve, ticks, delay));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.y, end.y-beg.y, curve, ticks, delay));
-    return delay + ticks;
+    // Not really sure why we need +1 here, but autoplayed game looks crappy without it
+    doMax(cardLock[cardId], delay + ticks + 1);
 }
 
-int Commander::turnAnimation(int cardId, int halfTicks, int delay)
+void Commander::turnAnimation(int cardId, int halfTicks, int delay)
 {
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
     tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
     alarms.push(Alarm(Alarm::ALARM_TURN_CARD, delay+halfTicks+1, cardId));
-    return delay + halfTicks*2;
+    // Not really sure why we need +1 here, but autoplayed game looks crappy without it
+    doMax(cardLock[cardId], delay + halfTicks*2 + 1);
 }
 
 void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
@@ -756,14 +774,11 @@ void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
     Rect begR = gameLayout.cardDescs[cardId].screenRect;
     Rect endR = gameLayout.stackRects[dst->handle];
     int ticks = getMovememntTicks(begR, endR);
-    int unlockDelay = moveAnimation(cardId, begR, endR, ticks);
+    moveAnimation(cardId, begR, endR, ticks);
     
     if (gameLayout.cardDescs[cardId].opened == false) {
-        unlockDelay = max(unlockDelay, turnAnimation(cardId, TURN_HALF_TICKS, ticks/2));
+        turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
     }
-
-    cardLock[cardId] = true;
-    alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
 }
 
 void Commander::addHandMovementAnimation(CardStack* dest)
@@ -774,19 +789,11 @@ void Commander::addHandMovementAnimation(CardStack* dest)
     Rect endR = gameLayout.getDestCardRect(dest);
     int ticks = getMovememntTicks(begR, endR);
 
-    for (int i=0; i<hand->size(); i++) 
-    {
-        int cardId = (*hand)[i].id;
-        int unlockDelay = moveAnimation(cardId, begR, endR, ticks);
-        cardLock[cardId] = true;
-        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
+    for (int i=0; i<hand->size(); i++) {
+        moveAnimation((*hand)[i].id, begR, endR, ticks);
     }
-    if (gameState->shouldOpenCard() && dest != gameState->handSource) 
-    {
-        int cardId = gameState->handSource->top().id;
-        int unlockDelay = turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
-        cardLock[cardId] = true;
-        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cardId));
+    if (gameState->shouldOpenCard() && dest != gameState->handSource) {
+        turnAnimation(gameState->handSource->top().id, TURN_HALF_TICKS, ticks/2);
     }
 }
 
@@ -800,10 +807,8 @@ void Commander::addAdvanceStockAnimation()
         Rect endR = gameLayout.stackRects[gameState->waste.handle];
         
         gameLayout.raiseZ(cd.id);
-        int unlockDelay = moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
-        unlockDelay = max(unlockDelay, turnAnimation(cd.id, HALF_TICKS, HALF_TICKS));
-        cardLock[cd.id] = true;
-        alarms.push(Alarm(Alarm::ALARM_UNLOCK_CARD, unlockDelay, cd.id));
+        moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
+        turnAnimation(cd.id, HALF_TICKS, HALF_TICKS);
     }
     else
     {
@@ -1004,13 +1009,11 @@ void Commander::doAutoMove()
     int srcIdx = -1;
 
     src = gameState->findAutoMove(&dst, &srcIdx);
-
     if (src == NULL_PTR) {
         return;
     }
 
     int cardId = (*src)[srcIdx].id;
-
     addAutoMoveAnimation(cardId, dst);
     gameLayout.raiseZ(cardId);
     for (int i=srcIdx+1; i<src->size(); i++) {
@@ -1022,6 +1025,6 @@ void Commander::doAutoMove()
 void Commander::unlockAllCards()
 {
     for (int i=0; i<CARDS_TOTAL; i++) {
-        cardLock[i] = false;
+        cardLock[i] = 0;
     }
 }

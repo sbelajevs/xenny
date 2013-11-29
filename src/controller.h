@@ -105,7 +105,6 @@ public:
         ALARM_THAW_STOCK,
         ALARM_TURN_CARD,
         ALARM_DO_AUTO_MOVE,
-        ALARM_UNLOCK_CARD,
     };
 
     Alarm();
@@ -285,14 +284,14 @@ private:
     void addAdvanceStockAnimation();
     void addHandMovementAnimation(CardStack* dest);
 
-    int moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower = false, int delay=0);
-    int turnAnimation(int cardId, int halfTicks, int delay);
+    void moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower = false, int delay=0);
+    void turnAnimation(int cardId, int halfTicks, int delay);
 
     void unlockAllCards();
 
     bool autoPlayOn;
     bool stockLock;
-    bool cardLock[CARDS_TOTAL];
+    int cardLock[CARDS_TOTAL];
 
     GameState* gameState;
     FixedVec<Tween, 256> tweens;
