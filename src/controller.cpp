@@ -253,6 +253,20 @@ void GameLayout::reset(GameState& gameState)
     normalized = true;
 }
 
+void GameLayout::updateCardRect(GameState& gameState, int cardId)
+{
+    int idx;
+    CardStack* cs = gameState.findById(cardId, &idx);
+    // assert (cs != NULL_PTR)
+    Rect result = stackRects[cs->handle];
+    for (int i=0; i<idx; i++) {
+        if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
+            result.y += Sys_Floor(.5f + ((*cs)[i].opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE));
+        }
+    }
+    cardDescs[cardId].screenRect = result;
+}
+
 void GameLayout::ensureNormalize()
 {
     if (normalized) {
@@ -741,10 +755,8 @@ void Commander::update()
 
     for (int i=0; i<CARDS_TOTAL; i++) {
         if (cardLock[i] > 0) {
-            if (--cardLock[i] == 0)
-            {
-                doFloor(gameLayout.cardDescs[i].screenRect.x);
-                doFloor(gameLayout.cardDescs[i].screenRect.y);
+            if (--cardLock[i] == 0) {
+                gameLayout.updateCardRect(*gameState, i);
             }
         }
     }

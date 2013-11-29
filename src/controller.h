@@ -178,6 +178,7 @@ public:
     void raiseZ(int cardId);
 
     int probe(float x, float y);
+    void updateCardRect(GameState& gameState, int cardId);
     Rect getDestCardRect(const CardStack* stack) const;
     const CardDesc& getOrderedCard(int ordinal);
     
