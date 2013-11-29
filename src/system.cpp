@@ -74,7 +74,6 @@ SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char*
         exit(EXIT_FAILURE);
     }
 
-    glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 2);
     glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 2);
     glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 1);
     glfwOpenWindowHint(GLFW_WINDOW_NO_RESIZE, 1);
