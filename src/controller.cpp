@@ -384,6 +384,11 @@ Event Event::DoAutoMove(int delay)
     return Event(Event::DO_AUTO_MOVE, delay);
 }
 
+Event Event::DoGameReady(int delay)
+{
+    return Event(Event::GAME_READY, delay);
+}
+
 void Event::update()
 {
     if (delayLeft > 0) {
@@ -591,6 +596,7 @@ void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
     autoPlayOn = false;
+    startAnimationOn = false;
     stockLock = false;
     unlockAllCards();
 
@@ -604,6 +610,11 @@ bool Commander::autoPlaying() const
     return autoPlayOn;
 }
 
+bool Commander::starting() const
+{
+    return startAnimationOn;
+}
+
 bool Commander::gameEnded() const
 {
     return gameState->gameWon() && events.empty() && tweens.empty();
@@ -615,10 +626,9 @@ void Commander::handleInput(const Input& input)
     {
         if (input.left.clicked) {
             cmdNew();
-            clearControlButtons();
         }
     }
-    else
+    else if (starting() == false)
     {
         if (gameState->hand.empty()) {
             handleInputForButtons(input);
@@ -738,6 +748,9 @@ void Commander::handleEvent(const Event& e)
         break;
     case Event::DO_AUTO_MOVE:
         doAutoMove();
+        break;
+    case Event::GAME_READY:
+        startAnimationOn = false;
         break;
     default:
         break;
@@ -862,6 +875,34 @@ void Commander::addAdvanceStockAnimation()
     }
 }
 
+void Commander::addStartAnimation()
+{
+    static const int MOVEMENT_TICKS = 24;
+    static const int MOVEMENT_PAUSE = 1;
+    static const int HALF_TURN_TICKS = 8;
+    int delay = 0;
+
+    startAnimationOn = true;
+
+    Rect begR = gameLayout.stackRects[gameState->stock.handle];
+    for (int i=TABLEAU_COUNT-1; i>=0; i--) 
+    {
+        for (int j=0; j<gameState->tableaux[i].size(); j++)
+        {
+            int cardId = gameState->tableaux[i][j].id;
+            Rect endR = gameLayout.cardDescs[cardId].screenRect;
+            gameLayout.cardDescs[cardId].screenRect = begR;
+            moveAnimation(cardId, begR, endR, MOVEMENT_TICKS, false, delay);
+            delay += MOVEMENT_PAUSE;
+        }
+        int cardId = gameState->tableaux[i].top().id;
+        gameLayout.cardDescs[cardId].opened = false;
+        turnAnimation(cardId, HALF_TURN_TICKS, delay + MOVEMENT_TICKS);
+    }
+
+    events.push(Event::DoGameReady(delay + MOVEMENT_TICKS + HALF_TURN_TICKS*2));
+}
+
 void Commander::resetGameLayout()
 {
     tweens.clear();
@@ -897,9 +938,11 @@ void Commander::cmdFullRedo()
 
 void Commander::cmdNew()
 {
+    autoPlayOn = false;
     gameState->init();
     resetGameLayout();
-    autoPlayOn = false;
+    addStartAnimation();
+    clearControlButtons();
 }
 
 void Commander::cmdAdvanceStock()

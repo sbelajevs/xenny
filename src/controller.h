@@ -105,12 +105,14 @@ public:
         THAW_STOCK,
         TURN_CARD,
         DO_AUTO_MOVE,
+        GAME_READY,
     };
 
     static Event RaiseZ(int delay, int cardId);
     static Event ThawStock(int delay);
     static Event TurnCard(int delay, int cardId);
     static Event DoAutoMove(int delay);
+    static Event DoGameReady(int delay);
 
     Event();
     Event(Type type, int delay, int arg = 0);
@@ -259,6 +261,7 @@ public:
     void update();
     bool gameEnded() const;
     bool autoPlaying() const;
+    bool starting() const;
 
     Layout layout;
     WidgetLayout widgetLayout;
@@ -289,12 +292,14 @@ private:
     void addAutoMoveAnimation(int cardId, CardStack* dest);
     void addAdvanceStockAnimation();
     void addHandMovementAnimation(CardStack* dest);
+    void addStartAnimation();
 
     void moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower = false, int delay=0);
     void turnAnimation(int cardId, int halfTicks, int delay);
 
     void unlockAllCards();
 
+    bool startAnimationOn;
     bool autoPlayOn;
     bool stockLock;
     int cardLock[CARDS_TOTAL];

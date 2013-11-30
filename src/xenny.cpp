@@ -120,7 +120,7 @@ public:
 
         if (commander.gameEnded()) {
             renderRect(commander.layout.getYouWonRect(), cardGfxData.youWon);
-        } else if (commander.autoPlaying() == false) {
+        } else if (commander.autoPlaying() == false && commander.starting() == false) {
             renderControlsGUI();
         }
     }
