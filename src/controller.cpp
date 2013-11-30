@@ -595,14 +595,12 @@ Commander::Commander(): gameState(NULL_PTR)
 void Commander::init(GameState* aGameState)
 {
     gameState = aGameState;
-    autoPlayOn = false;
-    startAnimationOn = false;
-    stockLock = false;
-    unlockAllCards();
 
     layout.init();
     widgetLayout.init(layout);
     gameLayout.init(*gameState, layout);
+
+    cmdNew();
 }
 
 bool Commander::autoPlaying() const
