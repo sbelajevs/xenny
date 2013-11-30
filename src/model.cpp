@@ -500,7 +500,7 @@ CardStack* GameState::findAutoMove(CardStack** destStack, int* srcIdx)
 
     for (int i=0; i<TABLEAU_COUNT; i++) {
         if (tableaux[i].empty() == false) {
-            for (int j=0; j<FOUNDATION_COUNT; j++) {
+            for (int j=FOUNDATION_COUNT-1; j>=0; j--) {
                 if (tableaux[i].top().id == desiredCardIds[j])
                 {
                     *destStack = &foundations[j];
@@ -514,7 +514,7 @@ CardStack* GameState::findAutoMove(CardStack** destStack, int* srcIdx)
     // Step #3: loop through stock
 
     for (int i=0; i<stock.size(); i++) {
-        for (int j=0; j<FOUNDATION_COUNT; j++) {
+        for (int j=FOUNDATION_COUNT-1; j>=0; j--) {
             if (stock[i].id == desiredCardIds[j])
             {
                 *destStack = &foundations[j];
@@ -527,7 +527,7 @@ CardStack* GameState::findAutoMove(CardStack** destStack, int* srcIdx)
     // Step #4: loop through waste
 
     for (int i=0; i<waste.size(); i++) {
-        for (int j=0; j<FOUNDATION_COUNT; j++) {
+        for (int j=FOUNDATION_COUNT-1; j>=0; j--) {
             if (waste[i].id == desiredCardIds[j])
             {
                 *destStack = &foundations[j];
