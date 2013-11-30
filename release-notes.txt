@@ -1,3 +1,11 @@
+Version 0.0.2
+==============
+ - Many actions are animated now
+ - Slight changes in card graphics
+ - Several hard-to-find bugs were fixed
+ - Refresh rate is synchronized, animation is more smooth now
+ - When all cards are opened, "Auto" button appears for auto-play
+
 Version 0.0.1
 ==============
  - Standard Klondike solitaire game with 1-deck/1-card/no-limit rules
