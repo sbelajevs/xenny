@@ -113,6 +113,7 @@ public:
 
     void render()
     {
+        Sys_SetTargetScreen(sys);
         //0x2f9672
         Sys_ClearScreen(sys, 0x119573);
         renderGameGUI();
@@ -125,11 +126,17 @@ public:
     }
 
 private:
-    void renderRect(Rect screen, Rect tex) const
+    void renderRect(Rect screen, Rect tex, bool useMainTex=true) const
     {
-        Sys_DrawMainTex(
-            sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, tex.h
-        );
+        if (useMainTex) {
+            Sys_DrawMainTex(
+                sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, tex.h
+            );
+        } else {
+            Sys_DrawHelperTex(
+                sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, -tex.h
+            );
+        }
     }
 
     void renderGameGUI()
