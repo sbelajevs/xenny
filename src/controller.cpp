@@ -813,14 +813,14 @@ void Commander::turnAnimation(int cardId, int halfTicks, int delay)
 
 void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
 {
-    static const int TURN_HALF_TICKS = 10;
+    static const int TURN_HALF_TICKS = 8;
+    static const int AUTO_MOVE_TICKS = 24;
     Rect begR = gameLayout.cardDescs[cardId].screenRect;
     Rect endR = gameLayout.stackRects[dst->handle];
-    int ticks = getMovememntTicks(begR, endR);
-    moveAnimation(cardId, begR, endR, ticks);
+    moveAnimation(cardId, begR, endR, AUTO_MOVE_TICKS);
     
     if (gameLayout.cardDescs[cardId].opened == false) {
-        turnAnimation(cardId, TURN_HALF_TICKS, ticks/2);
+        turnAnimation(cardId, TURN_HALF_TICKS, AUTO_MOVE_TICKS/2);
     }
 }
 
@@ -1066,11 +1066,11 @@ void Commander::cmdAutoClick(float x, float y)
 
 void Commander::cmdAutoPlay()
 {
-    static const int DELAY_TICKS = 6;
+    static const int DELAY_TICKS = 8;
     resetGameLayout();
     int movesLeft = gameState->countCardsLeft();
     for (int i=0; i<movesLeft; i++) {
-        events.push(Event::DoAutoMove(i*DELAY_TICKS));
+        events.push(Event::DoAutoMove((i/2)*DELAY_TICKS + i%2));
     }
     autoPlayOn = true;
 }
