@@ -124,22 +124,27 @@ public:
 
     void render()
     {
+        if (commander->movingScreen()) {
+            Sys_SetTargetHelper(sys);
+        } else {
+            Sys_SetTargetScreen(sys);
+        }
+
+        Sys_ClearScreen(sys, 0x119573);
+        renderGameGUI();
+
+        bool showButtons = commander->autoPlaying() == false
+            && commander->starting() == false
+            && commander->movingScreen() == false;
+
+        if (commander->gameEnded()) {
+            renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
+        } else if (showButtons) {
+            renderControlsGUI();
+        }
+
         if (commander->movingScreen())
         {
-            Sys_SetTargetHelper(sys);
-            Sys_ClearScreen(sys, 0x119573);
-            renderGameGUI();
-
-            bool showButtons = commander->autoPlaying() == false
-                && commander->starting() == false
-                && commander->movingScreen() == false;
-
-            if (commander->gameEnded()) {
-                renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
-            } else if (showButtons) {
-                renderControlsGUI();
-            }
-
             Sys_SetTargetScreen(sys);
             Rect oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
             Rect tex = Rect(0.f, 0.f, 1.f, 1.f);
@@ -154,23 +159,6 @@ public:
             oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY - SCREEN_HEIGHT, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
             tex = Rect(0.f, 0.f, 1.f, 1.f);
             renderRect(oldR, tex, false);
-        }
-        else
-        {
-            Sys_SetTargetScreen(sys);
-            //0x2f9672
-            Sys_ClearScreen(sys, 0x119573);
-            renderGameGUI();
-
-            bool showButtons = commander->autoPlaying() == false
-                && commander->starting() == false
-                && commander->movingScreen() == false;
-
-            if (commander->gameEnded()) {
-                renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
-            } else if (showButtons) {
-                renderControlsGUI();
-            }
         }
     }
 
