@@ -106,6 +106,7 @@ public:
         TURN_CARD,
         DO_AUTO_MOVE,
         GAME_READY,
+        DO_START_ANIMATION,
     };
 
     static Event RaiseZ(int delay, int cardId);
@@ -113,6 +114,7 @@ public:
     static Event TurnCard(int delay, int cardId);
     static Event DoAutoMove(int delay);
     static Event DoGameReady(int delay);
+    static Event DoStartAnimation(int delay);
 
     Event();
     Event(Type type, int delay, int arg = 0);
@@ -192,6 +194,9 @@ public:
     Rect stackRects[STACK_COUNT];
     CardDesc cardDescs[CARDS_TOTAL];
 
+    float oldX;
+    float oldY;
+
 private:
     void ensureNormalize();
 
@@ -259,9 +264,11 @@ public:
     void init(GameState* aGameState);
     void handleInput(const Input& input);
     void update();
+    
     bool gameEnded() const;
     bool autoPlaying() const;
     bool starting() const;
+    bool movingScreen() const;
 
     Layout layout;
     WidgetLayout widgetLayout;
@@ -275,6 +282,7 @@ private:
     void cmdFullUndo();
     void cmdFullRedo();
     void cmdNew();
+    void cmdMoveToNew();
 
     void cmdAdvanceStock();
     void cmdPickHand(float x, float y);
@@ -299,6 +307,7 @@ private:
 
     void unlockAllCards();
 
+    bool startMoveOn;
     bool startAnimationOn;
     bool autoPlayOn;
     bool stockLock;
@@ -307,4 +316,5 @@ private:
     GameState* gameState;
     FixedVec<Tween, 256> tweens;
     FixedVec<Event, 256> events;
+    FixedVec<Event, 256> eventsCopy;
 };

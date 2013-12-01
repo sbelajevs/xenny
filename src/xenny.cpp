@@ -85,8 +85,14 @@ public:
 class App
 {
 public:
-    App(): sys(NULL_PTR)
+    App(): sys(NULL_PTR), commander(NULL_PTR), gameState(NULL_PTR)
     {
+    }
+
+    ~App()
+    {
+        delete commander;
+        delete gameState;
     }
 
     void init(SystemAPI* s)
@@ -95,33 +101,76 @@ public:
         Sys_LoadMainTexture(sys, MAIN_TEXTURE, MAIN_TEXTURE_SIZE);
         cardGfxData.init();
         input.init(sys);
+        
+        delete gameState;
+        gameState = new GameState();
+        gameState->init();
 
-        gameState.init();
-        commander.init(&gameState);
+        delete commander;
+        commander = new Commander();
+        commander->init(gameState);
     }
 
     void handleControls()
     {
         input.update();
-        commander.handleInput(input);
+        commander->handleInput(input);
     }
 
     void tick()
     {
-        commander.update();
+        commander->update();
     }
 
     void render()
     {
-        Sys_SetTargetScreen(sys);
-        //0x2f9672
-        Sys_ClearScreen(sys, 0x119573);
-        renderGameGUI();
+        if (commander->movingScreen())
+        {
+            Sys_SetTargetHelper(sys);
+            Sys_ClearScreen(sys, 0x119573);
+            renderGameGUI();
 
-        if (commander.gameEnded()) {
-            renderRect(commander.layout.getYouWonRect(), cardGfxData.youWon);
-        } else if (commander.autoPlaying() == false && commander.starting() == false) {
-            renderControlsGUI();
+            bool showButtons = commander->autoPlaying() == false
+                && commander->starting() == false
+                && commander->movingScreen() == false;
+
+            if (commander->gameEnded()) {
+                renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
+            } else if (showButtons) {
+                renderControlsGUI();
+            }
+
+            Sys_SetTargetScreen(sys);
+            Rect oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+            Rect tex = Rect(0.f, 0.f, 1.f, 1.f);
+            renderRect(oldR, tex, false);
+
+            Sys_SetTargetHelper(sys);
+            Sys_ClearScreen(sys, 0x119573);
+            renderEmptyGame();
+            Rect stockR = commander->gameLayout.stackRects[gameState->stock.handle];
+            renderRect(stockR, cardGfxData.cardBack);
+            Sys_SetTargetScreen(sys);
+            oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY - SCREEN_HEIGHT, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+            tex = Rect(0.f, 0.f, 1.f, 1.f);
+            renderRect(oldR, tex, false);
+        }
+        else
+        {
+            Sys_SetTargetScreen(sys);
+            //0x2f9672
+            Sys_ClearScreen(sys, 0x119573);
+            renderGameGUI();
+
+            bool showButtons = commander->autoPlaying() == false
+                && commander->starting() == false
+                && commander->movingScreen() == false;
+
+            if (commander->gameEnded()) {
+                renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
+            } else if (showButtons) {
+                renderControlsGUI();
+            }
         }
     }
 
@@ -139,12 +188,12 @@ private:
         }
     }
 
-    void renderGameGUI()
+    void renderEmptyGame()
     {
         for (int i=0; i<STACK_COUNT; i++) 
         {
-            CardStack* cs = gameState.getStack(i);
-            Rect screenRect = commander.gameLayout.stackRects[cs->handle];
+            CardStack* cs = gameState->getStack(i);
+            Rect screenRect = commander->gameLayout.stackRects[cs->handle];
             Rect texRect = cardGfxData.cardWaste;
             if (cs->type == CardStack::TYPE_FOUNDATION) {
                 texRect = cardGfxData.cardFoundation;
@@ -155,10 +204,15 @@ private:
             }
             renderRect(screenRect, texRect);
         }
+    }
+
+    void renderGameGUI()
+    {
+        renderEmptyGame();
 
         for (int i=0; i<CARDS_TOTAL; i++)
         {
-            CardDesc cd = commander.gameLayout.getOrderedCard(i);
+            CardDesc cd = commander->gameLayout.getOrderedCard(i);
             Rect texRect = cd.opened ? cardGfxData.cardFaces[cd.id] : cardGfxData.cardBack;
             renderRect(cd.screenRect, texRect);
         }
@@ -166,22 +220,22 @@ private:
 
     void renderControlsGUI()
     {
-        const ButtonDesc fullUndo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
+        const ButtonDesc fullUndo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
         renderRect(fullUndo.getRect(), cardGfxData.fullUndo[fullUndo.getState()]);
 
-        const ButtonDesc undo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
+        const ButtonDesc undo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
         renderRect(undo.getRect(), cardGfxData.undo[undo.getState()]);
 
-        const ButtonDesc redo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
+        const ButtonDesc redo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
         renderRect(redo.getRect(), cardGfxData.undo[redo.getState()].flipX());
 
-        const ButtonDesc fullRedo = commander.widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
+        const ButtonDesc fullRedo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
         renderRect(fullRedo.getRect(), cardGfxData.fullUndo[fullRedo.getState()].flipX());
 
-        const ButtonDesc newGame = commander.widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
+        const ButtonDesc newGame = commander->widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
         renderRect(newGame.getRect(), cardGfxData.newGame[newGame.getState()]);
 
-        const ButtonDesc autoPlay = commander.widgetLayout.buttons[WidgetLayout::BUTTON_AUTO];
+        const ButtonDesc autoPlay = commander->widgetLayout.buttons[WidgetLayout::BUTTON_AUTO];
         if (autoPlay.visible()) {
             renderRect(autoPlay.getRect(), cardGfxData.autoPlay[autoPlay.getState()]);
         }
@@ -191,8 +245,8 @@ private:
     CardGfxData cardGfxData;
 
     Input input;
-    GameState gameState;
-    Commander commander;
+    GameState* gameState;
+    Commander* commander;
 };
 
 int runGame()

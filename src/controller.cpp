@@ -389,6 +389,11 @@ Event Event::DoGameReady(int delay)
     return Event(Event::GAME_READY, delay);
 }
 
+Event Event::DoStartAnimation(int delay)
+{
+    return Event(Event::DO_START_ANIMATION, delay);
+}
+
 void Event::update()
 {
     if (delayLeft > 0) {
@@ -613,6 +618,11 @@ bool Commander::starting() const
     return startAnimationOn;
 }
 
+bool Commander::movingScreen() const
+{
+    return startMoveOn;
+}
+
 bool Commander::gameEnded() const
 {
     return gameState->gameWon() && events.empty() && tweens.empty();
@@ -622,11 +632,11 @@ void Commander::handleInput(const Input& input)
 {
     if (gameEnded() || autoPlaying()) 
     {
-        if (input.left.clicked) {
-            cmdNew();
+        if (movingScreen() == false && input.left.clicked) {
+            cmdMoveToNew();
         }
     }
-    else if (starting() == false)
+    else if (starting() == false && movingScreen() == false)
     {
         if (gameState->hand.empty()) {
             handleInputForButtons(input);
@@ -696,7 +706,7 @@ void Commander::handleInputForButtons(const Input& input)
         } else if (focusButton == WidgetLayout::BUTTON_FULL_UNDO) {
             cmdFullUndo();
         } else if (focusButton == WidgetLayout::BUTTON_NEW) {
-            cmdNew();
+            cmdMoveToNew();
         } else if (focusButton == WidgetLayout::BUTTON_REDO) {
             cmdRedo();
         } else if (focusButton == WidgetLayout::BUTTON_UNDO) {
@@ -750,6 +760,9 @@ void Commander::handleEvent(const Event& e)
     case Event::GAME_READY:
         startAnimationOn = false;
         break;
+    case Event::DO_START_ANIMATION:
+        cmdNew();
+        break;
     default:
         break;
     }
@@ -770,17 +783,30 @@ void Commander::update()
         }
     }
 
-    idx = 0;
-    while (idx < events.size())
+    // Events can add new events, so work on copy
     {
-        events[idx].update();
-        if (events[idx].fired())
+        eventsCopy.clear();
+        for (int i=0; i<events.size(); i++) {
+            eventsCopy.push(events[i]);
+        }
+        events.clear();
+
+        int idx = 0;
+        while (idx < eventsCopy.size())
         {
-            handleEvent(events[idx]);
-            events[idx] = events.top();
-            events.pop();
-        } else {
-            idx++;
+            eventsCopy[idx].update();
+            if (eventsCopy[idx].fired())
+            {
+                handleEvent(eventsCopy[idx]);
+                eventsCopy[idx] = eventsCopy.top();
+                eventsCopy.pop();
+            } else {
+                idx++;
+            }
+        }
+
+        for (int i=0; i<eventsCopy.size(); i++) {
+            events.push(eventsCopy[i]);
         }
     }
 
@@ -881,6 +907,7 @@ void Commander::addStartAnimation()
     int delay = 0;
 
     startAnimationOn = true;
+    startMoveOn = false;
 
     Rect begR = gameLayout.stackRects[gameState->stock.handle];
     for (int i=TABLEAU_COUNT-1; i>=0; i--) 
@@ -893,9 +920,12 @@ void Commander::addStartAnimation()
             moveAnimation(cardId, begR, endR, MOVEMENT_TICKS, false, delay);
             delay += MOVEMENT_PAUSE;
         }
-        int cardId = gameState->tableaux[i].top().id;
-        gameLayout.cardDescs[cardId].opened = false;
-        turnAnimation(cardId, HALF_TURN_TICKS, delay + MOVEMENT_TICKS);
+        if (gameState->tableaux[i].empty() == false)
+        {
+            int cardId = gameState->tableaux[i].top().id;
+            gameLayout.cardDescs[cardId].opened = false;
+            turnAnimation(cardId, HALF_TURN_TICKS, delay + MOVEMENT_TICKS);
+        }
     }
 
     events.push(Event::DoGameReady(delay + MOVEMENT_TICKS + HALF_TURN_TICKS*2));
@@ -940,6 +970,17 @@ void Commander::cmdNew()
     gameState->init();
     resetGameLayout();
     addStartAnimation();
+    clearControlButtons();
+}
+
+void Commander::cmdMoveToNew()
+{
+    static const int MOVE_TICKS = 40;
+    gameLayout.oldX = 0.f;
+    gameLayout.oldY = 0.f;
+    startMoveOn = true;
+    tweens.push(Tween(&gameLayout.oldY, (float)SCREEN_HEIGHT, Tween::CURVE_SMOOTH2, MOVE_TICKS));
+    events.push(Event::DoStartAnimation(MOVE_TICKS));
     clearControlButtons();
 }
 
