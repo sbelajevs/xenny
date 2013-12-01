@@ -1,8 +1,7 @@
 About
 =====
 
-Simple Klondike Solitaire game for windows. 
-Version 0.0.1.
+Simple Klondike Solitaire game for windows, v0.0.2.
 
 Dependencies
 ============
