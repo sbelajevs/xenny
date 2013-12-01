@@ -935,6 +935,7 @@ void Commander::resetGameLayout()
 {
     tweens.clear();
     events.clear();
+    eventsCopy.clear();
     unlockAllCards();
     stockLock = false;
     gameLayout.reset(*gameState);
