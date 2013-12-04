@@ -6,7 +6,6 @@
 #include <time.h>
 
 #include <GL/glew.h>
-#include <GL/wglew.h>
 #include <GL/glfw.h>
 #include <stb_image.h>
 
@@ -103,14 +102,9 @@ SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char*
     glfwEnable(GLFW_STICKY_MOUSE_BUTTONS);
     glfwEnable(GLFW_AUTO_POLL_EVENTS);
 
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     glClearColor(0.f, 0.f, 0.f, 1.f);
-
-    if (WGLEW_EXT_swap_control)
-    {
-        wglSwapIntervalEXT(1);
-    }
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
