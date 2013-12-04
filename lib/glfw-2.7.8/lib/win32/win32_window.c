@@ -957,6 +957,16 @@ static LRESULT CALLBACK windowProc( HWND hWnd, UINT uMsg,
             return 0;
         }
 
+        case WM_GETMINMAXINFO:
+        {
+            MINMAXINFO* mmi = (MINMAXINFO*)lParam;
+            mmi->ptMinTrackSize.x = 480;
+            mmi->ptMinTrackSize.y = 300;
+            mmi->ptMaxTrackSize.x = 1920;
+            mmi->ptMaxTrackSize.y = 1200;
+            return 0;
+        }
+
         // Was the window contents damaged?
         case WM_PAINT:
         {
