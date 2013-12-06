@@ -262,7 +262,11 @@ void Sys_LoadMainTexture(SystemAPI* sysApi, const unsigned char* pngBytes, unsig
         glGenTextures(1, &sysApi->helperTextureId);
         glBindTexture(GL_TEXTURE_2D, sysApi->helperTextureId);
  
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)SCREEN_WIDTH, (GLsizei)SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        int scrW = -1;
+        int scrH = -1;
+        glfwGetWindowSize(&scrW, &scrH);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)scrW, (GLsizei)scrH, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
  
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);

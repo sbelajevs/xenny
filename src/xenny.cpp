@@ -145,8 +145,11 @@ public:
 
         if (commander->movingScreen())
         {
+            const float SCR_W = commander->layout.ScreenWidth;
+            const float SCR_H = commander->layout.ScreenHeight;
+
             Sys_SetTargetScreen(sys);
-            Rect oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+            Rect oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY, SCR_W, SCR_H);
             Rect tex = Rect(0.f, 0.f, 1.f, 1.f);
             renderRect(oldR, tex, false);
 
@@ -156,7 +159,7 @@ public:
             Rect stockR = commander->gameLayout.stackRects[gameState->stock.handle];
             renderRect(stockR, cardGfxData.cardBack);
             Sys_SetTargetScreen(sys);
-            oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY - SCREEN_HEIGHT, (float)SCREEN_WIDTH, (float)SCREEN_HEIGHT);
+            oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY - SCR_H, SCR_W, SCR_H);
             tex = Rect(0.f, 0.f, 1.f, 1.f);
             renderRect(oldR, tex, false);
         }
@@ -239,12 +242,15 @@ private:
 
 int runGame()
 {
-    SystemAPI* sys = Sys_CreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Xenny 0.0.1");
+    Layout l;
+    l.init();
+
+    SystemAPI* sys = Sys_CreateWindow((unsigned int)l.ScreenWidth, (unsigned int)l.ScreenHeight, "Xenny 0.0.2");
     Sys_Init(sys);
 
     App app;
     app.init(sys);
-
+    
     while (Sys_TimeToQuit(sys) == false)
     {
         // Assumption #1: monitor refresh rate is 1/FRAME_TIME Hz

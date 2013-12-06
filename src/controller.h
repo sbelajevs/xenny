@@ -29,16 +29,24 @@ public:
     Rect getWorkingArea() const;
     Rect getYouWonRect() const;
     Rect getStackRect(const CardStack* stack) const;
+    Rect getCardScreenRect(float x, float y) const;
 
-    static Rect getCardScreenRect(float x, float y);
+    const float CardWidth;
+    const float CardHeight;
+    const float SlideOpened;
+    const float SlideClosed;
+    const float ScreenWidth;
+    const float ScreenHeight;
+    const float Interval;
+    const float HalfInterval;
+    const float ButtonHeight;
+    const float ButtonArrowWidth;
+    const float ButtonActionWidth;
+    const float YouWonWidth;
 
 private:
     float borderV;
     float borderH;
-    float tableauInterval;
-
-    float handDx;
-    float handDy;
 
     float stockTopLeftX;
     float stockTopLeftY;
@@ -182,7 +190,7 @@ class GameLayout
 public:
     GameLayout();
 
-    void init(GameState& gs, const Layout& l);
+    void init(GameState& gs, Layout& l);
     void reset(GameState& gameState);
     void raiseZ(int cardId);
 
@@ -204,6 +212,7 @@ private:
     int orderedIds[CARDS_TOTAL];
     int curZ;
     bool normalized;
+    Layout* layout;
 };
 
 class ButtonDesc

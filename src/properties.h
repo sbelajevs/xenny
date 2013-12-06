@@ -2,19 +2,12 @@
 
 #include "generated\resources_gen.h"
 
-static const int SCREEN_WIDTH = 1280;
-static const int SCREEN_HEIGHT = 800;
 static const double FRAME_TIME = 1/60.;
+static const float DRAG_DIST_THRESHOLD_SQR = 64.f;
 
 static const int NULL_PTR = 0;
-
-static const int CARD_ORIGINAL_WIDTH = 125;
-static const int CARD_ORIGINAL_HEIGHT = 175;
-
-static const int CARD_WIDTH = 125;
-static const int CARD_HEIGHT = 175;
-
-static const float DRAG_DIST_THRESHOLD_SQR = 64.f;
+static const int CARD_ID_NULL = -1;
+static const int STACK_ID_NULL = -1;
 
 static const int SUIT_DIAMONDS = 0;
 static const int SUIT_HEARTS = 1;
@@ -32,35 +25,21 @@ static const int WASTE_COUNT = 1;
 static const int HAND_COUNT = 1;
 static const int STACK_COUNT = TABLEAU_COUNT + FOUNDATION_COUNT + STOCK_COUNT + WASTE_COUNT + HAND_COUNT;
 
-static const int CARD_OPEN_SLIDE = (int)((44.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
-static const int CARD_CLOSED_SLIDE = (int)((22.f/CARD_ORIGINAL_HEIGHT) * CARD_HEIGHT);
-
-static const int CARD_ID_NULL = -1;
-static const int STACK_ID_NULL = -1;
-
 static const int BUTTON_STATES = 4;
-static const float BUTTON_WIDTH = 48.f;
-static const float BUTTON_HEIGHT = 48.f;
-static const float BUTTON_TEX_DIMENSIONS[2] = {BUTTON_WIDTH/2048.f, BUTTON_HEIGHT/1024.f};
+static const float BUTTON_TEX_DIMENSIONS[2] = {48.f/2048.f, 48.f/1024.f};
 static const float BUTTON_UNDO_TEX_POS[2] = {0/2048.f, 0/1024.f};
-static const float BUTTON_FULL_UNDO_TEX_POS[2] = {BUTTON_WIDTH*BUTTON_STATES/2048.f, 0/1024.f};
+static const float BUTTON_FULL_UNDO_TEX_POS[2] = {48.f*BUTTON_STATES/2048.f, 0/1024.f};
 
-static const float BUTTON_NEW_WIDTH = 96.f;
-static const float BUTTON_NEW_HEIGHT = 48.f;
-static const float BUTTON_NEW_TEX_DIMENSIONS[2] = {BUTTON_NEW_WIDTH/2048.f, BUTTON_NEW_HEIGHT/1024.f};
+static const float BUTTON_NEW_TEX_DIMENSIONS[2] = {96.f/2048.f, 48.f/1024.f};
 static const float BUTTON_NEW_TEX_POS[2] = {384.f/2048.f, 0/1024.f};
 
-static const float BUTTON_AUTO_WIDTH = 96.f;
-static const float BUTTON_AUTO_HEIGHT = 48.f;
-static const float BUTTON_AUTO_TEX_DIMENSIONS[2] = {BUTTON_AUTO_WIDTH/2048.f, BUTTON_AUTO_HEIGHT/1024.f};
+static const float BUTTON_AUTO_TEX_DIMENSIONS[2] = {96.f/2048.f, 48.f/1024.f};
 static const float BUTTON_AUTO_TEX_POS[2] = {0.f/2048.f, 48.f/1024.f};
 
-static const float YOU_WON_WIDTH = 300.f;
-static const float YOU_WON_HEIGHT = 48.f;
-static const float YOU_WON_TEX_DIMENSIONS[2] = {YOU_WON_WIDTH/2048.f, YOU_WON_HEIGHT/1024.f};
+static const float YOU_WON_TEX_DIMENSIONS[2] = {300.f/2048.f, 48.f/1024.f};
 static const float YOU_WON_TEX_POS[2] = {672.f/2048.f, 0/2048.f};
 
-static const float CARD_TEX_DIMENSIONS[2] = {CARD_ORIGINAL_WIDTH/2048.f, CARD_ORIGINAL_HEIGHT/1024.f};
+static const float CARD_TEX_DIMENSIONS[2] = {125.f/2048.f, 175.f/1024.f};
 
 static const float CARD_FACES_TEX_POS[][2] = {
     {0/2048.f, 849/1024.f},

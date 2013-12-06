@@ -5,10 +5,10 @@ static float getDistSqr(float x1, float y1, float x2, float y2)
     return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
 }
 
-static int getMovememntTicks(const Rect& start, const Rect& end)
+static int getMovememntTicks(const Rect& start, const Rect& end, float screenWidth)
 {
     float distSqr = getDistSqr(start.x, start.y, end.x, end.y);
-    int ticks = 10 + (int)(distSqr * 30 / (SCREEN_WIDTH*SCREEN_WIDTH));
+    int ticks = 10 + (int)(distSqr * 30 / (screenWidth*screenWidth));
     if (ticks > 40) {
         ticks = 40;
     }
@@ -67,45 +67,51 @@ bool Rect::empty() const
 }
 
 Layout::Layout()
+    : CardWidth(125.f)
+    , CardHeight(175.f)
+    , SlideOpened(44.f)
+    , SlideClosed(20.f)
+    , ScreenWidth(125.f*7 + 44.f*6 + 44.f*2)
+    , ScreenHeight(22.f + 175.f + 44.f + 6*22.f + 12*44.f + 48.f + 22.f)
+    , Interval(44.f)
+    , HalfInterval(22.f)
+    , ButtonHeight(48.f)
+    , ButtonArrowWidth(48.f)
+    , ButtonActionWidth(96.f)
+    , YouWonWidth(300.f)
 {
 }
 
 void Layout::init()
 {
-    borderV = 0.025f * SCREEN_HEIGHT;
-    borderH = 0.075f * SCREEN_WIDTH;
-    tableauInterval = ((SCREEN_WIDTH-borderH*2.f)-(TABLEAU_COUNT*CARD_WIDTH))/(TABLEAU_COUNT-1);
+    borderV = HalfInterval;
+    borderH = Interval;
 
     stockTopLeftX = borderH;
     stockTopLeftY = borderV;
 
-    wasteTopLeftX = borderH + CARD_WIDTH + tableauInterval/2.f;
-    wasteTopLeftY = borderV;
+    wasteTopLeftX = stockTopLeftX + CardWidth + HalfInterval;
+    wasteTopLeftY = stockTopLeftY;
 
-    foundationsTopLeftX = SCREEN_WIDTH - borderH - FOUNDATION_COUNT*CARD_WIDTH - (FOUNDATION_COUNT-1)*(tableauInterval/2.f);
+    foundationsTopLeftX = ScreenWidth - borderH - FOUNDATION_COUNT*CardWidth - (FOUNDATION_COUNT-1)*HalfInterval;
     foundationsTopLeftY = borderV;
 
     tableausTopLeftX = borderH;
-    tableausTopLeftY = borderV + CARD_HEIGHT + tableauInterval;
+    tableausTopLeftY = borderV + CardHeight + Interval;
 }
 
 Rect Layout::getWorkingArea() const
 {
-    return Rect(
-        Sys_Floor(borderH), 
-        Sys_Floor(borderV), 
-        Sys_Floor(SCREEN_WIDTH-2*borderH), 
-        Sys_Floor(SCREEN_HEIGHT-2*borderV)
-    );
+    return Rect(borderH, borderV, ScreenWidth-2*borderH, ScreenHeight-2*borderV);
 }
 
 Rect Layout::getYouWonRect() const
 {
     return Rect(
-        Sys_Floor((SCREEN_WIDTH-YOU_WON_WIDTH)*0.5f), 
-        Sys_Floor((SCREEN_HEIGHT-YOU_WON_HEIGHT)*0.75f), 
-        Sys_Floor(YOU_WON_WIDTH), 
-        Sys_Floor(YOU_WON_HEIGHT)
+        Sys_Floor((ScreenWidth-YouWonWidth)*0.5f), 
+        Sys_Floor((ScreenHeight-ButtonHeight)*0.75f), 
+        Sys_Floor(YouWonWidth), 
+        Sys_Floor(ButtonHeight)
     );
 }
 
@@ -115,12 +121,12 @@ Rect Layout::getStackRect(const CardStack* stack) const
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            Sys_Floor(foundationsTopLeftX + (tableauInterval/2.f + CARD_WIDTH)*stack->ordinal),
+            Sys_Floor(foundationsTopLeftX + (HalfInterval + CardWidth)*stack->ordinal),
             Sys_Floor(foundationsTopLeftY)
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            Sys_Floor(tableausTopLeftX + (tableauInterval+CARD_WIDTH)*stack->ordinal),
+            Sys_Floor(tableausTopLeftX + (Interval+CardWidth)*stack->ordinal),
             Sys_Floor(tableausTopLeftY)
         );
     case CardStack::TYPE_STOCK:
@@ -132,9 +138,9 @@ Rect Layout::getStackRect(const CardStack* stack) const
     }
 }
 
-Rect Layout::getCardScreenRect(float x, float y)
+Rect Layout::getCardScreenRect(float x, float y) const
 {
-    return Rect(x, y, (float)CARD_WIDTH, (float)CARD_HEIGHT);
+    return Rect(x, y, (float)CardWidth, (float)CardHeight);
 }
 
 Input::MouseButton::MouseButton(): pressed(false), clicked(false)
@@ -229,7 +235,7 @@ CardDesc::CardDesc(int id, int z, bool opened, Rect screenRect)
 {
 }
 
-GameLayout::GameLayout()
+GameLayout::GameLayout(): layout(NULL_PTR)
 {
 }
 
@@ -246,7 +252,7 @@ void GameLayout::reset(GameState& gameState)
             cardDescs[gc.id] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
             orderedIds[curZ] = gc.id;
             if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-                screenPos.y += Sys_Floor(.5f + (gc.opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE));
+                screenPos.y += Sys_Floor(.5f + (gc.opened() ? layout->SlideOpened : layout->SlideClosed));
             }
         }
     }
@@ -261,7 +267,7 @@ void GameLayout::updateCardRect(GameState& gameState, int cardId)
     Rect result = stackRects[cs->handle];
     for (int i=0; i<idx; i++) {
         if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-            result.y += Sys_Floor(.5f + ((*cs)[i].opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE));
+            result.y += Sys_Floor(.5f + ((*cs)[i].opened() ? layout->SlideOpened : layout->SlideClosed));
         }
     }
     cardDescs[cardId].screenRect = result;
@@ -313,13 +319,14 @@ const CardDesc& GameLayout::getOrderedCard(int ordinal)
     return cardDescs[orderedIds[ordinal]];
 }
 
-void GameLayout::init(GameState& gs, const Layout& layout)
+void GameLayout::init(GameState& gs, Layout& l)
 {
+    layout = &l;
     for (int i=0; i<STACK_COUNT; i++)
     {
         CardStack*cs = gs.getStack(i);
         if (cs->type != CardStack::TYPE_HAND) {
-            stackRects[cs->handle] = layout.getStackRect(cs);
+            stackRects[cs->handle] = layout->getStackRect(cs);
         }
     }
 
@@ -334,7 +341,7 @@ Rect GameLayout::getDestCardRect(const CardStack* stack) const
         || stack->type == CardStack::TYPE_HAND)
     {
         for (int i=0; i<stack->size(); i++) {
-            screenRect.y += (*stack)[i].opened() ? CARD_OPEN_SLIDE : CARD_CLOSED_SLIDE;
+            screenRect.y += (*stack)[i].opened() ? layout->SlideOpened : layout->SlideClosed;
         }
     }
 
@@ -555,28 +562,33 @@ void WidgetLayout::init(const Layout& layout)
 {
     Rect area = layout.getWorkingArea();
     float interval = 8.f;
-    float undoTopLeftX = area.x + area.w - interval*3.f - BUTTON_WIDTH*4.f;
-    float undoTopLeftY = area.y + area.h - BUTTON_HEIGHT;
+    float undoTopLeftX = area.x + area.y + area.w - interval*3.f - layout.ButtonArrowWidth*4.f;
+    float undoTopLeftY = area.y + area.h - layout.ButtonHeight;
     
     for (int i=0; i<BUTTON_NEW; i++)
     {
         Rect onscreenPosition = Rect(
-            undoTopLeftX + (BUTTON_WIDTH+interval)*i, 
+            undoTopLeftX + (layout.ButtonArrowWidth+interval)*i, 
             undoTopLeftY, 
-            BUTTON_WIDTH, 
-            BUTTON_HEIGHT
+            layout.ButtonArrowWidth, 
+            layout.ButtonHeight
         );
         buttons[i].init(onscreenPosition, ButtonDesc::STATE_DISABLED, true);
     }
 
     buttons[BUTTON_NEW].init(
-        Rect(area.y, undoTopLeftY, BUTTON_NEW_WIDTH, BUTTON_NEW_HEIGHT),
+        Rect(area.y, undoTopLeftY, layout.ButtonActionWidth, layout.ButtonHeight),
         ButtonDesc::STATE_NORMAL, 
         true
     );
 
     buttons[BUTTON_AUTO].init(
-        Rect(buttons[BUTTON_NEW].getRect().x + BUTTON_NEW_WIDTH + interval*2.f, undoTopLeftY, BUTTON_AUTO_WIDTH, BUTTON_AUTO_HEIGHT),
+        Rect(
+            buttons[BUTTON_NEW].getRect().x + layout.ButtonActionWidth + interval*2.f, 
+            undoTopLeftY, 
+            layout.ButtonActionWidth, 
+            layout.ButtonHeight
+        ),
         ButtonDesc::STATE_NORMAL,
         true
     );
@@ -830,8 +842,8 @@ void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool sl
 
 void Commander::turnAnimation(int cardId, int halfTicks, int delay)
 {
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (CARD_WIDTH-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(CARD_WIDTH-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (layout.CardWidth-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(layout.CardWidth-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
     events.push(Event::TurnCard(delay+halfTicks+1, cardId));
     // Not really sure why we need +1 here, but autoplayed game looks crappy without it
     doMax(cardLock[cardId], delay + halfTicks*2 + 1);
@@ -856,7 +868,7 @@ void Commander::addHandMovementAnimation(CardStack* dest)
     CardStack* hand = &gameState->hand;
     Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
     Rect endR = gameLayout.getDestCardRect(dest);
-    int ticks = getMovememntTicks(begR, endR);
+    int ticks = getMovememntTicks(begR, endR, layout.ScreenWidth);
 
     for (int i=0; i<hand->size(); i++) {
         moveAnimation((*hand)[i].id, begR, endR, ticks);
@@ -980,7 +992,7 @@ void Commander::cmdMoveToNew()
     gameLayout.oldX = 0.f;
     gameLayout.oldY = 0.f;
     startMoveOn = true;
-    tweens.push(Tween(&gameLayout.oldY, (float)SCREEN_HEIGHT, Tween::CURVE_SMOOTH2, MOVE_TICKS));
+    tweens.push(Tween(&gameLayout.oldY, layout.ScreenHeight, Tween::CURVE_SMOOTH2, MOVE_TICKS));
     events.push(Event::DoStartAnimation(MOVE_TICKS));
     clearControlButtons();
 }
@@ -1073,7 +1085,7 @@ void Commander::cmdReleaseHand()
                 float destX = destRect.x + destRect.w/2.f;
                 float destY = destRect.y + destRect.h/2.f;
                 float dist = getVAdjustedDistSqr(x, y, destX, destY);
-                if (dist < CARD_HEIGHT*CARD_HEIGHT && (dist < bestDist || bestDist < 0.0))
+                if (dist < layout.CardHeight*layout.CardHeight && (dist < bestDist || bestDist < 0.0))
                 {
                     destStack = destCandidate;
                     bestDist = dist;
