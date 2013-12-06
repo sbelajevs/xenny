@@ -24,12 +24,9 @@ void Sys_LoadMainTexture(SystemAPI* sys, const unsigned char* pngBytes, unsigned
 
 void Sys_ClearScreen(SystemAPI* sys, unsigned int rgb);
 void Sys_DrawMainTex(SystemAPI* sys, float sx, float sy, float sw, float sh, float tx, float ty, float tw, float th);
-void Sys_DrawHelperTex(SystemAPI* sys, float sx, float sy, float sw, float sh, float tx, float ty, float tw, float th);
 
 void Sys_StartFrame(SystemAPI* sys);
 void Sys_EndFrame(SystemAPI* sys);
-void Sys_SetTargetScreen(SystemAPI* sys);
-void Sys_SetTargetHelper(SystemAPI* sys);
 void Sys_GetInfoString(SystemAPI* sys, char* s, int size);
 
 double Sys_GetTime(SystemAPI* sys);

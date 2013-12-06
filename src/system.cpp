@@ -45,9 +45,6 @@ struct SystemAPI
     unsigned int mainTextureId;
     ShaderProgram textureProgram;
 
-    unsigned int helperTextureId;
-    unsigned int helperFrameBufferId;
-
     float orthoProjection[16];
 
     double stopWatch;
@@ -132,9 +129,6 @@ void Sys_ShutDown(SystemAPI* sysApi)
     glDeleteTextures(1, &sysApi->mainTextureId);
     glDeleteVertexArrays(1, &sysApi->vertexArray);
     glDeleteProgram(sysApi->textureProgram.id);
-
-    glDeleteFramebuffers(1, &sysApi->helperFrameBufferId);
-    glDeleteTextures(1, &sysApi->helperTextureId);
 
     glfwTerminate();
 
@@ -256,35 +250,6 @@ void Sys_LoadMainTexture(SystemAPI* sysApi, const unsigned char* pngBytes, unsig
     }
 
     stbi_image_free(pixels);
-
-    // Init helper texture
-    {
-        glGenTextures(1, &sysApi->helperTextureId);
-        glBindTexture(GL_TEXTURE_2D, sysApi->helperTextureId);
- 
-        int scrW = -1;
-        int scrH = -1;
-        glfwGetWindowSize(&scrW, &scrH);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (GLsizei)scrW, (GLsizei)scrH, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
- 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    }
-
-    // init frame buffer for rendering to helper texture
-    {
-        glGenFramebuffers(1, &sysApi->helperFrameBufferId);
-        glBindFramebuffer(GL_FRAMEBUFFER, sysApi->helperFrameBufferId);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sysApi->helperTextureId, 0);
-        GLenum drawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-        glDrawBuffers(1, drawBuffers);
-        
-        // Always check that our framebuffer is ok
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-            throw "Some problems with frame buffer!";
-        }
-    }
 }
 
 void Sys_ClearScreen(SystemAPI* sysApi, unsigned int rgb)
@@ -373,15 +338,6 @@ void Sys_DrawMainTex(SystemAPI* sysApi,
     drawTex(sysApi, sysApi->mainTextureId, sx, sy, sw, sh, tx, ty, tw, th);
 }
 
-void Sys_DrawHelperTex(SystemAPI* sysApi,
-                       float sx, float sy,
-                       float sw, float sh,
-                       float tx, float ty,
-                       float tw, float th)
-{
-    drawTex(sysApi, sysApi->helperTextureId, sx, sy, sw, sh, tx, ty, tw, th);
-}
-
 void Sys_StartFrame(SystemAPI* sysApi)
 {
     sysApi->stopWatch = Sys_GetTime(sysApi);
@@ -408,16 +364,6 @@ void Sys_EndFrame(SystemAPI* sysApi)
         sysApi->curMaxFrame = 0.;
         sysApi->curMinFrame = 1e10;
     }
-}
-
-void Sys_SetTargetScreen(SystemAPI* sys)
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void Sys_SetTargetHelper(SystemAPI* sys)
-{
-    glBindFramebuffer(GL_FRAMEBUFFER, sys->helperFrameBufferId);
 }
 
 void Sys_GetInfoString(SystemAPI* sysApi, char* s, int size)

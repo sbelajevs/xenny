@@ -124,14 +124,18 @@ public:
 
     void render()
     {
-        if (commander->movingScreen()) {
-            Sys_SetTargetHelper(sys);
-        } else {
-            Sys_SetTargetScreen(sys);
-        }
+        float dx = 0.f;
+        float dy = 0.f;
 
         Sys_ClearScreen(sys, 0x119573);
-        renderGameGUI();
+        if (commander->movingScreen())
+        {
+            renderEmptyGame(commander->gameLayout.oldX, commander->gameLayout.oldY - commander->layout.ScreenHeight);
+            dx = commander->gameLayout.oldX;
+            dy = commander->gameLayout.oldY;
+        }
+
+        renderGameGUI(dx, dy);
 
         bool showButtons = commander->autoPlaying() == false
             && commander->starting() == false
@@ -142,49 +146,24 @@ public:
         } else if (showButtons) {
             renderControlsGUI();
         }
-
-        if (commander->movingScreen())
-        {
-            const float SCR_W = commander->layout.ScreenWidth;
-            const float SCR_H = commander->layout.ScreenHeight;
-
-            Sys_SetTargetScreen(sys);
-            Rect oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY, SCR_W, SCR_H);
-            Rect tex = Rect(0.f, 0.f, 1.f, 1.f);
-            renderRect(oldR, tex, false);
-
-            Sys_SetTargetHelper(sys);
-            Sys_ClearScreen(sys, 0x119573);
-            renderEmptyGame();
-            Rect stockR = commander->gameLayout.stackRects[gameState->stock.handle];
-            renderRect(stockR, cardGfxData.cardBack);
-            Sys_SetTargetScreen(sys);
-            oldR = Rect(commander->gameLayout.oldX, commander->gameLayout.oldY - SCR_H, SCR_W, SCR_H);
-            tex = Rect(0.f, 0.f, 1.f, 1.f);
-            renderRect(oldR, tex, false);
-        }
     }
 
 private:
-    void renderRect(Rect screen, Rect tex, bool useMainTex=true) const
+    void renderRect(Rect screen, Rect tex) const
     {
-        if (useMainTex) {
-            Sys_DrawMainTex(
-                sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, tex.h
-            );
-        } else {
-            Sys_DrawHelperTex(
-                sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, -tex.h
-            );
-        }
+        Sys_DrawMainTex(
+            sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, tex.h
+        );
     }
 
-    void renderEmptyGame()
+    void renderEmptyGame(float dx, float dy)
     {
         for (int i=0; i<STACK_COUNT; i++) 
         {
             CardStack* cs = gameState->getStack(i);
             Rect screenRect = commander->gameLayout.stackRects[cs->handle];
+            screenRect.x += dx;
+            screenRect.y += dy;
             Rect texRect = cardGfxData.cardWaste;
             if (cs->type == CardStack::TYPE_FOUNDATION) {
                 texRect = cardGfxData.cardFoundation;
@@ -197,15 +176,18 @@ private:
         }
     }
 
-    void renderGameGUI()
+    void renderGameGUI(float dx, float dy)
     {
-        renderEmptyGame();
+        renderEmptyGame(dx, dy);
 
         for (int i=0; i<CARDS_TOTAL; i++)
         {
             CardDesc cd = commander->gameLayout.getOrderedCard(i);
             Rect texRect = cd.opened ? cardGfxData.cardFaces[cd.id] : cardGfxData.cardBack;
-            renderRect(cd.screenRect, texRect);
+            Rect screenRect = cd.screenRect;
+            screenRect.x += dx;
+            screenRect.y += dy;
+            renderRect(screenRect, texRect);
         }
     }
 
