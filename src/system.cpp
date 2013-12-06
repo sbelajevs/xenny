@@ -64,6 +64,31 @@ struct SystemAPI
     double avgFrame;
 };
 
+// Global variables are evil, this will be fixed with #32
+SystemAPI* oneAndOnly = NULL;
+
+extern "C"
+void sizeChangeCallback(int newW, int newH)
+{
+    if (oneAndOnly == NULL || oneAndOnly->gameBaseH <= 0 || oneAndOnly->gameBaseW <= 0) {
+        return;
+    }
+
+    float aspectW = (float)newW / oneAndOnly->gameBaseW;
+    float aspectH = (float)newH / oneAndOnly->gameBaseH;
+    float corrector = aspectW < aspectH ? aspectW : aspectH;
+
+    int newGameW = (int)(oneAndOnly->gameBaseW*corrector);
+    int newGameH = (int)(oneAndOnly->gameBaseH*corrector);
+    int dx = (newW - newGameW) / 2;
+    
+    glViewport(dx, newH - newGameH, newGameW, newGameH);
+
+    oneAndOnly->mouseDx = (float)dx;
+    oneAndOnly->mouseCorrector = corrector;
+    // assert(oneAndOnly->mouseCorrector > 0.0001)
+}
+
 static float round(float f)
 {
     static const float EPS = 1.f/8192.f;
@@ -106,6 +131,7 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
     glfwEnable(GLFW_AUTO_POLL_EVENTS);
 
     glfwSwapInterval(1);
+    glfwSetWindowSizeCallback(sizeChangeCallback);
 
     glClearColor(0.f, 0.f, 0.f, 1.f);
 
@@ -132,6 +158,7 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
     result->mouseDx = 0.f;
     result->mouseCorrector = 1.f;
 
+    oneAndOnly = result;
     return result;
 }
 
@@ -357,25 +384,6 @@ void Sys_DrawMainTex(SystemAPI* sysApi,
 
 void Sys_StartFrame(SystemAPI* sysApi)
 {
-    if (sysApi->gameBaseH != -1 && sysApi->gameBaseW != -1)
-    {
-        int scrW = -1;
-        int scrH = -1;
-        glfwGetWindowSize(&scrW, &scrH);
-        float aspectW = (float)scrW / sysApi->gameBaseW;
-        float aspectH = (float)scrH / sysApi->gameBaseH;
-        float corrector = aspectW < aspectH ? aspectW : aspectH;
-
-        int newGameW = (int)(sysApi->gameBaseW*corrector);
-        int newGameH = (int)(sysApi->gameBaseH*corrector);
-        int dx = (scrW - newGameW) / 2;
-        glViewport(dx, scrH - newGameH, newGameW, newGameH);
-
-        sysApi->mouseDx = (float)dx;
-        sysApi->mouseCorrector = corrector;
-        // assert(sysApi->mouseCorrector > 0.0001)
-    }
-
     sysApi->stopWatch = Sys_GetTime(sysApi);
 }
 
