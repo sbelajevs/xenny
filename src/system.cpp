@@ -352,21 +352,20 @@ void Sys_DrawMainTex(SystemAPI* sysApi,
 
 void Sys_StartFrame(SystemAPI* sysApi)
 {
-    int scrW = -1;
-    int scrH = -1;
-    glfwGetWindowSize(&scrW, &scrH);
-    glViewport(0, 0, scrW, scrH);
-    sysApi->orthoProjection[0] = 2.f/scrW;
-    sysApi->orthoProjection[5] = -2.f/scrH;
-
     if (sysApi->gameBaseH != -1 && sysApi->gameBaseW != -1)
     {
+        int scrW = -1;
+        int scrH = -1;
+        glfwGetWindowSize(&scrW, &scrH);
         float aspectW = (float)scrW / sysApi->gameBaseW;
         float aspectH = (float)scrH / sysApi->gameBaseH;
         float corrector = aspectW < aspectH ? aspectW : aspectH;
 
-        sysApi->orthoProjection[0] *= corrector;
-        sysApi->orthoProjection[5] *= corrector;
+        int newGameW = (int)(sysApi->gameBaseW*corrector);
+        int newGameH = (int)(sysApi->gameBaseH*corrector);
+        int dx = (scrW - newGameW) / 2;
+        int dy = (scrH - newGameH) / 2;
+        glViewport(dx, scrH - newGameH - dy, newGameW, newGameH);
     }
 
     sysApi->stopWatch = Sys_GetTime(sysApi);
