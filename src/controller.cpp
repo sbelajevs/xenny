@@ -180,9 +180,9 @@ Input::Input(): sys(NULL_PTR)
 {
 }
 
-void Input::init(SystemAPI* sys)
+void Input::init(SystemAPI* aSys)
 {
-    sys = sys;
+    sys = aSys;
 
     left.reset();
     right.reset();
@@ -319,18 +319,18 @@ const CardDesc& GameLayout::getOrderedCard(int ordinal)
     return cardDescs[orderedIds[ordinal]];
 }
 
-void GameLayout::init(GameState& gs, Layout& l)
+void GameLayout::init(GameState& aGameState, Layout& aLayout)
 {
-    layout = &l;
+    layout = &aLayout;
     for (int i=0; i<STACK_COUNT; i++)
     {
-        CardStack*cs = gs.getStack(i);
+        CardStack*cs = aGameState.getStack(i);
         if (cs->type != CardStack::TYPE_HAND) {
             stackRects[cs->handle] = layout->getStackRect(cs);
         }
     }
 
-    reset(gs);
+    reset(aGameState);
 }
 
 Rect GameLayout::getDestCardRect(const CardStack* stack) const
@@ -558,36 +558,36 @@ WidgetLayout::WidgetLayout()
 {
 }
 
-void WidgetLayout::init(const Layout& layout)
+void WidgetLayout::init(const Layout& aLayout)
 {
-    Rect area = layout.getWorkingArea();
+    Rect area = aLayout.getWorkingArea();
     float interval = 8.f;
-    float undoTopLeftX = area.x + area.y + area.w - interval*3.f - layout.ButtonArrowWidth*4.f;
-    float undoTopLeftY = area.y + area.h - layout.ButtonHeight;
+    float undoTopLeftX = area.x + area.y + area.w - interval*3.f - aLayout.ButtonArrowWidth*4.f;
+    float undoTopLeftY = area.y + area.h - aLayout.ButtonHeight;
     
     for (int i=0; i<BUTTON_NEW; i++)
     {
         Rect onscreenPosition = Rect(
-            undoTopLeftX + (layout.ButtonArrowWidth+interval)*i, 
+            undoTopLeftX + (aLayout.ButtonArrowWidth+interval)*i, 
             undoTopLeftY, 
-            layout.ButtonArrowWidth, 
-            layout.ButtonHeight
+            aLayout.ButtonArrowWidth, 
+            aLayout.ButtonHeight
         );
         buttons[i].init(onscreenPosition, ButtonDesc::STATE_DISABLED, true);
     }
 
     buttons[BUTTON_NEW].init(
-        Rect(area.y, undoTopLeftY, layout.ButtonActionWidth, layout.ButtonHeight),
+        Rect(area.y, undoTopLeftY, aLayout.ButtonActionWidth, aLayout.ButtonHeight),
         ButtonDesc::STATE_NORMAL, 
         true
     );
 
     buttons[BUTTON_AUTO].init(
         Rect(
-            buttons[BUTTON_NEW].getRect().x + layout.ButtonActionWidth + interval*2.f, 
+            buttons[BUTTON_NEW].getRect().x + aLayout.ButtonActionWidth + interval*2.f, 
             undoTopLeftY, 
-            layout.ButtonActionWidth, 
-            layout.ButtonHeight
+            aLayout.ButtonActionWidth, 
+            aLayout.ButtonHeight
         ),
         ButtonDesc::STATE_NORMAL,
         true

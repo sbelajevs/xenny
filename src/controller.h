@@ -95,7 +95,7 @@ public:
 
     Input();
 
-    void init(SystemAPI* sys);
+    void init(SystemAPI* aSys);
     void update();
 
 private:
@@ -190,7 +190,7 @@ class GameLayout
 public:
     GameLayout();
 
-    void init(GameState& gs, Layout& l);
+    void init(GameState& aGameState, Layout& aLayout);
     void reset(GameState& gameState);
     void raiseZ(int cardId);
 
@@ -260,7 +260,7 @@ public:
     };
 
     WidgetLayout();
-    void init(const Layout& layout);
+    void init(const Layout& aLayout);
     ButtonType probe(float x, float y);
 
     ButtonDesc buttons[BUTTON_MAX];

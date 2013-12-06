@@ -44,6 +44,9 @@ struct SystemAPI
     int gameBaseW;
     int gameBaseH;
 
+    float mouseDx;
+    float mouseCorrector;
+
     unsigned int vertexArray;
     unsigned int mainTextureId;
     ShaderProgram textureProgram;
@@ -126,6 +129,8 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 
     result->gameBaseW = -1;
     result->gameBaseH = -1;
+    result->mouseDx = 0.f;
+    result->mouseCorrector = 1.f;
 
     return result;
 }
@@ -364,8 +369,11 @@ void Sys_StartFrame(SystemAPI* sysApi)
         int newGameW = (int)(sysApi->gameBaseW*corrector);
         int newGameH = (int)(sysApi->gameBaseH*corrector);
         int dx = (scrW - newGameW) / 2;
-        int dy = (scrH - newGameH) / 2;
-        glViewport(dx, scrH - newGameH - dy, newGameW, newGameH);
+        glViewport(dx, scrH - newGameH, newGameW, newGameH);
+
+        sysApi->mouseDx = (float)dx;
+        sysApi->mouseCorrector = corrector;
+        // assert(sysApi->mouseCorrector > 0.0001)
     }
 
     sysApi->stopWatch = Sys_GetTime(sysApi);
@@ -429,6 +437,8 @@ int Sys_TimeToQuit(SystemAPI* sysApi)
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y)
 {
     glfwGetMousePos(x, y);
+    *x = (int)Sys_Floor((*x - sys->mouseDx)/sys->mouseCorrector);
+    *y = (int)Sys_Floor((*y)/(sys->mouseCorrector));
 }
 
 int Sys_GetMouseButtonState(SystemAPI* sys)
