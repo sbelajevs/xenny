@@ -15,7 +15,8 @@ enum MouseButtonState
     MOUSE_BUTTON_FWRD  = 8,
 };
 
-SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char* windowTitle);
+SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle);
+void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height);
 void Sys_SetWindowTitle(SystemAPI* sys, const char* msg);
 void Sys_ShutDown(SystemAPI* sys);
 

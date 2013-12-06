@@ -227,8 +227,9 @@ int runGame()
     Layout l;
     l.init();
 
-    SystemAPI* sys = Sys_CreateWindow((unsigned int)l.ScreenWidth, (unsigned int)l.ScreenHeight, "Xenny 0.0.2");
+    SystemAPI* sys = Sys_CreateWindow((int)l.ScreenWidth, (int)l.ScreenHeight, "Xenny 0.0.2");
     Sys_Init(sys);
+    Sys_SetGameBaseSize(sys, (int)l.ScreenWidth, (int)l.ScreenHeight);
 
     App app;
     app.init(sys);

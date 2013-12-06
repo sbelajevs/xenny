@@ -41,6 +41,9 @@ namespace
 
 struct SystemAPI
 {
+    int gameBaseW;
+    int gameBaseH;
+
     unsigned int vertexArray;
     unsigned int mainTextureId;
     ShaderProgram textureProgram;
@@ -64,7 +67,7 @@ static float round(float f)
     return floor(f + 0.5f + EPS);
 }
 
-SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char* windowTitle)
+SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 {
     // Initialise GLFW
     if (!glfwInit())
@@ -75,10 +78,10 @@ SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char*
 
     glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 2);
     glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 1);
-    glfwOpenWindowHint(GLFW_WINDOW_NO_RESIZE, 1);
+    glfwOpenWindowHint(GLFW_WINDOW_NO_RESIZE, 0);
 
     // Open a window and create its OpenGL context
-    if (!glfwOpenWindow((int)width, (int)height, 0,0,0,0, 32,0, GLFW_WINDOW))
+    if (!glfwOpenWindow(width, height, 0,0,0,0, 32,0, GLFW_WINDOW))
     {
         fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
         glfwTerminate();
@@ -121,7 +124,16 @@ SystemAPI* Sys_CreateWindow(unsigned int width, unsigned int height, const char*
 
     std::srand((unsigned)time(0));
 
+    result->gameBaseW = -1;
+    result->gameBaseH = -1;
+
     return result;
+}
+
+void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height)
+{
+    sys->gameBaseH = height;
+    sys->gameBaseW = width;
 }
 
 void Sys_ShutDown(SystemAPI* sysApi)
@@ -340,6 +352,23 @@ void Sys_DrawMainTex(SystemAPI* sysApi,
 
 void Sys_StartFrame(SystemAPI* sysApi)
 {
+    int scrW = -1;
+    int scrH = -1;
+    glfwGetWindowSize(&scrW, &scrH);
+    glViewport(0, 0, scrW, scrH);
+    sysApi->orthoProjection[0] = 2.f/scrW;
+    sysApi->orthoProjection[5] = -2.f/scrH;
+
+    if (sysApi->gameBaseH != -1 && sysApi->gameBaseW != -1)
+    {
+        float aspectW = (float)scrW / sysApi->gameBaseW;
+        float aspectH = (float)scrH / sysApi->gameBaseH;
+        float corrector = aspectW < aspectH ? aspectW : aspectH;
+
+        sysApi->orthoProjection[0] *= corrector;
+        sysApi->orthoProjection[5] *= corrector;
+    }
+
     sysApi->stopWatch = Sys_GetTime(sysApi);
 }
 
