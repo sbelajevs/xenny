@@ -1108,7 +1108,8 @@ void Commander::cmdAutoClick(float x, float y)
         cmdAdvanceStock();
     }
     else if (stack != NULL_PTR && stackIdx == stack->size() - 1
-        && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE))
+        && (stack->type == CardStack::TYPE_TABLEAU || stack->type == CardStack::TYPE_WASTE)
+        && cardLock[cardId] == 0)
     {
         gameState->fillHand(stack, stack->size()-1);
         raiseHand();

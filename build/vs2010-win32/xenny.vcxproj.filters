@@ -19,16 +19,31 @@
     <ClInclude Include="..\..\src\generated\resources_gen.h">
       <Filter>generated</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\system.h" />
-    <ClInclude Include="..\..\src\model.h" />
-    <ClInclude Include="..\..\src\controller.h" />
-    <ClInclude Include="..\..\src\xenny.h" />
-    <ClInclude Include="..\..\src\properties.h" />
-    <ClInclude Include="..\..\src\utils.h" />
+    <ClInclude Include="..\..\src\controller.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\model.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\properties.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\system.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\utils.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\xenny.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="generated">
       <UniqueIdentifier>{9cb5d801-8fc7-4edd-a38d-00baacc26214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{60de27f8-b087-4739-81b3-254d075d363a}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
