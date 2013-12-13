@@ -71,7 +71,7 @@ Layout::Layout()
     , CardHeight(175.f)
     , SlideOpened(44.f)
     , SlideClosed(20.f)
-    , ScreenWidth(125.f*7 + 44.f*6 + 44.f*2)
+    , ScreenWidth(125.f*7 + 44.f*6 + 44.f*2*2)
     , ScreenHeight(22.f + 175.f + 44.f + 6*22.f + 12*44.f + 48.f + 22.f)
     , Interval(44.f)
     , HalfInterval(22.f)
@@ -85,7 +85,7 @@ Layout::Layout()
 void Layout::init()
 {
     borderV = HalfInterval;
-    borderH = Interval;
+    borderH = Interval*2;
 
     stockTopLeftX = borderH;
     stockTopLeftY = borderV;
@@ -559,7 +559,7 @@ void WidgetLayout::init(const Layout& aLayout)
 {
     Rect area = aLayout.getWorkingArea();
     float interval = 8.f;
-    float undoTopLeftX = area.x + area.y + area.w - interval*3.f - aLayout.ButtonArrowWidth*4.f;
+    float undoTopLeftX = area.x + (area.x-area.y) + area.w - interval*3.f - aLayout.ButtonArrowWidth*4.f;
     float undoTopLeftY = area.y + area.h - aLayout.ButtonHeight;
     
     for (int i=0; i<BUTTON_NEW; i++)
