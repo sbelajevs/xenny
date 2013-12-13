@@ -119,6 +119,10 @@ public:
 
     void tick()
     {
+        int width = 0;
+        int height = 0;
+        Sys_GetGameSize(sys, &width, &height);
+        commander->updateGameSize(width, height);
         commander->update();
     }
 
@@ -130,7 +134,7 @@ public:
         Sys_ClearScreen(sys, 0x119573);
         if (commander->movingScreen())
         {
-            renderEmptyGame(commander->gameLayout.oldX, commander->gameLayout.oldY - commander->layout.ScreenHeight);
+            renderEmptyGame(commander->gameLayout.oldX, commander->gameLayout.oldY - commander->layout.getGameHeight());
             dx = commander->gameLayout.oldX;
             dy = commander->gameLayout.oldY;
         }

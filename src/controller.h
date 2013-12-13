@@ -25,11 +25,15 @@ public:
     Layout();
 
     void init();
+    bool setGameSize(int newWidth, int newHeight);
 
     Rect getWorkingArea() const;
     Rect getYouWonRect() const;
     Rect getStackRect(const CardStack* stack) const;
     Rect getCardScreenRect(float x, float y) const;
+
+    float getGameWidth() const;
+    float getGameHeight() const;
 
     const float CardWidth;
     const float CardHeight;
@@ -45,6 +49,9 @@ public:
     const float YouWonWidth;
 
 private:
+    int gameW;
+    int gameH;
+
     float borderV;
     float borderH;
 
@@ -273,7 +280,8 @@ public:
     void init(GameState* aGameState);
     void handleInput(const Input& input);
     void update();
-    
+    void updateGameSize(int newWidth, int newHeight);
+
     bool gameEnded() const;
     bool autoPlaying() const;
     bool starting() const;

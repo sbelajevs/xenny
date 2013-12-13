@@ -43,6 +43,8 @@ struct SystemAPI
 {
     int gameBaseW;
     int gameBaseH;
+    int gameW;
+    int gameH;
 
     float mouseCorrector;
 
@@ -86,6 +88,9 @@ void sizeChangeCallback(int newW, int newH)
         newGameH = newH / corrector;
     }
     
+    oneAndOnly->gameW = (int)newGameW;
+    oneAndOnly->gameH = (int)newGameH;
+
     oneAndOnly->orthoProjection[0] =  2.f / newGameW;
     oneAndOnly->orthoProjection[5] = -2.f / newGameH;
 
@@ -161,6 +166,8 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 
     result->gameBaseW = -1;
     result->gameBaseH = -1;
+    result->gameW = -1;
+    result->gameH = -1;
     result->mouseCorrector = 1.f;
 
     oneAndOnly = result;
@@ -169,8 +176,14 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 
 void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height)
 {
-    sys->gameBaseH = height;
-    sys->gameBaseW = width;
+    sys->gameBaseH = sys->gameH = height;
+    sys->gameBaseW = sys->gameW = width;
+}
+
+void Sys_GetGameSize(SystemAPI* sys, int* width, int* height)
+{
+    *width = sys->gameW;
+    *height = sys->gameH;
 }
 
 void Sys_ShutDown(SystemAPI* sysApi)

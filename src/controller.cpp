@@ -72,18 +72,23 @@ Layout::Layout()
     , SlideOpened(44.f)
     , SlideClosed(20.f)
     , ScreenWidth(125.f*7 + 44.f*6 + 44.f*2*2)
-    , ScreenHeight(22.f + 175.f + 44.f + 6*22.f + 12*44.f + 48.f + 22.f)
+    , ScreenHeight(22.f + 175.f + 44.f + 6*20.f + 12*44.f + 48.f + 22.f)
     , Interval(44.f)
     , HalfInterval(22.f)
     , ButtonHeight(48.f)
     , ButtonArrowWidth(48.f)
     , ButtonActionWidth(96.f)
     , YouWonWidth(300.f)
+    , gameW(0)
+    , gameH(0)
 {
 }
 
 void Layout::init()
 {
+    gameH = (int)ScreenHeight;
+    gameW = (int)ScreenWidth;
+
     borderV = HalfInterval;
     borderH = Interval*2;
 
@@ -98,6 +103,27 @@ void Layout::init()
 
     tableausTopLeftX = borderH;
     tableausTopLeftY = borderV + CardHeight + Interval;
+}
+
+bool Layout::setGameSize(int width, int height)
+{
+    if (gameH != height || gameW != width)
+    {
+        gameH = height;
+        gameW = width;
+        return true;
+    }
+    return false;
+}
+
+float Layout::getGameHeight() const
+{
+    return (float)gameH;
+}
+
+float Layout::getGameWidth() const
+{
+    return (float)gameW;
 }
 
 Rect Layout::getWorkingArea() const
@@ -828,6 +854,11 @@ void Commander::update()
     }
 }
 
+void Commander::updateGameSize(int newWidth, int newHeight)
+{
+    layout.setGameSize(newWidth, newHeight);
+}
+
 void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
 {
     Tween::CurveType curve = slower ? Tween::CURVE_SMOOTH : Tween::CURVE_SMOOTH2;
@@ -989,7 +1020,7 @@ void Commander::cmdMoveToNew()
     gameLayout.oldX = 0.f;
     gameLayout.oldY = 0.f;
     startMoveOn = true;
-    tweens.push(Tween(&gameLayout.oldY, layout.ScreenHeight, Tween::CURVE_SMOOTH2, MOVE_TICKS));
+    tweens.push(Tween(&gameLayout.oldY, layout.getGameHeight(), Tween::CURVE_SMOOTH2, MOVE_TICKS));
     events.push(Event::DoStartAnimation(MOVE_TICKS));
     clearControlButtons();
 }
