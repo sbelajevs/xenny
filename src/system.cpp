@@ -44,7 +44,6 @@ struct SystemAPI
     int gameBaseW;
     int gameBaseH;
 
-    float mouseDx;
     float mouseCorrector;
 
     unsigned int vertexArray;
@@ -78,13 +77,20 @@ void sizeChangeCallback(int newW, int newH)
     float aspectH = (float)newH / oneAndOnly->gameBaseH;
     float corrector = aspectW < aspectH ? aspectW : aspectH;
 
-    int newGameW = (int)(oneAndOnly->gameBaseW*corrector);
-    int newGameH = (int)(oneAndOnly->gameBaseH*corrector);
-    int dx = (newW - newGameW) / 2;
+    float newGameW = (float)oneAndOnly->gameBaseW;
+    float newGameH = (float)oneAndOnly->gameBaseH;
     
-    glViewport(dx, newH - newGameH, newGameW, newGameH);
+    if (aspectW > aspectH) {
+        newGameW = newW / corrector;
+    } else {
+        newGameH = newH / corrector;
+    }
+    
+    oneAndOnly->orthoProjection[0] =  2.f / newGameW;
+    oneAndOnly->orthoProjection[5] = -2.f / newGameH;
 
-    oneAndOnly->mouseDx = (float)dx;
+    glViewport(0, 0, newW, newH);
+
     oneAndOnly->mouseCorrector = corrector;
     // assert(oneAndOnly->mouseCorrector > 0.0001)
 }
@@ -155,7 +161,6 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 
     result->gameBaseW = -1;
     result->gameBaseH = -1;
-    result->mouseDx = 0.f;
     result->mouseCorrector = 1.f;
 
     oneAndOnly = result;
@@ -447,8 +452,8 @@ int Sys_TimeToQuit(SystemAPI* sysApi)
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y)
 {
     glfwGetMousePos(x, y);
-    *x = (int)Sys_Floor((*x - sys->mouseDx)/sys->mouseCorrector);
-    *y = (int)Sys_Floor((*y)/(sys->mouseCorrector));
+    *x = (int)Sys_Floor(*x/sys->mouseCorrector);
+    *y = (int)Sys_Floor(*y/sys->mouseCorrector);
 }
 
 int Sys_GetMouseButtonState(SystemAPI* sys)
