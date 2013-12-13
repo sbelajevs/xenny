@@ -135,17 +135,7 @@ public:
             dy = commander->gameLayout.oldY;
         }
 
-        renderGameGUI(dx, dy);
-
-        bool showButtons = commander->autoPlaying() == false
-            && commander->starting() == false
-            && commander->movingScreen() == false;
-
-        if (commander->gameEnded()) {
-            renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
-        } else if (showButtons) {
-            renderControlsGUI();
-        }
+        renderGame(dx, dy);
     }
 
 private:
@@ -178,7 +168,7 @@ private:
         }
     }
 
-    void renderGameGUI(float dx, float dy)
+    void renderGame(float dx, float dy)
     {
         renderEmptyGame(dx, dy);
 
@@ -190,6 +180,16 @@ private:
             screenRect.x += dx;
             screenRect.y += dy;
             renderRect(screenRect, texRect);
+        }
+
+        bool showButtons = commander->autoPlaying() == false
+            && commander->starting() == false
+            && commander->movingScreen() == false;
+
+        if (commander->gameEnded()) {
+            renderRect(commander->layout.getYouWonRect(), cardGfxData.youWon);
+        } else if (showButtons) {
+            renderControlsGUI();
         }
     }
 
