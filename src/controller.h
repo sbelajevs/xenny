@@ -197,9 +197,9 @@ public:
     int probe(float x, float y);
     void updateCardRect(GameState& gameState, int cardId);
     Rect getDestCardRect(const CardStack* stack) const;
+    Rect getStackRect(const CardStack* stack) const;
     const CardDesc& getOrderedCard(int ordinal);
-    
-    Rect stackRects[STACK_COUNT];
+
     CardDesc cardDescs[CARDS_TOTAL];
 
     float oldX;

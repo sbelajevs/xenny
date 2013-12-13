@@ -245,7 +245,7 @@ void GameLayout::reset(GameState& gameState)
     for (int i=0; i<STACK_COUNT; i++)
     {
         CardStack* cs = gameState.getStack(i);
-        Rect screenPos = stackRects[cs->handle];
+        Rect screenPos = getStackRect(cs);
         for (int j=0; j<cs->size(); j++, curZ++)
         {
             GameCard gc = (*cs)[j];
@@ -264,7 +264,7 @@ void GameLayout::updateCardRect(GameState& gameState, int cardId)
     int idx;
     CardStack* cs = gameState.findById(cardId, &idx);
     // assert (cs != NULL_PTR)
-    Rect result = stackRects[cs->handle];
+    Rect result = getStackRect(cs);
     for (int i=0; i<idx; i++) {
         if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
             result.y += Sys_Floor(.5f + ((*cs)[i].opened() ? layout->SlideOpened : layout->SlideClosed));
@@ -322,20 +322,12 @@ const CardDesc& GameLayout::getOrderedCard(int ordinal)
 void GameLayout::init(GameState& aGameState, Layout& aLayout)
 {
     layout = &aLayout;
-    for (int i=0; i<STACK_COUNT; i++)
-    {
-        CardStack*cs = aGameState.getStack(i);
-        if (cs->type != CardStack::TYPE_HAND) {
-            stackRects[cs->handle] = layout->getStackRect(cs);
-        }
-    }
-
     reset(aGameState);
 }
 
 Rect GameLayout::getDestCardRect(const CardStack* stack) const
 {
-    Rect screenRect = stackRects[stack->handle];
+    Rect screenRect = getStackRect(stack);
 
     if (stack->type == CardStack::TYPE_TABLEAU 
         || stack->type == CardStack::TYPE_HAND)
@@ -346,6 +338,11 @@ Rect GameLayout::getDestCardRect(const CardStack* stack) const
     }
 
     return screenRect;
+}
+
+Rect GameLayout::getStackRect(const CardStack* stack) const
+{
+    return layout->getStackRect(stack);
 }
 
 int GameLayout::probe(float x, float y)
@@ -854,7 +851,7 @@ void Commander::addAutoMoveAnimation(int cardId, CardStack* dst)
     static const int TURN_HALF_TICKS = 8;
     static const int AUTO_MOVE_TICKS = 24;
     Rect begR = gameLayout.cardDescs[cardId].screenRect;
-    Rect endR = gameLayout.stackRects[dst->handle];
+    Rect endR = gameLayout.getStackRect(dst);
     moveAnimation(cardId, begR, endR, AUTO_MOVE_TICKS);
     
     if (gameLayout.cardDescs[cardId].opened == false) {
@@ -885,7 +882,7 @@ void Commander::addAdvanceStockAnimation()
     if (gameState->stock.empty() == false)
     {
         CardDesc cd = gameLayout.cardDescs[gameState->stock.top().id];
-        Rect endR = gameLayout.stackRects[gameState->waste.handle];
+        Rect endR = gameLayout.getStackRect(&gameState->waste);
         
         gameLayout.raiseZ(cd.id);
         moveAnimation(cd.id, cd.screenRect, endR, HALF_TICKS*2, true);
@@ -894,8 +891,8 @@ void Commander::addAdvanceStockAnimation()
     else
     {
         // No need for card locking here - we're locking the whole stock!
-        Rect begR = gameLayout.stackRects[gameState->waste.handle];
-        Rect endR = gameLayout.stackRects[gameState->stock.handle];
+        Rect begR = gameLayout.getStackRect(&gameState->waste);
+        Rect endR = gameLayout.getStackRect(&gameState->stock);
 
         for (int i=0; i<gameState->waste.size(); i++)
         {
@@ -921,7 +918,7 @@ void Commander::addStartAnimation()
     startAnimationOn = true;
     startMoveOn = false;
 
-    Rect begR = gameLayout.stackRects[gameState->stock.handle];
+    Rect begR = gameLayout.getStackRect(&gameState->stock);
     for (int i=TABLEAU_COUNT-1; i>=0; i--) 
     {
         for (int j=0; j<gameState->tableaux[i].size(); j++)
@@ -1104,7 +1101,7 @@ void Commander::cmdAutoClick(float x, float y)
     int cardId = gameLayout.probe(x, y);
     CardStack* stack = gameState->findById(cardId, &stackIdx);
 
-    if (gameLayout.stackRects[gameState->stock.handle].inside(x, y)) {
+    if (gameLayout.getStackRect(&gameState->stock).inside(x, y)) {
         cmdAdvanceStock();
     }
     else if (stack != NULL_PTR && stackIdx == stack->size() - 1

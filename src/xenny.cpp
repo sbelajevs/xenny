@@ -161,11 +161,13 @@ private:
         for (int i=0; i<STACK_COUNT; i++) 
         {
             CardStack* cs = gameState->getStack(i);
-            Rect screenRect = commander->gameLayout.stackRects[cs->handle];
+            Rect screenRect = commander->gameLayout.getStackRect(cs);
             screenRect.x += dx;
             screenRect.y += dy;
             Rect texRect = cardGfxData.cardWaste;
-            if (cs->type == CardStack::TYPE_FOUNDATION) {
+            if (cs->type == CardStack::TYPE_HAND) {
+                continue;
+            } else if (cs->type == CardStack::TYPE_FOUNDATION) {
                 texRect = cardGfxData.cardFoundation;
             } else if (cs->type == CardStack::TYPE_TABLEAU) {
                 texRect = cardGfxData.cardTableau;
