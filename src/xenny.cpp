@@ -122,8 +122,8 @@ public:
         int width = 0;
         int height = 0;
         Sys_GetGameSize(sys, &width, &height);
-        commander->updateGameSize(width, height);
-        commander->update();
+
+        commander->update(width, height);
     }
 
     void render()
@@ -233,9 +233,9 @@ int runGame()
     Layout l;
     l.init();
 
-    SystemAPI* sys = Sys_CreateWindow((int)l.ScreenWidth, (int)l.ScreenHeight, "Xenny 0.0.2");
+    SystemAPI* sys = Sys_CreateWindow((int)l.BaseGameWidth, (int)l.BaseGameHeight, "Xenny 0.0.2");
     Sys_Init(sys);
-    Sys_SetGameBaseSize(sys, (int)l.ScreenWidth, (int)l.ScreenHeight);
+    Sys_SetGameBaseSize(sys, (int)l.BaseGameWidth, (int)l.BaseGameHeight);
 
     App app;
     app.init(sys);

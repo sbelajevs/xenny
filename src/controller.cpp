@@ -71,10 +71,9 @@ Layout::Layout()
     , CardHeight(175.f)
     , SlideOpened(44.f)
     , SlideClosed(20.f)
-    , ScreenWidth(125.f*7 + 44.f*6 + 44.f*2*2)
-    , ScreenHeight(22.f + 175.f + 44.f + 6*20.f + 12*44.f + 48.f + 22.f)
-    , Interval(44.f)
-    , HalfInterval(22.f)
+    , PaddingTop(22.f)
+    , BaseGameWidth(125.f*7 + 44.f*6 + 44.f*2*2)
+    , BaseGameHeight(22.f + 175.f + 44.f + 6*20.f + 12*44.f + 48.f + 22.f)
     , ButtonHeight(48.f)
     , ButtonArrowWidth(48.f)
     , ButtonActionWidth(96.f)
@@ -86,23 +85,31 @@ Layout::Layout()
 
 void Layout::init()
 {
-    gameH = (int)ScreenHeight;
-    gameW = (int)ScreenWidth;
+    gameW = (int)BaseGameWidth;
+    gameH = (int)BaseGameHeight;
 
-    borderV = HalfInterval;
-    borderH = Interval*2;
+    initPositions();
+}
+
+void Layout::initPositions()
+{
+    interval = (getGameWidth() - CardWidth*7)/10.f;
+    halfInterval = interval/2.f;
+
+    borderV = PaddingTop;
+    borderH = interval*2;
 
     stockTopLeftX = borderH;
     stockTopLeftY = borderV;
 
-    wasteTopLeftX = stockTopLeftX + CardWidth + HalfInterval;
-    wasteTopLeftY = stockTopLeftY;
+    wasteTopLeftX = stockTopLeftX + CardWidth + halfInterval;
+    wasteTopLeftY = borderV;
 
-    foundationsTopLeftX = ScreenWidth - borderH - FOUNDATION_COUNT*CardWidth - (FOUNDATION_COUNT-1)*HalfInterval;
+    foundationsTopLeftX = getGameWidth() - borderH - FOUNDATION_COUNT*CardWidth - (FOUNDATION_COUNT-1)*halfInterval;
     foundationsTopLeftY = borderV;
 
     tableausTopLeftX = borderH;
-    tableausTopLeftY = borderV + CardHeight + Interval;
+    tableausTopLeftY = borderV + CardHeight + PaddingTop*2;
 }
 
 bool Layout::setGameSize(int width, int height)
@@ -111,6 +118,7 @@ bool Layout::setGameSize(int width, int height)
     {
         gameH = height;
         gameW = width;
+        initPositions();
         return true;
     }
     return false;
@@ -128,14 +136,14 @@ float Layout::getGameWidth() const
 
 Rect Layout::getWorkingArea() const
 {
-    return Rect(borderH, borderV, ScreenWidth-2*borderH, ScreenHeight-2*borderV);
+    return Rect(borderH, borderV, getGameWidth()-2*borderH, getGameHeight()-2*borderV);
 }
 
 Rect Layout::getYouWonRect() const
 {
     return Rect(
-        Sys_Floor((ScreenWidth-YouWonWidth)*0.5f), 
-        Sys_Floor((ScreenHeight-ButtonHeight)*0.75f), 
+        Sys_Floor((getGameWidth()-YouWonWidth)*0.5f), 
+        Sys_Floor((getGameHeight()-ButtonHeight)*0.75f), 
         Sys_Floor(YouWonWidth), 
         Sys_Floor(ButtonHeight)
     );
@@ -147,12 +155,12 @@ Rect Layout::getStackRect(const CardStack* stack) const
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            Sys_Floor(foundationsTopLeftX + (HalfInterval + CardWidth)*stack->ordinal),
+            Sys_Floor(foundationsTopLeftX + (halfInterval + CardWidth)*stack->ordinal),
             Sys_Floor(foundationsTopLeftY)
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            Sys_Floor(tableausTopLeftX + (Interval+CardWidth)*stack->ordinal),
+            Sys_Floor(tableausTopLeftX + (interval+CardWidth)*stack->ordinal),
             Sys_Floor(tableausTopLeftY)
         );
     case CardStack::TYPE_STOCK:
@@ -803,7 +811,7 @@ void Commander::handleEvent(const Event& e)
     }
 }
 
-void Commander::update()
+void Commander::updateEvents()
 {
     int idx = 0;
     while (idx < tweens.size())
@@ -854,9 +862,20 @@ void Commander::update()
     }
 }
 
-void Commander::updateGameSize(int newWidth, int newHeight)
+void Commander::update(int newWidth, int newHeight)
 {
-    layout.setGameSize(newWidth, newHeight);
+    if (layout.setGameSize(newWidth, newHeight)) 
+    {
+        while (events.empty() == false || tweens.empty() == false) {
+            updateEvents();
+        }
+        widgetLayout.init(layout);
+        gameLayout.reset(*gameState);
+    }
+    else
+    {
+        updateEvents();
+    }
 }
 
 void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool slower, int delay)
@@ -896,7 +915,7 @@ void Commander::addHandMovementAnimation(CardStack* dest)
     CardStack* hand = &gameState->hand;
     Rect begR = gameLayout.cardDescs[(*hand)[0].id].screenRect;
     Rect endR = gameLayout.getDestCardRect(dest);
-    int ticks = getMovememntTicks(begR, endR, layout.ScreenWidth);
+    int ticks = getMovememntTicks(begR, endR, layout.getGameWidth());
 
     for (int i=0; i<hand->size(); i++) {
         moveAnimation((*hand)[i].id, begR, endR, ticks);

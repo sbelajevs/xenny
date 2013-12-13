@@ -39,18 +39,22 @@ public:
     const float CardHeight;
     const float SlideOpened;
     const float SlideClosed;
-    const float ScreenWidth;
-    const float ScreenHeight;
-    const float Interval;
-    const float HalfInterval;
+    const float PaddingTop;
+    const float BaseGameWidth;
+    const float BaseGameHeight;
     const float ButtonHeight;
     const float ButtonArrowWidth;
     const float ButtonActionWidth;
     const float YouWonWidth;
 
 private:
+    void initPositions();
+
     int gameW;
     int gameH;
+
+    float interval;
+    float halfInterval;
 
     float borderV;
     float borderH;
@@ -279,8 +283,7 @@ public:
     Commander();
     void init(GameState* aGameState);
     void handleInput(const Input& input);
-    void update();
-    void updateGameSize(int newWidth, int newHeight);
+    void update(int width, int height);
 
     bool gameEnded() const;
     bool autoPlaying() const;
@@ -293,6 +296,7 @@ public:
 private:
     void handleInputForButtons(const Input& input);
     void handleInputForGame(const Input& input);
+    void updateEvents();
 
     void cmdUndo();
     void cmdRedo();
