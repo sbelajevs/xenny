@@ -1,47 +1,52 @@
 Version 0.0.3:
- === Focus on helping to play more efficiently ===
- - Consider generating only 100% solvable games
- - Implement special case of "undo" that undoes until a chosen card is moved
- - Do some simple game-over checks
- - Research brute-forcing for checking game-over cases, check if it won't drain laptop battery too much
-
-version 0.0.4:
  === Focus on user experience, resizing game window ===
  - Replace glfw/OpenGL with custom-made-code/DirectX
  - Use distance fields to generate ideal border around cards at any scale
  - Try optimizing rendering - batch render calls, sort rectangles and don't draw many of them at one place
- - Module separation - OS module as executable and game module as .dll
- - Allow to resize window and scale graphics in a smart way, make game layout more generic
+ - Allow to resize window and scale graphics
+ - Improve cards and button images, to make it more readable at small window sizes
  - Add keyboard shortcuts for controling window and control buttons
- 
-version 0.0.5:
+ - Simplify buttons - they should be easy to click at any size, remove full undo/redo button, introduce "restart". Restart can be undone
+
+version 0.0.4:
  === Focus on stability and small tweaks ===
- - Add logging and all kinds of error checking to the OS module
+ - Add logging and all kinds of error checking to the system module
  - Add lots of debug assertions and run the game in debug mode
- - Show "Are you sure?" when "New game" is pressed
  - Fix remaining FPS issues
  - Do something with max allowed moves in game history
- - Show amount of cards left in the stock/waste
+ - Implement some simple font engine, start using it
 
-Version 0.0.6
- === Focus on making the game more juicy ===
- - Implement (full) undo/redo animation
+Version 0.0.5
+ === Focus on making the game prettier ===
+ - Implement undo/redo/restart animation
  - Implement end game animation
  - Add some shaking animation when something cannot be done
  - Change mouse cursor pointers depending on screen position
+ - Some drag-and-drop improvements
  - Add motion blur effect and evaluate if it is cool
- - Think how to implement hints if user is stuck
+ - Generate graphics (cards, fonts, buttons) on the fly depending on window size
+ - Add some juice to backgrounds
+ - Add some nicer effects to transitions and buttons
+ - Consider adding some shadows and particles
 
 Version 0.1
  === Focus on adding new games ===
  - Implement a simple GUI framework, refactor existing code
  - Add different Klondaike types of game
 
-Version 0.2
+version 0.2:
+ === Focus on helping to play more efficiently ===
+ - Consider generating only 100% solvable games
+ - Do some simple game-over checks
+ - Research brute-forcing for checking game-over cases, check if it won't drain laptop battery too much
+ - Think how to implement hints if user is stuck
+ - Show amount of cards left in the stock/waste
+ 
+Version 0.3
  === Focus on adding even more games ===
  - Add other more or less popular types of patience games
 
-Version 0.3
+Version 0.4
  === Focus on adding new type of game ===
  - Add bubble shooter game, just for lulz
 
