@@ -18,6 +18,7 @@ enum MouseButtonState
 SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle);
 void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height);
 void Sys_GetGameSize(SystemAPI* sys, int* width, int* height);
+float Sys_GetScaleFactor(SystemAPI* sys);
 void Sys_SetWindowTitle(SystemAPI* sys, const char* msg);
 void Sys_ShutDown(SystemAPI* sys);
 

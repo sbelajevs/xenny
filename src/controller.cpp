@@ -72,7 +72,7 @@ Layout::Layout()
     , SlideOpened(44.f)
     , SlideClosed(20.f)
     , PaddingTop(22.f)
-    , BaseGameWidth(125.f*7 + 44.f*6 + 44.f*2*2)
+    , BaseGameWidth(125.f*7 + 16.f*6 + 16.f*2*2)
     , BaseGameHeight(22.f + 175.f + 44.f + 6*20.f + 12*44.f + 48.f + 22.f)
     , ButtonHeight(48.f)
     , ButtonArrowWidth(48.f)
@@ -247,7 +247,7 @@ void Input::update()
     dragEnd = left.pressed == false && dragActive;
     dragStart = left.pressed 
         && dragActive == false 
-        && getDistSqr(x, y, left.pressX, left.pressY) > DRAG_DIST_THRESHOLD_SQR;
+        && getDistSqr(x, y, left.pressX, left.pressY) > DRAG_DIST_THRESHOLD_SQR / Sys_GetScaleFactor(sys);
 
     if (dragStart) {
         dragActive = true;

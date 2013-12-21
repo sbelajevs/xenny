@@ -46,7 +46,7 @@ struct SystemAPI
     int gameW;
     int gameH;
 
-    float mouseCorrector;
+    float scaleFactor;
 
     unsigned int vertexArray;
     unsigned int mainTextureId;
@@ -96,8 +96,8 @@ void sizeChangeCallback(int newW, int newH)
 
     glViewport(0, 0, newW, newH);
 
-    oneAndOnly->mouseCorrector = corrector;
-    // assert(oneAndOnly->mouseCorrector > 0.0001)
+    oneAndOnly->scaleFactor = corrector;
+    // assert(oneAndOnly->scaleFactor > 0.0001)
 }
 
 static float round(float f)
@@ -168,7 +168,7 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
     result->gameBaseH = -1;
     result->gameW = -1;
     result->gameH = -1;
-    result->mouseCorrector = 1.f;
+    result->scaleFactor = 1.f;
 
     oneAndOnly = result;
     return result;
@@ -184,6 +184,11 @@ void Sys_GetGameSize(SystemAPI* sys, int* width, int* height)
 {
     *width = sys->gameW;
     *height = sys->gameH;
+}
+
+float Sys_GetScaleFactor(SystemAPI* sys)
+{
+    return sys->scaleFactor;
 }
 
 void Sys_ShutDown(SystemAPI* sysApi)
@@ -465,8 +470,8 @@ int Sys_TimeToQuit(SystemAPI* sysApi)
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y)
 {
     glfwGetMousePos(x, y);
-    *x = (int)Sys_Floor(*x/sys->mouseCorrector);
-    *y = (int)Sys_Floor(*y/sys->mouseCorrector);
+    *x = (int)Sys_Floor(*x/sys->scaleFactor);
+    *y = (int)Sys_Floor(*y/sys->scaleFactor);
 }
 
 int Sys_GetMouseButtonState(SystemAPI* sys)
