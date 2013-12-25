@@ -179,6 +179,13 @@ private:
         for (int i=0; i<CARDS_TOTAL; i++)
         {
             CardDesc cd = commander->gameLayout.getOrderedCard(i);
+            if (i < CARDS_TOTAL-1) 
+            {
+                CardDesc next = commander->gameLayout.getOrderedCard(i+1);
+                if (next.screenRect == cd.screenRect) {
+                    continue;
+                }
+            }
             Rect texRect = cd.opened ? cardGfxData.cardFaces[cd.id] : cardGfxData.cardBack;
             Rect screenRect = cd.screenRect;
             screenRect.x += dx;

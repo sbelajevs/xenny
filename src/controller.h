@@ -17,6 +17,11 @@ struct Rect
     Rect flipX() const;
     bool inside(float rx, float ry) const;
     bool empty() const;
+
+    bool operator == (const Rect& other)
+    {
+        return x==other.x && y==other.y && w==other.w && h==other.h;
+    }
 };
 
 class Layout
