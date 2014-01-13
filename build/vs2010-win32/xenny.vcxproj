@@ -16,6 +16,7 @@
     <ClCompile Include="..\..\src\generated\default.fragmentshader.c" />
     <ClCompile Include="..\..\src\generated\default.vertexshader.c" />
     <ClCompile Include="..\..\src\model.cpp" />
+    <ClCompile Include="..\..\src\stb_image.c" />
     <ClCompile Include="..\..\src\system.cpp" />
     <ClCompile Include="..\..\src\xenny.cpp" />
   </ItemGroup>
@@ -25,9 +26,6 @@
     </ProjectReference>
     <ProjectReference Include="lib\glfw-2.7.8\glfw.vcxproj">
       <Project>{24643044-b16c-4ee4-b3bb-1fcdbff17fa3}</Project>
-    </ProjectReference>
-    <ProjectReference Include="lib\stb_image\stb_image.vcxproj">
-      <Project>{6d3dbc7f-3219-4c9c-8283-cf2f617cd321}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -83,7 +81,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;GLEW_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;STBI_NO_STDIO;STBI_NO_HDR;STBI_NO_FAILURE_STRINGS;GLEW_STATIC;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\lib\glfw-2.7.8\include;..\..\lib\glew-1.9.0\include;..\..\lib\glm-0.9.4.0;..\..\lib\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -106,7 +104,7 @@
       <Optimization>Full</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;STBI_NO_STDIO;STBI_NO_HDR;STBI_NO_FAILURE_STRINGS;GLEW_STATIC;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..\..\lib\glfw-2.7.8\include;..\..\lib\glew-1.9.0\include;..\..\lib\glm-0.9.4.0;..\..\lib\stb_image;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>

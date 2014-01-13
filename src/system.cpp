@@ -7,7 +7,9 @@
 
 #include <GL/glew.h>
 #include <GL/glfw.h>
-#include <stb_image.h>
+
+#define STBI_HEADER_FILE_ONLY
+#include "stb_image.c"
 
 #include "system.h"
 
