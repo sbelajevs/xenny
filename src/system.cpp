@@ -41,12 +41,7 @@ namespace
 
 struct SystemAPI
 {
-    int gameBaseW;
-    int gameBaseH;
-    int gameW;
-    int gameH;
-
-    float scaleFactor;
+    ResizeCallback resize;
 
     unsigned int vertexArray;
     unsigned int mainTextureId;
@@ -71,33 +66,16 @@ SystemAPI* oneAndOnly = NULL;
 extern "C"
 void sizeChangeCallback(int newW, int newH)
 {
-    if (oneAndOnly == NULL || oneAndOnly->gameBaseH <= 0 || oneAndOnly->gameBaseW <= 0) {
+    if (oneAndOnly == NULL) {
         return;
     }
 
-    float aspectW = (float)newW / oneAndOnly->gameBaseW;
-    float aspectH = (float)newH / oneAndOnly->gameBaseH;
-    float corrector = aspectW < aspectH ? aspectW : aspectH;
+    oneAndOnly->resize(newW, newH);
 
-    float newGameW = (float)oneAndOnly->gameBaseW;
-    float newGameH = (float)oneAndOnly->gameBaseH;
-    
-    if (aspectW > aspectH) {
-        newGameW = newW / corrector;
-    } else {
-        newGameH = newH / corrector;
-    }
-    
-    oneAndOnly->gameW = (int)newGameW;
-    oneAndOnly->gameH = (int)newGameH;
-
-    oneAndOnly->orthoProjection[0] =  2.f / newGameW;
-    oneAndOnly->orthoProjection[5] = -2.f / newGameH;
+    oneAndOnly->orthoProjection[0] =  2.f / newW;
+    oneAndOnly->orthoProjection[5] = -2.f / newH;
 
     glViewport(0, 0, newW, newH);
-
-    oneAndOnly->scaleFactor = corrector;
-    // assert(oneAndOnly->scaleFactor > 0.0001)
 }
 
 static float round(float f)
@@ -106,7 +84,7 @@ static float round(float f)
     return floor(f + 0.5f + EPS);
 }
 
-SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
+SystemAPI* Sys_CreateWindow(int width, int height, ResizeCallback resizeCb, const char* windowTitle)
 {
     // Initialise GLFW
     if (!glfwInit())
@@ -133,7 +111,7 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
         fprintf(stderr, "Failed to initialize GLEW\n");
         exit(EXIT_FAILURE);
     }
-
+    
     glfwSetWindowTitle(windowTitle);
 
     // Ensure we can capture the escape key being pressed below
@@ -164,31 +142,10 @@ SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle)
 
     std::srand((unsigned)time(0));
 
-    result->gameBaseW = -1;
-    result->gameBaseH = -1;
-    result->gameW = -1;
-    result->gameH = -1;
-    result->scaleFactor = 1.f;
+    result->resize = resizeCb;
 
     oneAndOnly = result;
     return result;
-}
-
-void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height)
-{
-    sys->gameBaseH = sys->gameH = height;
-    sys->gameBaseW = sys->gameW = width;
-}
-
-void Sys_GetGameSize(SystemAPI* sys, int* width, int* height)
-{
-    *width = sys->gameW;
-    *height = sys->gameH;
-}
-
-float Sys_GetScaleFactor(SystemAPI* sys)
-{
-    return sys->scaleFactor;
 }
 
 void Sys_ShutDown(SystemAPI* sysApi)
@@ -470,8 +427,6 @@ int Sys_TimeToQuit(SystemAPI* sysApi)
 void Sys_GetMousePos(SystemAPI* sys, int* x, int* y)
 {
     glfwGetMousePos(x, y);
-    *x = (int)Sys_Floor(*x/sys->scaleFactor);
-    *y = (int)Sys_Floor(*y/sys->scaleFactor);
 }
 
 int Sys_GetMouseButtonState(SystemAPI* sys)

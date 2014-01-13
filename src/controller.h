@@ -14,9 +14,9 @@ struct Rect
 
     void translate(float dx, float dy);
 
-    Rect flipX() const;
-    bool inside(float rx, float ry) const;
-    bool empty() const;
+    Rect flipX();
+    bool inside(float rx, float ry);
+    bool empty();
 
     bool operator == (const Rect& other)
     {
@@ -30,30 +30,48 @@ public:
     Layout();
 
     void init();
-    bool setGameSize(int newWidth, int newHeight);
+    bool setGameSize(int w, int h);
+    float getGameWidth();
+    float getGameHeight();
 
-    Rect getWorkingArea() const;
-    Rect getYouWonRect() const;
-    Rect getStackRect(const CardStack* stack) const;
-    Rect getCardScreenRect(float x, float y) const;
+    Rect getWorkingArea();
+    Rect getYouWonRect();
+    Rect getStackRect(CardStack* stack);
+    Rect getCardScreenRect(float x, float y);
 
-    float getGameWidth() const;
-    float getGameHeight() const;
+    float getCardWidth();
+    float getCardHeight();
 
-    const float CardWidth;
-    const float CardHeight;
-    const float SlideOpened;
-    const float SlideClosed;
-    const float PaddingTop;
-    const float BaseGameWidth;
-    const float BaseGameHeight;
-    const float ButtonHeight;
-    const float ButtonArrowWidth;
-    const float ButtonActionWidth;
-    const float YouWonWidth;
+    float getSlide(bool opened);
 
+    float getPaddingTop();
+    float getYouWonWidth();
+
+    float getButtonWidth();
+    float getButtonWidthLong();
+    float getButtonHeight();
+    
 private:
+    void updateScaleFactor();
     void initPositions();
+
+    float BASE_GAME_WIDTH;
+    float BASE_GAME_HEIGHT;
+
+    float BASE_CARD_WIDTH;
+    float BASE_CARD_HEIGHT;
+
+    float BASE_SLIDE_OPENED;
+    float BASE_SLIDE_CLOSED;
+
+    float BASE_PADDING_TOP;
+    float BASE_YOU_WON_WIDTH;
+
+    float BUTTON_WIDTH;
+    float BUTTON_WIDTH_LONG;
+    float BUTTON_HEIGHT;
+
+    float scaleFactor;
 
     int gameW;
     int gameH;
@@ -144,9 +162,9 @@ public:
     Event(Type type, int delay, int arg = 0);
 
     void update();
-    bool fired() const;
-    int getArg() const;
-    Type getType() const;
+    bool fired();
+    int getArg();
+    Type getType();
 
 private:
     int delayLeft;
@@ -212,9 +230,9 @@ public:
 
     int probe(float x, float y);
     void updateCardRect(GameState& gameState, int cardId);
-    Rect getDestCardRect(const CardStack* stack) const;
-    Rect getStackRect(const CardStack* stack) const;
-    const CardDesc& getOrderedCard(int ordinal);
+    Rect getDestCardRect(CardStack* stack);
+    Rect getStackRect(CardStack* stack);
+    CardDesc& getOrderedCard(int ordinal);
 
     CardDesc cardDescs[CARDS_TOTAL];
 
@@ -245,10 +263,10 @@ public:
     ButtonDesc();
     void init(Rect aRect, ButtonState aState, bool aVisible);
 
-    Rect getRect() const;
-    ButtonState getState() const;
-    bool visible() const;
-    bool enabled() const;
+    Rect getRect();
+    ButtonState getState();
+    bool visible();
+    bool enabled();
 
     void setVisible(bool aVisible);
     void setEnabled(bool aEnabled);
@@ -276,7 +294,7 @@ public:
     };
 
     WidgetLayout();
-    void init(const Layout& aLayout);
+    void init(Layout& aLayout);
     ButtonType probe(float x, float y);
 
     ButtonDesc buttons[BUTTON_MAX];
@@ -287,20 +305,21 @@ class Commander
 public:
     Commander();
     void init(GameState* aGameState);
-    void handleInput(const Input& input);
-    void update(int width, int height);
+    void handleInput(Input& input);
+    void update();
+    void resize(int width, int height);
 
-    bool gameEnded() const;
-    bool autoPlaying() const;
-    bool starting() const;
-    bool movingScreen() const;
+    bool gameEnded();
+    bool autoPlaying();
+    bool starting();
+    bool movingScreen();
 
     Layout layout;
     WidgetLayout widgetLayout;
     GameLayout gameLayout;
 private:
-    void handleInputForButtons(const Input& input);
-    void handleInputForGame(const Input& input);
+    void handleInputForButtons(Input& input);
+    void handleInputForGame(Input& input);
     void updateEvents();
 
     void cmdUndo();
@@ -317,7 +336,7 @@ private:
     void cmdAutoClick(float x, float y);
     void cmdAutoPlay();
 
-    void handleEvent(const Event& event);
+    void handleEvent(Event& event);
     void doAutoMove();
     void resetGameLayout();
     void clearControlButtons();

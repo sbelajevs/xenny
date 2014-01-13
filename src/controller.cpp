@@ -51,65 +51,90 @@ void Rect::translate(float dx, float dy)
     y += dy;
 }
 
-Rect Rect::flipX() const
+Rect Rect::flipX()
 {
     return Rect(x+w, y, -w, h);
 }
 
-bool Rect::inside(float rx, float ry) const
+bool Rect::inside(float rx, float ry)
 {
     return rx >= x && rx < x + w && ry >= y && ry < y + h;
 }
 
-bool Rect::empty() const
+bool Rect::empty()
 {
     return w == 0.f || h == 0.f;
 }
 
 Layout::Layout()
-    : CardWidth(125.f)
-    , CardHeight(175.f)
-    , SlideOpened(44.f)
-    , SlideClosed(20.f)
-    , PaddingTop(22.f)
-    , BaseGameWidth(125.f*7 + 16.f*6 + 16.f*2*2)
-    , BaseGameHeight(22.f + 175.f + 44.f + 6*20.f + 12*44.f + 48.f + 22.f)
-    , ButtonHeight(48.f)
-    , ButtonArrowWidth(48.f)
-    , ButtonActionWidth(96.f)
-    , YouWonWidth(300.f)
+    : BASE_CARD_WIDTH(125.f)
+    , BASE_CARD_HEIGHT(175.f)
+    , BASE_SLIDE_OPENED(44.f)
+    , BASE_SLIDE_CLOSED(20.f)
+    , BASE_PADDING_TOP(22.f)
+    , BASE_YOU_WON_WIDTH(300.f)
+    , BUTTON_WIDTH(48.f)
+    , BUTTON_WIDTH_LONG(96.f)
+    , BUTTON_HEIGHT(48.f)
     , gameW(0)
     , gameH(0)
 {
+    const int TABLEAU_COUNT = 7;
+    const float BASE_MIN_TABLEAU_INTERVAL = 16.f;
+
+    BASE_GAME_WIDTH = BASE_CARD_WIDTH * TABLEAU_COUNT 
+        + BASE_MIN_TABLEAU_INTERVAL * (TABLEAU_COUNT-1) 
+        + BASE_MIN_TABLEAU_INTERVAL*2*2
+        ;
+    BASE_GAME_HEIGHT = BASE_PADDING_TOP 
+        + BASE_CARD_HEIGHT 
+        + BASE_PADDING_TOP
+        + BASE_SLIDE_CLOSED * (TABLEAU_COUNT-1)
+        + BASE_SLIDE_OPENED * 12
+        + BASE_CARD_HEIGHT
+        + BASE_PADDING_TOP
+        ;
+    scaleFactor = 1.f;
 }
 
-void Layout::init()
+float Layout::getCardWidth()
 {
-    gameW = (int)BaseGameWidth;
-    gameH = (int)BaseGameHeight;
-
-    initPositions();
+    return BASE_CARD_WIDTH * scaleFactor;
 }
 
-void Layout::initPositions()
+float Layout::getCardHeight()
 {
-    interval = (getGameWidth() - CardWidth*7)/10.f;
-    halfInterval = interval/2.f;
+    return BASE_CARD_HEIGHT * scaleFactor;
+}
 
-    borderV = PaddingTop;
-    borderH = interval*2;
+float Layout::getSlide(bool opened)
+{
+    return (opened ? BASE_SLIDE_OPENED : BASE_SLIDE_CLOSED) * scaleFactor;
+}
 
-    stockTopLeftX = borderH;
-    stockTopLeftY = borderV;
+float Layout::getPaddingTop()
+{
+    return BASE_PADDING_TOP * scaleFactor;
+}
 
-    wasteTopLeftX = stockTopLeftX + CardWidth + halfInterval;
-    wasteTopLeftY = borderV;
+float Layout::getYouWonWidth()
+{
+    return BASE_YOU_WON_WIDTH * scaleFactor;
+}
 
-    foundationsTopLeftX = getGameWidth() - borderH - FOUNDATION_COUNT*CardWidth - (FOUNDATION_COUNT-1)*halfInterval;
-    foundationsTopLeftY = borderV;
+float Layout::getButtonWidth()
+{
+    return BUTTON_WIDTH;
+}
 
-    tableausTopLeftX = borderH;
-    tableausTopLeftY = borderV + CardHeight + PaddingTop*2;
+float Layout::getButtonWidthLong()
+{
+    return BUTTON_WIDTH_LONG;
+}
+
+float Layout::getButtonHeight()
+{
+    return BUTTON_HEIGHT;
 }
 
 bool Layout::setGameSize(int width, int height)
@@ -118,49 +143,86 @@ bool Layout::setGameSize(int width, int height)
     {
         gameH = height;
         gameW = width;
+        updateScaleFactor();
         initPositions();
         return true;
     }
     return false;
 }
 
-float Layout::getGameHeight() const
+void Layout::init()
+{
+    gameW = (int)BASE_GAME_WIDTH;
+    gameH = (int)BASE_GAME_HEIGHT;
+
+    initPositions();
+}
+
+void Layout::updateScaleFactor()
+{
+    float aspectW = gameW / (float)BASE_GAME_WIDTH;
+    float aspectH = gameH / (float)BASE_GAME_HEIGHT;
+    scaleFactor = aspectW < aspectH ? aspectW : aspectH;
+}
+
+void Layout::initPositions()
+{
+    interval = (getGameWidth() - getCardWidth()*7)/10.f;
+    halfInterval = interval/2.f;
+
+    borderV = getPaddingTop();
+    borderH = interval*2;
+
+    stockTopLeftX = borderH;
+    stockTopLeftY = borderV;
+
+    wasteTopLeftX = stockTopLeftX + getCardWidth() + halfInterval;
+    wasteTopLeftY = borderV;
+
+    foundationsTopLeftX = getGameWidth() - borderH - FOUNDATION_COUNT*getCardWidth() - (FOUNDATION_COUNT-1)*halfInterval;
+    foundationsTopLeftY = borderV;
+
+    tableausTopLeftX = borderH;
+    tableausTopLeftY = borderV + getCardHeight() + getPaddingTop()*2;
+}
+
+float Layout::getGameHeight()
 {
     return (float)gameH;
 }
 
-float Layout::getGameWidth() const
+float Layout::getGameWidth()
 {
     return (float)gameW;
 }
 
-Rect Layout::getWorkingArea() const
+Rect Layout::getWorkingArea()
 {
     return Rect(borderH, borderV, getGameWidth()-2*borderH, getGameHeight()-2*borderV);
 }
 
-Rect Layout::getYouWonRect() const
+Rect Layout::getYouWonRect()
 {
     return Rect(
-        Sys_Floor((getGameWidth()-YouWonWidth)*0.5f), 
-        Sys_Floor((getGameHeight()-ButtonHeight)*0.75f), 
-        Sys_Floor(YouWonWidth), 
-        Sys_Floor(ButtonHeight)
+        Sys_Floor((getGameWidth()-getYouWonWidth())*0.5f), 
+        Sys_Floor((getGameHeight()-getButtonHeight())*0.75f), 
+        Sys_Floor(getYouWonWidth()), 
+        Sys_Floor(getButtonHeight())
     );
 }
 
-Rect Layout::getStackRect(const CardStack* stack) const
+Rect Layout::getStackRect(CardStack* stack)
 {
     switch (stack->type)
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            Sys_Floor(foundationsTopLeftX + (halfInterval + CardWidth)*stack->ordinal),
+            Sys_Floor(foundationsTopLeftX + (halfInterval + getCardWidth())*stack->ordinal),
             Sys_Floor(foundationsTopLeftY)
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            Sys_Floor(tableausTopLeftX + (interval+CardWidth)*stack->ordinal),
+            Sys_Floor(tableausTopLeftX + (interval+getCardWidth())*stack->ordinal),
             Sys_Floor(tableausTopLeftY)
         );
     case CardStack::TYPE_STOCK:
@@ -172,9 +234,9 @@ Rect Layout::getStackRect(const CardStack* stack) const
     }
 }
 
-Rect Layout::getCardScreenRect(float x, float y) const
+Rect Layout::getCardScreenRect(float x, float y)
 {
-    return Rect(x, y, (float)CardWidth, (float)CardHeight);
+    return Rect(x, y, (float)getCardWidth(), (float)getCardHeight());
 }
 
 Input::MouseButton::MouseButton(): pressed(false), clicked(false)
@@ -247,7 +309,7 @@ void Input::update()
     dragEnd = left.pressed == false && dragActive;
     dragStart = left.pressed 
         && dragActive == false 
-        && getDistSqr(x, y, left.pressX, left.pressY) > DRAG_DIST_THRESHOLD_SQR / Sys_GetScaleFactor(sys);
+        && getDistSqr(x, y, left.pressX, left.pressY) > DRAG_DIST_THRESHOLD_SQR;
 
     if (dragStart) {
         dragActive = true;
@@ -286,7 +348,7 @@ void GameLayout::reset(GameState& gameState)
             cardDescs[gc.id] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
             orderedIds[curZ] = gc.id;
             if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-                screenPos.y += Sys_Floor(.5f + (gc.opened() ? layout->SlideOpened : layout->SlideClosed));
+                screenPos.y += Sys_Floor(.5f + (layout->getSlide(gc.opened())));
             }
         }
     }
@@ -301,7 +363,7 @@ void GameLayout::updateCardRect(GameState& gameState, int cardId)
     Rect result = getStackRect(cs);
     for (int i=0; i<idx; i++) {
         if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-            result.y += Sys_Floor(.5f + ((*cs)[i].opened() ? layout->SlideOpened : layout->SlideClosed));
+            result.y += Sys_Floor(.5f + (layout->getSlide((*cs)[i].opened())));
         }
     }
     cardDescs[cardId].screenRect = result;
@@ -347,7 +409,7 @@ void GameLayout::raiseZ(int cardId)
     }
 }
 
-const CardDesc& GameLayout::getOrderedCard(int ordinal)
+CardDesc& GameLayout::getOrderedCard(int ordinal)
 {
     ensureNormalize();
     return cardDescs[orderedIds[ordinal]];
@@ -359,7 +421,7 @@ void GameLayout::init(GameState& aGameState, Layout& aLayout)
     reset(aGameState);
 }
 
-Rect GameLayout::getDestCardRect(const CardStack* stack) const
+Rect GameLayout::getDestCardRect(CardStack* stack)
 {
     Rect screenRect = getStackRect(stack);
 
@@ -367,14 +429,14 @@ Rect GameLayout::getDestCardRect(const CardStack* stack) const
         || stack->type == CardStack::TYPE_HAND)
     {
         for (int i=0; i<stack->size(); i++) {
-            screenRect.y += (*stack)[i].opened() ? layout->SlideOpened : layout->SlideClosed;
+            screenRect.y += layout->getSlide((*stack)[i].opened());
         }
     }
 
     return screenRect;
 }
 
-Rect GameLayout::getStackRect(const CardStack* stack) const
+Rect GameLayout::getStackRect(CardStack* stack)
 {
     return layout->getStackRect(stack);
 }
@@ -439,17 +501,17 @@ void Event::update()
     }
 }
 
-bool Event::fired() const
+bool Event::fired()
 {
     return delayLeft <= 0;
 }
 
-int Event::getArg() const
+int Event::getArg()
 {
     return arg;
 }
 
-Event::Type Event::getType() const
+Event::Type Event::getType()
 {
     return type;
 }
@@ -547,22 +609,22 @@ void ButtonDesc::init(Rect aRect, ButtonState aState, bool aVisible)
     isVisible = aVisible;
 }
 
-Rect ButtonDesc::getRect() const
+Rect ButtonDesc::getRect()
 {
     return rect;
 }
 
-ButtonDesc::ButtonState ButtonDesc::getState() const
+ButtonDesc::ButtonState ButtonDesc::getState()
 {
     return isEnabled ? state : STATE_DISABLED;
 }
 
-bool ButtonDesc::visible() const
+bool ButtonDesc::visible()
 {
     return isVisible;
 }
 
-bool ButtonDesc::enabled() const
+bool ButtonDesc::enabled()
 {
     return isEnabled && isVisible && state != STATE_DISABLED;
 }
@@ -589,36 +651,36 @@ WidgetLayout::WidgetLayout()
 {
 }
 
-void WidgetLayout::init(const Layout& aLayout)
+void WidgetLayout::init(Layout& aLayout)
 {
     Rect area = aLayout.getWorkingArea();
     float interval = 8.f;
-    float undoTopLeftX = area.x + (area.x-area.y) + area.w - interval*3.f - aLayout.ButtonArrowWidth*4.f;
-    float undoTopLeftY = area.y + area.h - aLayout.ButtonHeight;
+    float undoTopLeftX = area.x + (area.x-area.y) + area.w - interval*3.f - aLayout.getButtonWidth()*4.f;
+    float undoTopLeftY = area.y + area.h - aLayout.getButtonHeight();
     
     for (int i=0; i<BUTTON_NEW; i++)
     {
         Rect onscreenPosition = Rect(
-            undoTopLeftX + (aLayout.ButtonArrowWidth+interval)*i, 
+            undoTopLeftX + (aLayout.getButtonWidth()+interval)*i, 
             undoTopLeftY, 
-            aLayout.ButtonArrowWidth, 
-            aLayout.ButtonHeight
+            aLayout.getButtonWidth(), 
+            aLayout.getButtonHeight()
         );
         buttons[i].init(onscreenPosition, ButtonDesc::STATE_DISABLED, true);
     }
 
     buttons[BUTTON_NEW].init(
-        Rect(area.y, undoTopLeftY, aLayout.ButtonActionWidth, aLayout.ButtonHeight),
+        Rect(area.y, undoTopLeftY, aLayout.getButtonWidthLong(), aLayout.getButtonHeight()),
         ButtonDesc::STATE_NORMAL, 
         true
     );
 
     buttons[BUTTON_AUTO].init(
         Rect(
-            buttons[BUTTON_NEW].getRect().x + aLayout.ButtonActionWidth + interval*2.f, 
+            buttons[BUTTON_NEW].getRect().x + aLayout.getButtonWidthLong() + interval*2.f, 
             undoTopLeftY, 
-            aLayout.ButtonActionWidth, 
-            aLayout.ButtonHeight
+            aLayout.getButtonWidthLong(), 
+            aLayout.getButtonHeight()
         ),
         ButtonDesc::STATE_NORMAL,
         true
@@ -651,27 +713,27 @@ void Commander::init(GameState* aGameState)
     cmdNew();
 }
 
-bool Commander::autoPlaying() const
+bool Commander::autoPlaying()
 {
     return autoPlayOn;
 }
 
-bool Commander::starting() const
+bool Commander::starting()
 {
     return startAnimationOn;
 }
 
-bool Commander::movingScreen() const
+bool Commander::movingScreen()
 {
     return startMoveOn;
 }
 
-bool Commander::gameEnded() const
+bool Commander::gameEnded()
 {
     return gameState->gameWon() && events.empty() && tweens.empty();
 }
 
-void Commander::handleInput(const Input& input)
+void Commander::handleInput(Input& input)
 {
     if (gameEnded() || autoPlaying()) 
     {
@@ -688,7 +750,7 @@ void Commander::handleInput(const Input& input)
     }
 }
 
-void Commander::handleInputForGame(const Input& input)
+void Commander::handleInputForGame(Input& input)
 {
     float x = input.x;
     float y = input.y;
@@ -726,7 +788,7 @@ void Commander::clearControlButtons()
     widgetLayout.buttons[WidgetLayout::BUTTON_UNDO].setEnabled(gameState->history.canUndo());
 }
 
-void Commander::handleInputForButtons(const Input& input)
+void Commander::handleInputForButtons(Input& input)
 {
     clearControlButtons();
     WidgetLayout::ButtonType focusButton = widgetLayout.probe(input.x, input.y);
@@ -783,7 +845,7 @@ void Commander::handleInputForButtons(const Input& input)
     }
 }
 
-void Commander::handleEvent(const Event& e)
+void Commander::handleEvent(Event& e)
 {
     int arg = e.getArg();
     switch (e.getType())
@@ -862,19 +924,21 @@ void Commander::updateEvents()
     }
 }
 
-void Commander::update(int newWidth, int newHeight)
+void Commander::update()
 {
-    if (layout.setGameSize(newWidth, newHeight)) 
+    updateEvents();
+}
+
+void Commander::resize(int width, int height)
+{
+    if (layout.setGameSize(width, height)) 
     {
         while (events.empty() == false || tweens.empty() == false) {
             updateEvents();
         }
+        layout.setGameSize(width, height);
         widgetLayout.init(layout);
         gameLayout.reset(*gameState);
-    }
-    else
-    {
-        updateEvents();
     }
 }
 
@@ -889,8 +953,8 @@ void Commander::moveAnimation(int cardId, Rect beg, Rect end, int ticks, bool sl
 
 void Commander::turnAnimation(int cardId, int halfTicks, int delay)
 {
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (layout.CardWidth-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
-    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(layout.CardWidth-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.x, (layout.getCardWidth()-4.f)/2.f, Tween::CURVE_SIN, halfTicks, delay, true));
+    tweens.push(Tween(&gameLayout.cardDescs[cardId].screenRect.w, -(layout.getCardWidth()-2.f),    Tween::CURVE_SIN, halfTicks, delay, true));
     events.push(Event::TurnCard(delay+halfTicks+1, cardId));
     // Not really sure why we need +1 here, but autoplayed game looks crappy without it
     doMax(cardLock[cardId], delay + halfTicks*2 + 1);
@@ -1132,7 +1196,7 @@ void Commander::cmdReleaseHand()
                 float destX = destRect.x + destRect.w/2.f;
                 float destY = destRect.y + destRect.h/2.f;
                 float dist = getVAdjustedDistSqr(x, y, destX, destY);
-                if (dist < layout.CardHeight*layout.CardHeight && (dist < bestDist || bestDist < 0.0))
+                if (dist < layout.getCardHeight()*layout.getCardHeight() && (dist < bestDist || bestDist < 0.0))
                 {
                     destStack = destCandidate;
                     bestDist = dist;

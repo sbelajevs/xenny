@@ -6,6 +6,8 @@ extern "C" {
 
 struct SystemAPI;
 
+typedef void (*ResizeCallback)(int w, int h);
+
 enum MouseButtonState
 {
     MOUSE_BUTTON_NONE  = 0,
@@ -15,10 +17,7 @@ enum MouseButtonState
     MOUSE_BUTTON_FWRD  = 8,
 };
 
-SystemAPI* Sys_CreateWindow(int width, int height, const char* windowTitle);
-void Sys_SetGameBaseSize(SystemAPI* sys, int width, int height);
-void Sys_GetGameSize(SystemAPI* sys, int* width, int* height);
-float Sys_GetScaleFactor(SystemAPI* sys);
+SystemAPI* Sys_CreateWindow(int width, int height, ResizeCallback resizeCb, const char* windowTitle);
 void Sys_SetWindowTitle(SystemAPI* sys, const char* msg);
 void Sys_ShutDown(SystemAPI* sys);
 

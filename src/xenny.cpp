@@ -111,6 +111,11 @@ public:
         commander->init(gameState);
     }
 
+    void resize(int width, int height)
+    {
+        commander->resize(width, height);
+    }
+
     void handleControls()
     {
         input.update();
@@ -119,11 +124,7 @@ public:
 
     void tick()
     {
-        int width = 0;
-        int height = 0;
-        Sys_GetGameSize(sys, &width, &height);
-
-        commander->update(width, height);
+        commander->update();
     }
 
     void render()
@@ -206,22 +207,22 @@ private:
 
     void renderControlsGUI()
     {
-        const ButtonDesc fullUndo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
+        ButtonDesc fullUndo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_UNDO];
         renderRect(fullUndo.getRect(), cardGfxData.fullUndo[fullUndo.getState()]);
 
-        const ButtonDesc undo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
+        ButtonDesc undo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_UNDO];
         renderRect(undo.getRect(), cardGfxData.undo[undo.getState()]);
 
-        const ButtonDesc redo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
+        ButtonDesc redo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_REDO];
         renderRect(redo.getRect(), cardGfxData.undo[redo.getState()].flipX());
 
-        const ButtonDesc fullRedo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
+        ButtonDesc fullRedo = commander->widgetLayout.buttons[WidgetLayout::BUTTON_FULL_REDO];
         renderRect(fullRedo.getRect(), cardGfxData.fullUndo[fullRedo.getState()].flipX());
 
-        const ButtonDesc newGame = commander->widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
+        ButtonDesc newGame = commander->widgetLayout.buttons[WidgetLayout::BUTTON_NEW];
         renderRect(newGame.getRect(), cardGfxData.newGame[newGame.getState()]);
 
-        const ButtonDesc autoPlay = commander->widgetLayout.buttons[WidgetLayout::BUTTON_AUTO];
+        ButtonDesc autoPlay = commander->widgetLayout.buttons[WidgetLayout::BUTTON_AUTO];
         if (autoPlay.visible()) {
             renderRect(autoPlay.getRect(), cardGfxData.autoPlay[autoPlay.getState()]);
         }
@@ -235,17 +236,22 @@ private:
     Commander* commander;
 };
 
+App* gApp = NULL_PTR;
+
+void resizeCallback(int w, int h)
+{
+    if (gApp != NULL_PTR) {
+        gApp->resize(w, h);
+    }
+}
+
 int runGame()
 {
-    Layout l;
-    l.init();
-
-    SystemAPI* sys = Sys_CreateWindow((int)l.BaseGameWidth, (int)l.BaseGameHeight, "Xenny 0.0.2");
+    SystemAPI* sys = Sys_CreateWindow(1035, 1064, resizeCallback, "Xenny 0.0.2");
     Sys_Init(sys);
-    Sys_SetGameBaseSize(sys, (int)l.BaseGameWidth, (int)l.BaseGameHeight);
 
-    App app;
-    app.init(sys);
+    gApp = new App();
+    gApp->init(sys);
     
     while (Sys_TimeToQuit(sys) == false)
     {
@@ -254,8 +260,8 @@ int runGame()
         
         double stopWatch = Sys_GetTime(sys);
 
-        app.handleControls();
-        app.tick();
+        gApp->handleControls();
+        gApp->tick();
 
         {
             static const size_t BUFFER_SIZE = 100;
@@ -271,11 +277,13 @@ int runGame()
         }
 
         Sys_StartFrame(sys);
-        app.render();
+        gApp->render();
         Sys_EndFrame(sys);
     } 
 
     Sys_ShutDown(sys);
+
+    delete gApp;
 
     return 0;
 }
