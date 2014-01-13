@@ -943,6 +943,7 @@ void Commander::resize(int width, int height)
         layout.setGameSize(width, height);
         widgetLayout.init(layout);
         gameLayout.reset(*gameState);
+        clearControlButtons();
     }
 }
 
