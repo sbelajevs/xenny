@@ -209,10 +209,10 @@ Rect Layout::getWorkingArea()
 Rect Layout::getYouWonRect()
 {
     return Rect(
-        Sys_Floor((getGameWidth()-getYouWonWidth())*0.5f), 
-        Sys_Floor((getGameHeight()-getYouWonHeight())*0.75f), 
-        Sys_Floor(getYouWonWidth()), 
-        Sys_Floor(getYouWonHeight())
+        (getGameWidth()-getYouWonWidth())*0.5f, 
+        (getGameHeight()-getYouWonHeight())*0.75f, 
+        getYouWonWidth(), 
+        getYouWonHeight()
     );
 }
 
@@ -222,18 +222,18 @@ Rect Layout::getStackRect(CardStack* stack)
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            Sys_Floor(foundationsTopLeftX + (halfInterval + getCardWidth())*stack->ordinal),
-            Sys_Floor(foundationsTopLeftY)
+            foundationsTopLeftX + (halfInterval + getCardWidth())*stack->ordinal,
+            foundationsTopLeftY
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            Sys_Floor(tableausTopLeftX + (interval+getCardWidth())*stack->ordinal),
-            Sys_Floor(tableausTopLeftY)
+            tableausTopLeftX + (interval+getCardWidth())*stack->ordinal,
+            tableausTopLeftY
         );
     case CardStack::TYPE_STOCK:
-        return getCardScreenRect(Sys_Floor(stockTopLeftX), Sys_Floor(stockTopLeftY));
+        return getCardScreenRect(stockTopLeftX, stockTopLeftY);
     case CardStack::TYPE_WASTE:
-        return getCardScreenRect(Sys_Floor(wasteTopLeftX), Sys_Floor(wasteTopLeftY));
+        return getCardScreenRect(wasteTopLeftX, wasteTopLeftY);
     default:
         return getCardScreenRect(-1.f, -1.f);
     }
@@ -353,7 +353,7 @@ void GameLayout::reset(GameState& gameState)
             cardDescs[gc.id] = CardDesc(gc.id, curZ, gc.opened(), screenPos);
             orderedIds[curZ] = gc.id;
             if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-                screenPos.y += Sys_Floor(.5f + (layout->getSlide(gc.opened())));
+                screenPos.y += layout->getSlide(gc.opened());
             }
         }
     }
@@ -368,7 +368,7 @@ void GameLayout::updateCardRect(GameState& gameState, int cardId)
     Rect result = getStackRect(cs);
     for (int i=0; i<idx; i++) {
         if (cs->type == CardStack::TYPE_TABLEAU || cs->type == CardStack::TYPE_HAND) {
-            result.y += Sys_Floor(.5f + (layout->getSlide((*cs)[i].opened())));
+            result.y += layout->getSlide((*cs)[i].opened());
         }
     }
     cardDescs[cardId].screenRect = result;
