@@ -16,15 +16,6 @@
 #include "properties.h"
 #include "xenny.h"
 
-// Because including wglew.h results in these defines that 
-// mess up with std::max/std::min
-#ifdef max
-  #undef max
-#endif
-#ifdef min
-  #undef min
-#endif
-
 namespace
 {
     const unsigned int UNIFORMS_MAX = 3;
