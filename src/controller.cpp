@@ -122,6 +122,11 @@ float Layout::getYouWonWidth()
     return BASE_YOU_WON_WIDTH * scaleFactor;
 }
 
+float Layout::getYouWonHeight()
+{
+    return BUTTON_HEIGHT * scaleFactor;
+}
+
 float Layout::getButtonWidth()
 {
     return BUTTON_WIDTH;
@@ -205,9 +210,9 @@ Rect Layout::getYouWonRect()
 {
     return Rect(
         Sys_Floor((getGameWidth()-getYouWonWidth())*0.5f), 
-        Sys_Floor((getGameHeight()-getButtonHeight())*0.75f), 
+        Sys_Floor((getGameHeight()-getYouWonHeight())*0.75f), 
         Sys_Floor(getYouWonWidth()), 
-        Sys_Floor(getButtonHeight())
+        Sys_Floor(getYouWonHeight())
     );
 }
 

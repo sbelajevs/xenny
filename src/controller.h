@@ -46,6 +46,7 @@ public:
 
     float getPaddingTop();
     float getYouWonWidth();
+    float getYouWonHeight();
 
     float getButtonWidth();
     float getButtonWidthLong();
