@@ -859,6 +859,13 @@ int Sys_GetMouseButtonState(SysAPI* sys)
         VK_XBUTTON1, (int)MOUSE_BUTTON_BACK,
         VK_XBUTTON2, (int)MOUSE_BUTTON_FWRD,
     };
+
+    POINT cursorPos;
+    GetCursorPos(&cursorPos);
+    if (WindowFromPoint(cursorPos) != sys->window) {
+        return result;
+    }
+
     for (int i=0; i<sizeof(KEY_MAPPING); i++) {
         result |= (GetAsyncKeyState(KEY_MAPPING[i]) & (int)0x80000000) 
             ? KEY_MAPPING[i+1] : 0;
