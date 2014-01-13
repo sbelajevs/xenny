@@ -21,14 +21,6 @@
     <ClCompile Include="..\..\src\xenny.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="lib\glew-1.9.0\glew.vcxproj">
-      <Project>{bfff4028-e7f9-4809-ae35-f66c7abbf37b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="lib\glfw-2.7.8\glfw.vcxproj">
-      <Project>{24643044-b16c-4ee4-b3bb-1fcdbff17fa3}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\..\src\controller.h" />
     <ClInclude Include="..\..\src\generated\resources_gen.h" />
     <ClInclude Include="..\..\src\model.h" />

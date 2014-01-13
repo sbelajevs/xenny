@@ -82,23 +82,27 @@ public:
     }
 };
 
-class App
+struct GameAPI
 {
 public:
-    App(): sys(NULL_PTR), commander(NULL_PTR), gameState(NULL_PTR)
+    GameAPI()
+        : gameFinished(false)
+        , sys(NULL_PTR)
+        , commander(NULL_PTR)
+        , gameState(NULL_PTR)
     {
     }
 
-    ~App()
+    ~GameAPI()
     {
         delete commander;
         delete gameState;
     }
 
-    void init(SystemAPI* s)
+    void init(SysAPI* s)
     {
         sys = s;
-        Sys_LoadMainTexture(sys, MAIN_TEXTURE, MAIN_TEXTURE_SIZE);
+        Sys_LoadTexture(sys, MAIN_TEXTURE, MAIN_TEXTURE_SIZE);
         cardGfxData.init();
         input.init(sys);
         
@@ -120,6 +124,16 @@ public:
     {
         input.update();
         commander->handleInput(input);
+    }
+
+    void forceClose()
+    {
+        gameFinished = true;
+    }
+
+    bool finished()
+    {
+        return gameFinished;
     }
 
     void tick()
@@ -146,9 +160,9 @@ public:
 private:
     void renderRect(Rect screen, Rect tex) const
     {
-        Sys_DrawMainTex(
-            sys, screen.x, screen.y, screen.w, screen.h, tex.x, tex.y, tex.w, tex.h
-        );
+        Sys_Render(sys, 
+            screen.x, screen.y, screen.w, screen.h, 
+            tex.x, tex.y, tex.w, tex.h);
     }
 
     void renderEmptyGame(float dx, float dy)
@@ -228,7 +242,9 @@ private:
         }
     }
 
-    SystemAPI*  sys;
+    bool gameFinished;
+
+    SysAPI*  sys;
     CardGfxData cardGfxData;
 
     Input input;
@@ -236,54 +252,55 @@ private:
     Commander* commander;
 };
 
-App* gApp = NULL_PTR;
-
-void resizeCallback(int w, int h)
+GameAPI* GameAPI_Create()
 {
-    if (gApp != NULL_PTR) {
-        gApp->resize(w, h);
+    return new GameAPI();
+}
+
+void GameAPI_Init(GameAPI* game, SysAPI* sys, int w, int h, float frameTime)
+{
+    if (game != NULL_PTR) {
+        game->init(sys);
+        game->resize(w, h);
+        // TODO: set frameTime
     }
 }
 
-int runGame()
+void GameAPI_Update(GameAPI* game)
 {
-    SystemAPI* sys = Sys_CreateWindow(1035, 1064, resizeCallback, "Xenny 0.0.2");
-    Sys_Init(sys);
+    if (game != NULL_PTR) {
+        game->handleControls();
+        game->tick();
+    }
+}
 
-    gApp = new App();
-    gApp->init(sys);
-    
-    while (Sys_TimeToQuit(sys) == false)
-    {
-        // Assumption #1: monitor refresh rate is 1/FRAME_TIME Hz
-        // Assumption #2: each game update takes less than FRAME_TIME seconds
-        
-        double stopWatch = Sys_GetTime(sys);
+void GameAPI_Render(GameAPI* game)
+{
+    if (game != NULL_PTR) {
+        game->render();
+    }
+}
 
-        gApp->handleControls();
-        gApp->tick();
+void GameAPI_Resize(GameAPI* game, int w, int h)
+{
+    if (game != NULL_PTR) {
+        game->resize(w, h);
+    }
+}
 
-        {
-            static const size_t BUFFER_SIZE = 100;
-            char buffer[BUFFER_SIZE];
-            Sys_GetInfoString(sys, buffer, BUFFER_SIZE);
-            Sys_SetWindowTitle(sys, buffer);
-        }
+void GameAPI_OnClosing(GameAPI* game)
+{
+    if (game != NULL_PTR) {
+        game->forceClose();
+    }
+}
 
-        static const double SLEEP_EPS = 0.002;
-        double timeToSleep = FRAME_TIME - (Sys_GetTime(sys) - stopWatch) - SLEEP_EPS;
-        if (timeToSleep > SLEEP_EPS) {
-            Sys_Sleep(timeToSleep);
-        }
+int GameAPI_Finished(GameAPI* game)
+{
+    return (game != NULL_PTR && game->finished()) ? 1 : 0;
+}
 
-        Sys_StartFrame(sys);
-        gApp->render();
-        Sys_EndFrame(sys);
-    } 
-
-    Sys_ShutDown(sys);
-
-    delete gApp;
-
-    return 0;
+void GameAPI_Release(GameAPI* game)
+{
+    delete game;
 }

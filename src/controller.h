@@ -129,13 +129,13 @@ public:
 
     Input();
 
-    void init(SystemAPI* aSys);
+    void init(SysAPI* aSys);
     void update();
 
 private:
     float oldX;
     float oldY;
-    SystemAPI* sys;
+    SysAPI* sys;
 };
 
 class Event

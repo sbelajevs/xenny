@@ -3,10 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xenny", "xenny.vcxproj", "{BD5E7969-EACE-4E55-ADFA-804876ECFBED}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glfw", "lib\glfw-2.7.8\glfw.vcxproj", "{24643044-B16C-4EE4-B3BB-1FCDBFF17FA3}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "glew", "lib\glew-1.9.0\glew.vcxproj", "{BFFF4028-E7F9-4809-AE35-F66C7ABBF37B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -17,14 +13,6 @@ Global
 		{BD5E7969-EACE-4E55-ADFA-804876ECFBED}.Debug|Win32.Build.0 = Debug|Win32
 		{BD5E7969-EACE-4E55-ADFA-804876ECFBED}.Release|Win32.ActiveCfg = Release|Win32
 		{BD5E7969-EACE-4E55-ADFA-804876ECFBED}.Release|Win32.Build.0 = Release|Win32
-		{24643044-B16C-4EE4-B3BB-1FCDBFF17FA3}.Debug|Win32.ActiveCfg = Debug|Win32
-		{24643044-B16C-4EE4-B3BB-1FCDBFF17FA3}.Debug|Win32.Build.0 = Debug|Win32
-		{24643044-B16C-4EE4-B3BB-1FCDBFF17FA3}.Release|Win32.ActiveCfg = Release|Win32
-		{24643044-B16C-4EE4-B3BB-1FCDBFF17FA3}.Release|Win32.Build.0 = Release|Win32
-		{BFFF4028-E7F9-4809-AE35-F66C7ABBF37B}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BFFF4028-E7F9-4809-AE35-F66C7ABBF37B}.Debug|Win32.Build.0 = Debug|Win32
-		{BFFF4028-E7F9-4809-AE35-F66C7ABBF37B}.Release|Win32.ActiveCfg = Release|Win32
-		{BFFF4028-E7F9-4809-AE35-F66C7ABBF37B}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -276,7 +276,7 @@ Input::Input(): sys(NULL_PTR)
 {
 }
 
-void Input::init(SystemAPI* aSys)
+void Input::init(SysAPI* aSys)
 {
     sys = aSys;
 
@@ -654,14 +654,13 @@ WidgetLayout::WidgetLayout()
 void WidgetLayout::init(Layout& aLayout)
 {
     Rect area = aLayout.getWorkingArea();
-    float interval = 8.f;
-    float undoTopLeftX = area.x + (area.x-area.y) + area.w - interval*3.f - aLayout.getButtonWidth()*4.f;
-    float undoTopLeftY = area.y + area.h - aLayout.getButtonHeight();
+    float undoTopLeftX = area.x*2.f + area.w - aLayout.getButtonWidth()*4.f;
+    float undoTopLeftY = area.y*2.f + area.h - aLayout.getButtonHeight();
     
     for (int i=0; i<BUTTON_NEW; i++)
     {
         Rect onscreenPosition = Rect(
-            undoTopLeftX + (aLayout.getButtonWidth()+interval)*i, 
+            undoTopLeftX + aLayout.getButtonWidth()*i, 
             undoTopLeftY, 
             aLayout.getButtonWidth(), 
             aLayout.getButtonHeight()
@@ -670,14 +669,14 @@ void WidgetLayout::init(Layout& aLayout)
     }
 
     buttons[BUTTON_NEW].init(
-        Rect(area.y, undoTopLeftY, aLayout.getButtonWidthLong(), aLayout.getButtonHeight()),
+        Rect(0.f, undoTopLeftY, aLayout.getButtonWidthLong(), aLayout.getButtonHeight()),
         ButtonDesc::STATE_NORMAL, 
         true
     );
 
     buttons[BUTTON_AUTO].init(
         Rect(
-            buttons[BUTTON_NEW].getRect().x + aLayout.getButtonWidthLong() + interval*2.f, 
+            buttons[BUTTON_NEW].getRect().x + aLayout.getButtonWidthLong(), 
             undoTopLeftY, 
             aLayout.getButtonWidthLong(), 
             aLayout.getButtonHeight()
