@@ -584,7 +584,9 @@ public:
         int displayW = -1;
         int displayH = -1;
         ctx->getDisplayRes(displayW, displayH);
-        ctx->setClientSize(displayW/2, displayH/2);
+        int gameH = displayH/2;
+        int gameW = (int)(gameH / 7.f * 9.f);
+        ctx->setClientSize(gameW, gameH);
 
         // And finally, make it visible
         ShowWindow(ctx->mWindow, SW_SHOWNORMAL);
