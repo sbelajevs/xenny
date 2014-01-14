@@ -15,7 +15,7 @@ GameCard::GameCard(const char* code, bool opened): id(CodeToId(code)), state(ope
 int GameCard::CodeToId(const char* code)
 {
     int value = 0;
-    static const char VALUES[] = "223344556677889900JjQqKkAa";
+    static const char VALUES[] = "Aa223344556677889900JjQqKk";
     for (int i=0; VALUES[i]; i++) {
         if (VALUES[i] == code[0]) 
         {
@@ -35,6 +35,11 @@ int GameCard::CodeToId(const char* code)
     }
     
     return suit * CARDS_PER_SUIT + value;
+}
+
+int GameCard::GetAceId(int suit)
+{
+    return suit*CARDS_PER_SUIT;
 }
 
 void GameCard::switchState()
@@ -64,8 +69,12 @@ int GameCard::getSuit() const
 
 int GameCard::getValue() const
 {
-    // Such a hack, only because our texture has aces after kings
-    return ((id % CARDS_PER_SUIT) + 1) % CARDS_PER_SUIT;
+    return id % CARDS_PER_SUIT;
+}
+
+bool GameCard::isKing() const
+{
+    return getValue() == CARDS_PER_SUIT - 1;
 }
 
 GameCard::Color GameCard::getColor() const
@@ -452,14 +461,13 @@ CardStack* GameState::findHandAutoDest()
 int GameState::getNextFoundationCard(int topCardId, int suit) const
 {
     if (topCardId == -1) {
-        return (suit+1)*CARDS_PER_SUIT - 1;
+        return GameCard::GetAceId(suit);
     } 
 
-    GameCard gc(topCardId);
-    if (gc.getValue() == CARDS_PER_SUIT - 1) {
+    if (GameCard(topCardId).isKing()) {
         return -1;
     } else {
-        return gc.getSuit() * CARDS_PER_SUIT + gc.getValue();
+        return topCardId + 1;
     }
 }
 

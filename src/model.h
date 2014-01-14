@@ -22,11 +22,13 @@ struct GameCard
     void open();
     void close();
     bool opened() const;
-    
+
     int getSuit() const;
     int getValue() const;
+    bool isKing() const;
     Color getColor() const;
 
+    static int GetAceId(int suit);
     static int CodeToId(const char* code);
 
 private:
