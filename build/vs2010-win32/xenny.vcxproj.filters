@@ -15,6 +15,7 @@
     <ClCompile Include="..\..\src\controller.cpp" />
     <ClCompile Include="..\..\src\xenny.cpp" />
     <ClCompile Include="..\..\src\stb_image.c" />
+    <ClCompile Include="..\..\src\utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\generated\resources_gen.h">

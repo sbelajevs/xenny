@@ -181,7 +181,7 @@ void GameState::dealRandomGame()
     }
 
     int cardIdx[CARDS_TOTAL];
-    Sys_GenRandomPermutation(cardIdx, CARDS_TOTAL);
+    Utils_CreateRandomPermutation(cardIdx, CARDS_TOTAL);
 
     int top = 0;
     for (int i=0; i<TABLEAU_COUNT; i++)

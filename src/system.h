@@ -6,10 +6,6 @@ extern "C" {
 
 struct SysAPI;
 
-float Sys_Floor(float arg);
-float Sys_Sin(float rad);
-void Sys_GenRandomPermutation(int* begin, int count);
-
 int  Sys_LoadTexture(SysAPI* sys, const unsigned char* data, int len);
 void Sys_SetTexture(SysAPI* sys, int hTexture);
 void Sys_ClearScreen(SysAPI* sys, int rgb);

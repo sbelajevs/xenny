@@ -589,7 +589,7 @@ float Tween::curveLinear(float x)
 
 float Tween::curveSin(float x)
 {
-    return x == 1.0f ? 1.0f : Sys_Sin(x * 3.1415926f/2.f);
+    return x == 1.0f ? 1.0f : Utils_Sin(x * 3.1415926f/2.f);
 }
 
 float Tween::curveSmoothStep(float x)

@@ -20,25 +20,6 @@
 // * check maximal window size
 // * check how resizing and positioning works
 
-float Sys_Floor(float arg)
-{
-    return floorf(arg);
-}
-
-float Sys_Sin(float rad)
-{
-    return sinf(rad);
-}
-
-void Sys_GenRandomPermutation(int* begin, int count)
-{
-    for (int i=0; i<count; i++)
-    {
-        begin[i] = i;
-    }
-    std::random_shuffle(begin, begin+count);
-}
-
 namespace {
 
 const char WND_CLASS_NAME[] = "win32-tests";

@@ -18,6 +18,7 @@
     <ClCompile Include="..\..\src\model.cpp" />
     <ClCompile Include="..\..\src\stb_image.c" />
     <ClCompile Include="..\..\src\system.cpp" />
+    <ClCompile Include="..\..\src\utils.cpp" />
     <ClCompile Include="..\..\src\xenny.cpp" />
   </ItemGroup>
   <ItemGroup>

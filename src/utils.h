@@ -1,7 +1,5 @@
 #pragma once
 
-#include "system.h"
-
 template <class Element, int MaxCount>
 class FixedVec
 {
@@ -86,23 +84,11 @@ inline T doMax(T& a, const T& b)
     return a = max(a, b);
 }
 
-template <class T>
-inline T min(const T&a, const T& b)
-{
-    return a < b ? a : b;
-}
-template <class T>
-inline T doMin(T&a, const T& b)
-{
-    return a = min(a, b);
-}
-
 inline void doFlip(bool& a)
 {
     a = a == false;
 }
 
-inline void doFloor(float& arg)
-{
-    arg = Sys_Floor(arg);
-}
+float Utils_Sin(float arg);
+
+void Utils_CreateRandomPermutation(int* begin, int count);
