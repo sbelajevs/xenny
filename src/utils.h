@@ -89,6 +89,7 @@ inline void doFlip(bool& a)
     a = a == false;
 }
 
+float Utils_Round(float arg);
 float Utils_Sin(float arg);
 
 void Utils_CreateRandomPermutation(int* begin, int count);

@@ -3,6 +3,11 @@
 
 #include "utils.h"
 
+float Utils_Round(float arg)
+{
+    return floor(arg + 0.5f);
+}
+
 float Utils_Sin(float arg)
 {
     return sinf(arg);

@@ -99,22 +99,22 @@ Layout::Layout()
 
 float Layout::getCardWidth()
 {
-    return BASE_CARD_WIDTH * scaleFactor;
+    return Utils_Round(BASE_CARD_WIDTH * scaleFactor);
 }
 
 float Layout::getCardHeight()
 {
-    return BASE_CARD_HEIGHT * scaleFactor;
+    return Utils_Round(BASE_CARD_HEIGHT * scaleFactor);
 }
 
 float Layout::getSlide(bool opened)
 {
-    return (opened ? BASE_SLIDE_OPENED : BASE_SLIDE_CLOSED) * scaleFactor;
+    return Utils_Round((opened ? BASE_SLIDE_OPENED : BASE_SLIDE_CLOSED) * scaleFactor);
 }
 
 float Layout::getPaddingTop()
 {
-    return BASE_PADDING_TOP * scaleFactor;
+    return Utils_Round(BASE_PADDING_TOP * scaleFactor);
 }
 
 float Layout::getYouWonWidth()
@@ -189,6 +189,11 @@ void Layout::initPositions()
 
     tableausTopLeftX = borderH;
     tableausTopLeftY = borderV + getCardHeight() + getPaddingTop()*2;
+
+    stockTopLeftX = Utils_Round(stockTopLeftX);
+    stockTopLeftY = Utils_Round(stockTopLeftY);
+    wasteTopLeftX = Utils_Round(wasteTopLeftX);
+    wasteTopLeftY = Utils_Round(wasteTopLeftY);
 }
 
 float Layout::getGameHeight()
@@ -203,16 +208,21 @@ float Layout::getGameWidth()
 
 Rect Layout::getWorkingArea()
 {
-    return Rect(borderH, borderV, getGameWidth()-2*borderH, getGameHeight()-2*borderV);
+    return Rect(
+        Utils_Round(borderH), 
+        Utils_Round(borderV), 
+        Utils_Round(getGameWidth()-2*borderH), 
+        Utils_Round(getGameHeight()-2*borderV)
+    );
 }
 
 Rect Layout::getYouWonRect()
 {
     return Rect(
-        (getGameWidth()-getYouWonWidth())*0.5f, 
-        (getGameHeight()-getYouWonHeight())*0.75f, 
-        getYouWonWidth(), 
-        getYouWonHeight()
+        Utils_Round((getGameWidth()-getYouWonWidth())*0.5f), 
+        Utils_Round((getGameHeight()-getYouWonHeight())*0.75f), 
+        Utils_Round(getYouWonWidth()), 
+        Utils_Round(getYouWonHeight())
     );
 }
 
@@ -222,13 +232,13 @@ Rect Layout::getStackRect(CardStack* stack)
     {
     case CardStack::TYPE_FOUNDATION:
         return getCardScreenRect(
-            foundationsTopLeftX + (halfInterval + getCardWidth())*stack->ordinal,
-            foundationsTopLeftY
+            Utils_Round(foundationsTopLeftX + (halfInterval + getCardWidth())*stack->ordinal),
+            Utils_Round(foundationsTopLeftY)
         );
     case CardStack::TYPE_TABLEAU:
         return getCardScreenRect(
-            tableausTopLeftX + (interval+getCardWidth())*stack->ordinal,
-            tableausTopLeftY
+            Utils_Round(tableausTopLeftX + (interval+getCardWidth())*stack->ordinal),
+            Utils_Round(tableausTopLeftY)
         );
     case CardStack::TYPE_STOCK:
         return getCardScreenRect(stockTopLeftX, stockTopLeftY);
