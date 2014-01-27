@@ -39,7 +39,7 @@ static const float BUTTON_AUTO_TEX_POS[2] = {0.f/2048.f, 48.f/1024.f};
 static const float YOU_WON_TEX_DIMENSIONS[2] = {300.f/2048.f, 48.f/1024.f};
 static const float YOU_WON_TEX_POS[2] = {672.f/2048.f, 0/2048.f};
 
-static const float CARD_TEX_DIMENSIONS[2] = {120.f/2048.f, 160.f/1024.f};
+static const float CARD_TEX_DIMENSIONS[2] = {121.f/2048.f, 161.f/1024.f};
 
 static const float CARD_FACES_TEX_POS[][2] = {
     {4/2048.f, 848/1024.f}, 
