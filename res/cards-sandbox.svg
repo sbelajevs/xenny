@@ -175,10 +175,10 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1"
-     inkscape:cx="1221.0906"
-     inkscape:cy="350.29737"
+     inkscape:cx="1197.7187"
+     inkscape:cy="990.29737"
      inkscape:document-units="px"
-     inkscape:current-layer="layer5"
+     inkscape:current-layer="layer2"
      showgrid="false"
      inkscape:window-width="1858"
      inkscape:window-height="1178"
@@ -193,15 +193,14 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      inkscape:groupmode="layer"
      id="layer2"
-     inkscape:label="base"
-     sodipodi:insensitive="true">
+     inkscape:label="base">
     <rect
        style="fill:#b68c73;fill-opacity:1;fill-rule:evenodd;stroke:none"
        id="rect7307-3"
@@ -721,14 +720,14 @@
     <text
        xml:space="preserve"
        style="font-size:58.24496841px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#33a66f;fill-opacity:1;stroke:#8ae9b5;stroke-width:2.91224813;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;display:inline;font-family:gulim;-inkscape-font-specification:gulim"
-       x="684.61853"
+       x="688.67761"
        y="46.03582"
        id="text3551"
        sodipodi:linespacing="125%"
        transform="scale(0.98543167,1.0147837)"><tspan
          sodipodi:role="line"
          id="tspan3553"
-         x="684.61853"
+         x="688.67761"
          y="46.03582"
          style="fill:#33a66f;fill-opacity:1;stroke:#8ae9b5;stroke-width:2.91224813;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:Cooper Std Black;-inkscape-font-specification:Cooper Std Black">You won!</tspan></text>
     <g
@@ -5759,7 +5758,7 @@
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="rectangles"
-     sodipodi:insensitive="true">
+     style="display:none">
     <rect
        style="fill:none;stroke:#000000;stroke-width:0.65383512;stroke-opacity:1"
        id="rect4379-7-0"

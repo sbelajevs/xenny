@@ -67,8 +67,8 @@ bool Rect::empty()
 }
 
 Layout::Layout()
-    : BASE_CARD_WIDTH(120.f)
-    , BASE_CARD_HEIGHT(160.f)
+    : BASE_CARD_WIDTH(128.f)
+    , BASE_CARD_HEIGHT(168.f)
     , BASE_SLIDE_OPENED(44.f)
     , BASE_SLIDE_CLOSED(20.f)
     , BASE_PADDING_TOP(22.f)

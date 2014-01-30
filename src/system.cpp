@@ -298,10 +298,6 @@ struct Graphics
             flush();
         }
 
-        // Hack to make OpenGL pixel-perfect?
-        qx += 0.375f;
-        qy += 0.375f;
-
         Vertex* v = &vertices[verticesLen];
 
         v[0] = Vertex(qx, qy, tx, ty);
